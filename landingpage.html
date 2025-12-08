@@ -7,6 +7,7 @@
     <title>Constructa</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         :root {
             --bg-color: #f6f7f2;
@@ -16,6 +17,7 @@
             --accent-green: #3d5a49;
             --card-bg: #ffffff;
             --icon-bg: #e0e8e3;
+            --footer-bg: #1c2b23;
         }
 
         * {
@@ -26,11 +28,70 @@
         }
 
         body {
-            background-color: var(--bg-color);
+            background-color: transparent;
+            /* Changed to allow canvas to show */
             color: var(--text-dark);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* 3D Background Canvas */
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            background: #f6f7f2;
+            /* Fallback */
+            pointer-events: none;
+            /* Let clicks pass through */
+        }
+
+        /* Intro Overlay */
+        #intro-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #f6f7f2;
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 1s ease-out, visibility 1s;
+        }
+
+        #intro-overlay.fade-out {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .loading-text {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--primary-green);
+            letter-spacing: 4px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 0.6;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0.6;
+            }
         }
 
         /* Navbar */
@@ -42,6 +103,12 @@
             max-width: 1600px;
             margin: 0 auto;
             width: 100%;
+            background: rgba(246, 247, 242, 0.9);
+            /* Slight gloss */
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
         .logo {
@@ -91,10 +158,20 @@
             background-color: var(--accent-green);
         }
 
-        /* Main Content */
+        /* Main Content Wrapper */
         main {
             flex: 1;
-            padding: 2rem 3rem 4rem;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 6rem;
+            /* Increased spacing */
+            padding-bottom: 4rem;
+        }
+
+        /* Hero Grid Section */
+        .hero-grid {
+            padding: 2rem 3rem 0;
             max-width: 1600px;
             margin: 0 auto;
             width: 100%;
@@ -123,7 +200,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: linear-gradient(to right, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.3) 50%, rgba(0, 0, 0, 0) 100%);
+            background: linear-gradient(to right, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.4) 50%, rgba(0, 0, 0, 0) 100%);
             z-index: 1;
         }
 
@@ -144,7 +221,7 @@
 
         .hero-subtitle {
             font-size: 1.125rem;
-            opacity: 0.9;
+            opacity: 0.95;
             margin-bottom: 2.5rem;
             line-height: 1.5;
             max-width: 500px;
@@ -175,23 +252,41 @@
         .features-col {
             display: flex;
             flex-direction: column;
-            gap: 2rem;
+            gap: 1.5rem;
         }
 
         .feature-card {
             background: var(--card-bg);
             border-radius: 16px;
-            padding: 2.5rem;
+            padding: 2rem;
             flex: 1;
             display: flex;
             flex-direction: column;
             justify-content: center;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
             transition: transform 0.2s;
+            position: relative;
+            overflow: hidden;
         }
 
         .feature-card:hover {
             transform: translateY(-4px);
+        }
+
+        /* Specific Feature Backgrounds (Reusing logic but ensuring styles are set) */
+        .feature-card.expert-support {
+            background: #e8eaec url('https://upload.wikimedia.org/wikipedia/commons/9/9a/Sample_Floorplan.jpg') center/cover no-repeat;
+            background-blend-mode: overlay;
+        }
+
+        .feature-card.ai-generation {
+            background: #eaf0f6 url('https://images.unsplash.com/photo-1600607686527-6fb886090705?q=80&w=2000&auto=format&fit=crop') center/cover no-repeat;
+            background-blend-mode: overlay;
+        }
+
+        .feature-card.cost-estimates {
+            background: #e8eaec url('https://upload.wikimedia.org/wikipedia/commons/9/9a/Sample_Floorplan.jpg') center/cover no-repeat;
+            background-blend-mode: overlay;
         }
 
         .feature-icon {
@@ -204,20 +299,33 @@
             justify-content: center;
             color: var(--primary-green);
             font-size: 1.25rem;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
+            z-index: 2;
+            position: relative;
+        }
+
+        .feature-card.expert-support .feature-icon,
+        .feature-card.cost-estimates .feature-icon {
+            background-color: rgba(255, 255, 255, 0.9);
         }
 
         .feature-title {
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             font-weight: 700;
             color: var(--text-dark);
-            margin-bottom: 1rem;
+            margin-bottom: 0.5rem;
+            z-index: 2;
+            position: relative;
         }
 
         .feature-desc {
-            color: var(--text-gray);
-            line-height: 1.6;
-            font-size: 1rem;
+            color: var(--text-dark);
+            /* Darker for readability over bg */
+            font-weight: 500;
+            line-height: 1.5;
+            font-size: 0.95rem;
+            z-index: 2;
+            position: relative;
         }
 
         .cost-icon {
@@ -225,18 +333,310 @@
             color: #d97706;
         }
 
+        /* How It Works Section */
+        .how-it-works {
+            max-width: 1200px;
+            margin: 0 auto;
+            text-align: center;
+            padding: 2rem 3rem;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 4rem;
+            color: var(--text-dark);
+            position: relative;
+            display: inline-block;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 4px;
+            background-color: var(--primary-green);
+            border-radius: 2px;
+        }
+
+        .steps-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 3rem;
+        }
+
+        .step-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: white;
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+            transition: transform 0.3s;
+        }
+
+        .step-item:hover {
+            transform: translateY(-5px);
+        }
+
+        .step-number {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 1.5rem;
+        }
+
+        .step-1 {
+            background-color: #294033;
+        }
+
+        .step-2 {
+            background-color: #cca36e;
+        }
+
+        .step-3 {
+            background-color: #e53e3e;
+        }
+
+        .step-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .step-desc {
+            color: var(--text-gray);
+            line-height: 1.6;
+            font-size: 0.95rem;
+            max-width: 300px;
+        }
+
+        /* Why Choose Us Section */
+        .why-choose {
+            background-color: white;
+            padding: 6rem 3rem;
+            text-align: center;
+        }
+
+        .benefits-grid {
+            max-width: 1200px;
+            margin: 4rem auto 0;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4rem;
+        }
+
+        .benefit-item i {
+            font-size: 3rem;
+            color: var(--primary-green);
+            margin-bottom: 1.5rem;
+        }
+
+        .benefit-item h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .benefit-item p {
+            color: var(--text-gray);
+            line-height: 1.6;
+        }
+
+        /* Testimonials Section */
+        .testimonials {
+            padding: 4rem 3rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .testimonial-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .testimonial-card {
+            background: #ffffff;
+            padding: 2.5rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .stars {
+            color: #f59e0b;
+        }
+
+        .quote {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            font-style: italic;
+            color: var(--text-dark);
+        }
+
+        .author {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .author-avatar {
+            width: 50px;
+            height: 50px;
+            background-color: #ddd;
+            border-radius: 50%;
+            background: url('https://randomuser.me/api/portraits/men/32.jpg') center/cover;
+        }
+
+        .author-info h4 {
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .author-info span {
+            font-size: 0.85rem;
+            color: var(--text-gray);
+        }
+
+        /* CTA Section */
+        .cta-section {
+            background-color: var(--primary-green);
+            color: white;
+            padding: 6rem 3rem;
+            text-align: center;
+            margin: 2rem 3rem 4rem;
+            border-radius: 24px;
+        }
+
+        .cta-content {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .cta-title {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .cta-subtitle {
+            font-size: 1.125rem;
+            opacity: 0.9;
+            margin-bottom: 3rem;
+        }
+
+        .btn-white {
+            background-color: white;
+            color: var(--primary-green);
+            padding: 1rem 3rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1.1rem;
+            display: inline-block;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-white:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--footer-bg);
+            color: white;
+            padding: 4rem 3rem 2rem;
+        }
+
+        .footer-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 3rem;
+            margin-bottom: 3rem;
+        }
+
+        .footer-brand h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .footer-brand p {
+            color: #a0aec0;
+            line-height: 1.6;
+            max-width: 300px;
+        }
+
+        .footer-col h3 {
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+            color: white;
+        }
+
+        .footer-col ul {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+
+        .footer-col a {
+            color: #a0aec0;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer-col a:hover {
+            color: white;
+        }
+
+        .footer-bottom {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+            color: #718096;
+            font-size: 0.9rem;
+        }
+
         /* Responsive */
         @media (max-width: 1024px) {
-            main {
+            .hero-grid {
                 grid-template-columns: 1fr;
             }
 
-            .hero-card {
-                min-height: 500px;
+            .steps-container,
+            .benefits-grid {
+                grid-template-columns: 1fr;
+                gap: 2rem;
             }
 
-            .features-col {
-                flex-direction: row;
+            .testimonial-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-content {
+                grid-template-columns: 1fr 1fr;
             }
         }
 
@@ -246,78 +646,396 @@
             }
 
             .hero-title {
-                font-size: 3.5rem;
+                font-size: 3rem;
+            }
+
+            .cta-title {
+                font-size: 2rem;
             }
 
             header {
                 padding: 1rem;
             }
 
-            main {
-                padding: 1.5rem;
+            .footer-content {
+                grid-template-columns: 1fr;
             }
+        }
+
+        /* 3D Tilt Effect Utilities */
+        .tilt-container {
+            perspective: 1000px;
+        }
+
+        .tilt-card {
+            transform-style: preserve-3d;
+            transition: transform 0.1s ease-out;
+            will-change: transform;
+        }
+
+        .tilt-card:hover {
+            z-index: 10;
         }
     </style>
 </head>
 
 <body>
+    <!-- 3D Canvas Background -->
+    <div id="canvas-container"></div>
+
+    <!-- Intro Overlay -->
+    <div id="intro-overlay">
+        <div class="loading-text">CONSTRUCTA</div>
+    </div>
+
+    <!-- Navigation -->
     <header>
         <a href="#" class="logo">
             <i class="far fa-building"></i>
             Constructa
         </a>
         <nav>
-            <a href="#">Designs</a>
-            <a href="#">Engineers</a>
-            <a href="#">Workers</a>
-            <a href="#">Materials</a>
-            <a href="#">Estimator</a>
-            <a href="#">Feedback</a>
-            <a href="#">Log In</a>
-            <a href="#" class="btn-start">Sign Up</a>
+            <a href="loginrole.html">Log In</a>
+            <a href="signuprole.html" class="btn-start">Sign Up</a>
         </nav>
     </header>
 
     <main>
-        <!-- Left: Hero -->
-        <div class="hero-card">
-            <div class="hero-overlay"></div>
-            <div class="hero-content">
-                <h1 class="hero-title">Design Your<br>Dream Home</h1>
-                <p class="hero-subtitle">
-                    AI-powered personalized house design portal. Enter your requirements and get detailed architectural
-                    plans, cost estimates, and stunning visualizations.
-                </p>
-                <a href="#" class="btn-hero">
-                    Get Started <i class="fas fa-arrow-right"></i>
-                </a>
-            </div>
-        </div>
-
-        <!-- Right: Features -->
-        <div class="features-col">
-            <div class="feature-card">
-                <div class="feature-icon">
-                    <i class="far fa-building"></i>
+        <!-- Hero Section -->
+        <section class="hero-grid tilt-container">
+            <!-- Left: Hero -->
+            <div class="hero-card tilt-card" data-tilt>
+                <div class="hero-overlay"></div>
+                <div class="hero-content">
+                    <h1 class="hero-title">Design Your<br>Dream Home</h1>
+                    <p class="hero-subtitle">
+                        AI-powered personalized house design portal. Enter your requirements and get detailed
+                        architectural plans, cost estimates, and stunning visualizations instantly.
+                    </p>
+                    <a href="#" class="btn-hero">
+                        Start Designing <i class="fas fa-arrow-right"></i>
+                    </a>
                 </div>
-                <h3>AI-Powered Generation</h3>
-                <p class="feature-desc">
-                    Advanced AI creates detailed floor plans and photorealistic renderings based on your exact
-                    specifications.
-                </p>
             </div>
 
-            <div class="feature-card">
-                <div class="feature-icon cost-icon">
-                    <i class="far fa-file-alt"></i>
+            <!-- Right: Features -->
+            <div class="features-col tilt-container">
+                <div class="feature-card expert-support tilt-card" data-tilt>
+                    <div class="feature-icon">
+                        <i class="fas fa-hard-hat"></i>
+                    </div>
+                    <h3 class="feature-title">Expert Support</h3>
+                    <p class="feature-desc">
+                        Connect with licensed structural engineers to validate your AI-generated plans.
+                    </p>
                 </div>
-                <h3>Cost Estimates</h3>
-                <p class="feature-desc">
-                    Get accurate material lists and budget estimates for your project before you break ground.
-                </p>
+
+                <div class="feature-card ai-generation tilt-card" data-tilt>
+                    <div class="feature-icon">
+                        <i class="fas fa-magic"></i>
+                    </div>
+                    <h3 class="feature-title">AI Generation</h3>
+                    <p class="feature-desc">
+                        Get photorealistic 3D renderings and floor plans in seconds using our advanced models.
+                    </p>
+                </div>
+
+                <div class="feature-card cost-estimates tilt-card" data-tilt>
+                    <div class="feature-icon cost-icon">
+                        <i class="fas fa-coins"></i>
+                    </div>
+                    <h3 class="feature-title">Smart Estimates</h3>
+                    <p class="feature-desc">
+                        Real-time budget calculation based on your local material and labor costs.
+                    </p>
+                </div>
             </div>
-        </div>
+        </section>
+
+        <!-- How It Works Section -->
+        <section class="how-it-works">
+            <h2 class="section-title">How It Works</h2>
+            <div class="steps-container">
+                <div class="step-item">
+                    <div class="step-number step-1">1</div>
+                    <h3 class="step-title">Enter Requirements</h3>
+                    <p class="step-desc">
+                        Fill in our simple questionnaire about your plot size, budget, and style preferences.
+                    </p>
+                </div>
+                <div class="step-item">
+                    <div class="step-number step-2">2</div>
+                    <h3 class="step-title">AI Generation</h3>
+                    <p class="step-desc">
+                        Our specialized AI generates comprehensive blueprints and 3D models tailored to you.
+                    </p>
+                </div>
+                <div class="step-item">
+                    <div class="step-number step-3">3</div>
+                    <h3 class="step-title">Build & Connect</h3>
+                    <p class="step-desc">
+                        Seamlessly hire vetted contractors and procure materials directly through the platform.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Why Choose Us -->
+        <section class="why-choose">
+            <h2 class="section-title">Why Constructa?</h2>
+            <div class="benefits-grid">
+                <div class="benefit-item">
+                    <i class="fas fa-rocket"></i>
+                    <h3>Lightning Fast</h3>
+                    <p>Gone are the days of waiting weeks for a draft. Get professional-grade designs in minutes.</p>
+                </div>
+                <div class="benefit-item">
+                    <i class="fas fa-wallet"></i>
+                    <h3>Cost Efficient</h3>
+                    <p>Save up to 80% on architectural design fees and avoid costly construction mistakes.</p>
+                </div>
+                <div class="benefit-item">
+                    <i class="fas fa-shield-alt"></i>
+                    <h3>Reliable Quality</h3>
+                    <p>Our database adheres to local building codes, ensuring your dream home is safe and compliant.</p>
+                </div>
+            </div>
+        </section>
+
+
+
+
     </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-brand">
+                <h2><i class="far fa-building"></i> Constructa</h2>
+                <p>Revolutionizing the construction industry with AI-driven design and management solutions.</p>
+            </div>
+            <div class="footer-col">
+                <h3>Product</h3>
+                <ul>
+                    <li><a href="#">Features</a></li>
+                    <li><a href="#">Pricing</a></li>
+                    <li><a href="#">Showcase</a></li>
+                    <li><a href="#">Estimator</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h3>Company</h3>
+                <ul>
+                    <li><a href="#">About Us</a></li>
+                    <li><a href="#">Careers</a></li>
+                    <li><a href="#">Blog</a></li>
+                    <li><a href="#">Contact</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h3>Legal</h3>
+                <ul>
+                    <li><a href="#">Privacy Policy</a></li>
+                    <li><a href="#">Terms of Service</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            &copy; 2025 Constructa. All rights reserved.
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // === 3D BACKGROUND ANIMATION ===
+            const initBackground3D = () => {
+                const container = document.getElementById('canvas-container');
+                if (!container) return;
+
+                const scene = new THREE.Scene();
+                // Transparent background to blend with page or use a light color
+                scene.background = new THREE.Color('#f6f7f2');
+
+                // Camera setup
+                const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+                camera.position.z = 8;
+                camera.position.y = 2;
+
+                const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                container.appendChild(renderer.domElement);
+
+                // Lighting
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+                scene.add(ambientLight);
+
+                const mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                mainLight.position.set(10, 10, 10);
+                scene.add(mainLight);
+
+                const blueLight = new THREE.PointLight(0x3d5a49, 0.5);
+                blueLight.position.set(-5, 5, 5);
+                scene.add(blueLight);
+
+                // --- 3D Objects ---
+                const cityGroup = new THREE.Group();
+                scene.add(cityGroup);
+
+                // Create a grid of simple building structures
+                const buildingGeometry = new THREE.BoxGeometry(1, 1, 1);
+                const buildingMaterial = new THREE.MeshPhongMaterial({
+                    color: 0x294033,
+                    transparent: true,
+                    opacity: 0.1,
+                    side: THREE.DoubleSide
+                });
+                const edgeMaterial = new THREE.LineBasicMaterial({ color: 0x294033, transparent: true, opacity: 0.3 });
+
+                // Generate a grid of "blueprints"
+                const gridSize = 10;
+                const spacing = 3;
+
+                for (let x = -gridSize; x < gridSize; x++) {
+                    for (let z = -gridSize; z < gridSize; z++) {
+                        // Random heights for buildings
+                        const height = Math.random() * 2 + 0.5;
+                        const building = new THREE.Group();
+
+                        // Solid (faint)
+                        const geometry = new THREE.BoxGeometry(1, height, 1);
+                        const mesh = new THREE.Mesh(geometry, buildingMaterial);
+                        mesh.position.y = height / 2;
+
+                        // Wireframe
+                        const edges = new THREE.EdgesGeometry(geometry);
+                        const line = new THREE.LineSegments(edges, edgeMaterial);
+                        line.position.y = height / 2;
+
+                        building.add(mesh);
+                        building.add(line);
+
+                        building.position.set(x * spacing, -2, z * spacing);
+                        cityGroup.add(building);
+                    }
+                }
+
+                // Central Hero House (More detailed)
+                const houseGroup = new THREE.Group();
+
+                // Base
+                const baseGeo = new THREE.BoxGeometry(2, 2, 2);
+                const baseEdges = new THREE.EdgesGeometry(baseGeo);
+                const baseLine = new THREE.LineSegments(baseEdges, new THREE.LineBasicMaterial({ color: 0x294033, linewidth: 2 }));
+                houseGroup.add(baseLine);
+
+                // Roof
+                const roofGeo = new THREE.ConeGeometry(1.5, 1.2, 4);
+                const roofEdges = new THREE.EdgesGeometry(roofGeo);
+                const roofLine = new THREE.LineSegments(roofEdges, new THREE.LineBasicMaterial({ color: 0x3d5a49, linewidth: 2 }));
+                roofLine.position.y = 1.6;
+                roofLine.rotation.y = Math.PI / 4;
+                houseGroup.add(roofLine);
+
+                // Float animation group
+                const floatGroup = new THREE.Group();
+                floatGroup.add(houseGroup);
+                floatGroup.position.set(0, 0, 2); // Bring closer
+                scene.add(floatGroup);
+
+
+                // Animation Loop
+                let mouseX = 0;
+                let mouseY = 0;
+                let targetRotationX = 0;
+                let targetRotationY = 0;
+
+                // Mouse interaction
+                document.addEventListener('mousemove', (event) => {
+                    mouseX = (event.clientX - window.innerWidth / 2) * 0.001;
+                    mouseY = (event.clientY - window.innerHeight / 2) * 0.001;
+                });
+
+                // Scroll interaction
+                let scrollY = 0;
+                window.addEventListener('scroll', () => {
+                    scrollY = window.scrollY * 0.001;
+                });
+
+                const animate = () => {
+                    requestAnimationFrame(animate);
+
+                    // Rotate entire city slowly
+                    cityGroup.rotation.y += 0.001;
+
+                    // Hero house rotation
+                    floatGroup.rotation.y += 0.005;
+                    floatGroup.position.y = Math.sin(Date.now() * 0.001) * 0.5 + 0.5;
+
+                    // Interactive camera movement
+                    targetRotationX = mouseX;
+                    targetRotationY = mouseY;
+
+                    // Smooth follow
+                    cityGroup.rotation.x += 0.05 * (targetRotationY - cityGroup.rotation.x);
+                    cityGroup.rotation.y += 0.05 * (targetRotationX - cityGroup.rotation.y);
+
+                    // Scroll effect
+                    camera.position.y = 2 - scrollY * 2;
+                    camera.position.z = 8 + scrollY * 5;
+
+                    renderer.render(scene, camera);
+                };
+
+                animate();
+
+                // Handle Window Resize
+                window.addEventListener('resize', () => {
+                    camera.aspect = window.innerWidth / window.innerHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                });
+            };
+
+            if (typeof THREE !== 'undefined') {
+                initBackground3D();
+
+                // Fade out overlay after load + delay
+                setTimeout(() => {
+                    const overlay = document.getElementById('intro-overlay');
+                    if (overlay) {
+                        overlay.classList.add('fade-out');
+                    }
+                }, 2000); // 2 second intro
+
+            } else {
+                document.getElementById('intro-overlay').style.display = 'none';
+            }
+
+            // Tilt Effect for Cards
+            const cards = document.querySelectorAll('.tilt-card');
+            cards.forEach(card => {
+                card.addEventListener('mousemove', handleHover);
+                card.addEventListener('mouseleave', resetTilt);
+            });
+
+            function handleHover(e) {
+                const card = this;
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                const rotateX = ((y - centerY) / centerY) * -5;
+                const rotateY = ((x - centerX) / centerX) * 5;
+                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+            }
+
+            function resetTilt(e) {
+                this.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)';
+            }
+        });
+    </script>
 </body>
 
 </html>
