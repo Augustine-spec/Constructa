@@ -201,9 +201,198 @@
             font-weight: 600;
         }
 
-        /* 3D Tilt Effect Utilities */
-        .tilt-container {
+        /* Dashboard Layout */
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+            padding: 2rem 3rem;
+            display: flex;
+            flex-direction: column;
+            gap: 3rem;
+            z-index: 2;
+        }
+
+        .welcome-section {
+            text-align: center;
+            margin-bottom: 1rem;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .welcome-title {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #294033 0%, #3d5a49 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .welcome-subtitle {
+            color: var(--text-gray);
+            font-size: 1.1rem;
+        }
+
+        /* Features Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
             perspective: 1000px;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border-radius: 24px;
+            padding: 2.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            transform-style: preserve-3d;
+            animation: fadeInUp 0.8s ease-out backwards;
+        }
+
+        /* Staggered Animation */
+        .feature-card:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .feature-card:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .feature-card:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        .feature-card:nth-child(4) {
+            animation-delay: 0.4s;
+        }
+
+        .feature-card:nth-child(5) {
+            animation-delay: 0.5s;
+        }
+
+        .feature-card:nth-child(6) {
+            animation-delay: 0.6s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+            background: rgba(255, 255, 255, 0.95);
+        }
+
+        .icon-wrapper {
+            width: 70px;
+            height: 70px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            color: white;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            margin-bottom: 0.5rem;
+            transform: translateZ(20px);
+        }
+
+        /* Gradients for Icons */
+        .gradient-1 {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        .gradient-2 {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+        }
+
+        .gradient-3 {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+        }
+
+        .gradient-4 {
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+        }
+
+        .gradient-5 {
+            background: linear-gradient(135deg, #ec4899, #db2777);
+        }
+
+        .gradient-6 {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+        }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            transform: translateZ(15px);
+        }
+
+        .feature-card p {
+            color: var(--text-gray);
+            line-height: 1.6;
+            font-size: 0.95rem;
+            transform: translateZ(10px);
+        }
+
+        /* 3D Decorative Blob in Card */
+        .card-bg-3d {
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 150px;
+            height: 150px;
+            background: radial-gradient(circle, rgba(41, 64, 51, 0.05) 0%, rgba(255, 255, 255, 0) 70%);
+            border-radius: 50%;
+            z-index: 0;
+            transition: all 0.5s ease;
+        }
+
+        .feature-card:hover .card-bg-3d {
+            transform: scale(1.5);
+            background: radial-gradient(circle, rgba(41, 64, 51, 0.1) 0%, rgba(255, 255, 255, 0) 70%);
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .welcome-title {
+                font-size: 2rem;
+            }
         }
     </style>
 </head>
@@ -224,34 +413,111 @@
         </nav>
     </header>
 
-    <main class="tilt-container">
-        <div class="auth-card">
-            <div class="auth-icon">
-                <i class="fas fa-home"></i>
+    <main class="dashboard-container">
+        <div class="welcome-section">
+            <h1 class="welcome-title">Welcome back, Alex</h1>
+            <p class="welcome-subtitle">Manage your dream project from one central hub.</p>
+        </div>
+
+        <div class="features-grid">
+            <!-- Card 1: Budget Calculator -->
+            <div class="feature-card tilt-card" onclick="window.location.href='#'">
+                <div class="card-content">
+                    <div class="icon-wrapper gradient-1">
+                        <i class="fas fa-calculator"></i>
+                    </div>
+                    <h3>Budget Calculator</h3>
+                    <p>Estimate costs for materials, labor, and permits instantly.</p>
+                </div>
+                <div class="card-bg-3d"></div>
             </div>
-            <h1 class="auth-title">Homeowner Portal</h1>
-            <p class="auth-subtitle">Sign in to manage your construction project</p>
 
-            <form>
-                <div class="form-group">
-                    <label class="form-label" for="email">Email Address</label>
-                    <input type="email" id="email" class="form-input" placeholder="you@example.com" required>
+            <!-- Card 2: Material Shopping -->
+            <div class="feature-card tilt-card" onclick="window.location.href='#'">
+                <div class="card-content">
+                    <div class="icon-wrapper gradient-2">
+                        <i class="fas fa-shopping-basket"></i>
+                    </div>
+                    <h3>Material Market</h3>
+                    <p>Order high-quality construction materials at best rates.</p>
                 </div>
-                <div class="form-group">
-                    <label class="form-label" for="password">Password</label>
-                    <input type="password" id="password" class="form-input" placeholder="••••••••" required>
-                </div>
-                <button type="submit" class="btn-submit">Sign In</button>
-            </form>
+                <div class="card-bg-3d"></div>
+            </div>
 
-            <div class="auth-footer">
-                Don't have an account? <a href="#">Create one here</a>
+            <!-- Card 3: Plans & Designs -->
+            <div class="feature-card tilt-card" onclick="window.location.href='#'">
+                <div class="card-content">
+                    <div class="icon-wrapper gradient-3">
+                        <i class="fas fa-layer-group"></i>
+                    </div>
+                    <h3>Plans & Designs</h3>
+                    <p>View 3D models, blueprints, and architectural drafts.</p>
+                </div>
+                <div class="card-bg-3d"></div>
+            </div>
+
+            <!-- Card 4: Engineer Directory -->
+            <div class="feature-card tilt-card" onclick="window.location.href='#'">
+                <div class="card-content">
+                    <div class="icon-wrapper gradient-4">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                    <h3>Engineer Directory</h3>
+                    <p>Connect with vetted structural and civil engineers.</p>
+                </div>
+                <div class="card-bg-3d"></div>
+            </div>
+
+            <!-- Card 5: Find Contractor -->
+            <div class="feature-card tilt-card" onclick="window.location.href='#'">
+                <div class="card-content">
+                    <div class="icon-wrapper gradient-5">
+                        <i class="fas fa-tools"></i>
+                    </div>
+                    <h3>Find Contractors</h3>
+                    <p>Hire reliable contractors for your specific needs.</p>
+                </div>
+                <div class="card-bg-3d"></div>
+            </div>
+
+            <!-- Card 6: Hire Workers -->
+            <div class="feature-card tilt-card" onclick="window.location.href='#'">
+                <div class="card-content">
+                    <div class="icon-wrapper gradient-6">
+                        <i class="fas fa-user-friends"></i>
+                    </div>
+                    <h3>Hire Workers</h3>
+                    <p>Find skilled laborers, electricians, and plumbers.</p>
+                </div>
+                <div class="card-bg-3d"></div>
             </div>
         </div>
     </main>
+    <script>document.addEventListener('DOMContentLoaded', () => {
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
+            // === 3D TILT EFFECT ===
+            const cards = document.querySelectorAll('.tilt-card');
+
+            cards.forEach(card => {
+                card.addEventListener('mousemove', (e) => {
+                    const rect = card.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+
+                    const centerX = rect.width / 2;
+                    const centerY = rect.height / 2;
+
+                    const rotateX = ((y - centerY) / centerY) * -10; // Max rotation deg
+                    const rotateY = ((x - centerX) / centerX) * 10;
+
+                    card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.02) translateY(-10px)`;
+                });
+
+                card.addEventListener('mouseleave', () => {
+                    card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale(1) translateY(0)';
+                });
+            });
+
             // === 3D BACKGROUND ANIMATION ===
             const initBackground3D = () => {
                 const container = document.getElementById('canvas-container');
@@ -264,7 +530,9 @@
                 camera.position.z = 8;
                 camera.position.y = 2;
 
-                const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                const renderer = new THREE.WebGLRenderer({
+                    antialias: true, alpha: true
+                });
                 renderer.setSize(window.innerWidth, window.innerHeight);
                 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
                 container.appendChild(renderer.domElement);
@@ -287,13 +555,17 @@
 
                 // Create a grid of simple building structures
                 const buildingGeometry = new THREE.BoxGeometry(1, 1, 1);
+
                 const buildingMaterial = new THREE.MeshPhongMaterial({
                     color: 0x294033,
                     transparent: true,
                     opacity: 0.1,
                     side: THREE.DoubleSide
                 });
-                const edgeMaterial = new THREE.LineBasicMaterial({ color: 0x294033, transparent: true, opacity: 0.3 });
+
+                const edgeMaterial = new THREE.LineBasicMaterial({
+                    color: 0x294033, transparent: true, opacity: 0.3
+                });
 
                 // Generate a grid
                 const gridSize = 10;
@@ -323,10 +595,16 @@
                 // Central Hero House
                 const houseGroup = new THREE.Group();
                 const baseGeo = new THREE.BoxGeometry(2, 2, 2);
-                const baseLine = new THREE.LineSegments(new THREE.EdgesGeometry(baseGeo), new THREE.LineBasicMaterial({ color: 0x294033, linewidth: 2 }));
+
+                const baseLine = new THREE.LineSegments(new THREE.EdgesGeometry(baseGeo), new THREE.LineBasicMaterial({
+                    color: 0x294033, linewidth: 2
+                }));
                 houseGroup.add(baseLine);
                 const roofGeo = new THREE.ConeGeometry(1.5, 1.2, 4);
-                const roofLine = new THREE.LineSegments(new THREE.EdgesGeometry(roofGeo), new THREE.LineBasicMaterial({ color: 0x3d5a49, linewidth: 2 }));
+
+                const roofLine = new THREE.LineSegments(new THREE.EdgesGeometry(roofGeo), new THREE.LineBasicMaterial({
+                    color: 0x3d5a49, linewidth: 2
+                }));
                 roofLine.position.y = 1.6;
                 roofLine.rotation.y = Math.PI / 4;
                 houseGroup.add(roofLine);
@@ -365,7 +643,9 @@
                     camera.position.z = 8 + scrollY * 5;
 
                     renderer.render(scene, camera);
-                };
+                }
+
+                    ;
                 animate();
 
                 // Window Resize
@@ -374,7 +654,9 @@
                     camera.updateProjectionMatrix();
                     renderer.setSize(window.innerWidth, window.innerHeight);
                 });
-            };
+            }
+
+                ;
 
             if (typeof THREE !== 'undefined') {
                 initBackground3D();
