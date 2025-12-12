@@ -4,10 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Engineer Portal - Constructa</title>
+    <title>Homeowner Login - Constructa</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
         :root {
             --bg-color: #f6f7f2;
@@ -17,6 +18,8 @@
             --accent-green: #3d5a49;
             --card-bg: #ffffff;
             --input-bg: #f9f9f9;
+            --error-color: #dc2626;
+            --success-color: #16a34a;
         }
 
         * {
@@ -95,7 +98,7 @@
             color: var(--primary-green);
         }
 
-        /* Login/Signup Form */
+        /* Login Form */
         main {
             flex: 1;
             display: flex;
@@ -162,13 +165,28 @@
             border-radius: 8px;
             font-size: 1rem;
             background-color: var(--input-bg);
-            transition: border-color 0.2s;
+            transition: border-color 0.2s, background-color 0.2s;
         }
 
         .form-input:focus {
             outline: none;
             border-color: var(--primary-green);
             background-color: white;
+        }
+
+        .form-input.error {
+            border-color: var(--error-color);
+        }
+
+        .error-msg {
+            color: var(--error-color);
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+            display: none;
+        }
+
+        .error-msg.show {
+            display: block;
         }
 
         .btn-submit {
@@ -185,8 +203,33 @@
             margin-top: 1rem;
         }
 
-        .btn-submit:hover {
+        .btn-submit:hover:not(:disabled) {
             background-color: var(--accent-green);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 1.5rem 0;
+            color: var(--text-gray);
+            font-size: 0.9rem;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background-color: #e2e8f0;
+        }
+
+        .divider span {
+            padding: 0 1rem;
         }
 
         .auth-footer {
@@ -201,9 +244,58 @@
             font-weight: 600;
         }
 
-        /* 3D Tilt Effect Utilities */
+        .auth-footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Password Toggle */
+        .password-toggle {
+            position: relative;
+        }
+
+        .password-toggle i {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: var(--text-gray);
+            transition: color 0.2s;
+        }
+
+        .password-toggle i:hover {
+            color: var(--text-dark);
+        }
+
+        /* Forgot Password Link */
+        .forgot-password {
+            text-align: right;
+            margin-top: -1rem;
+            margin-bottom: 1rem;
+        }
+
+        .forgot-password a {
+            color: var(--primary-green);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .forgot-password a:hover {
+            color: var(--accent-green);
+            text-decoration: underline;
+        }
+
+        /* 3D Tilt Effect */
         .tilt-container {
             perspective: 1000px;
+        }
+
+        @media (max-width: 640px) {
+            .auth-card {
+                padding: 2rem;
+            }
         }
     </style>
 </head>
@@ -227,32 +319,171 @@
     <main class="tilt-container">
         <div class="auth-card">
             <div class="auth-icon">
-                <i class="fas fa-hard-hat"></i>
+                <i class="fas fa-home"></i>
             </div>
-            <h1 class="auth-title">Engineer Portal</h1>
-            <p class="auth-subtitle">Log in to view projects and submit estimates</p>
+            <h1 class="auth-title">Welcome Back</h1>
+            <p class="auth-subtitle">Log in to your homeowner portal</p>
 
-            <form>
+            <form id="loginForm">
                 <div class="form-group">
-                    <label class="form-label" for="email">License / Email</label>
-                    <input type="email" id="email" class="form-input" placeholder="Engineer ID or Email" required>
+                    <label class="form-label" for="email">Email Address</label>
+                    <input type="email" id="email" class="form-input" placeholder="john@example.com" required>
+                    <div id="emailError" class="error-msg">Please enter a valid email address.</div>
                 </div>
+
                 <div class="form-group">
                     <label class="form-label" for="password">Password</label>
-                    <input type="password" id="password" class="form-input" placeholder="••••••••" required>
+                    <div class="password-toggle">
+                        <input type="password" id="password" class="form-input" placeholder="••••••••" required>
+                        <i class="fas fa-eye" id="togglePassword"></i>
+                    </div>
+                    <div id="passwordError" class="error-msg">Password is required.</div>
                 </div>
-                <button type="submit" class="btn-submit">Sign In</button>
+
+                <div class="forgot-password">
+                    <a href="forgot_password.html?role=homeowner">Forgot Password?</a>
+                </div>
+
+                <button type="submit" class="btn-submit" id="submitBtn">Log In</button>
             </form>
 
+            <div class="divider">
+                <span>Or continue with</span>
+            </div>
+
+            <div id="g_id_onload"
+                data-client_id="665743141019-gq39034aahsgi72o9imvc46gr1dkfpq3.apps.googleusercontent.com"
+                data-callback="handleGoogleLogin" data-context="signin" data-ux_mode="popup" data-auto_prompt="false">
+            </div>
+            <div class="g_id_signin" data-type="standard" data-size="large" data-theme="outline" data-text="signin_with"
+                data-shape="rectangular" data-logo_alignment="left">
+            </div>
+
             <div class="auth-footer">
-                New contractor? <a href="engineer_signup.html">Register your firm</a>
+                Don't have an account? <a href="homeowner_signup.html">Sign up here</a>
             </div>
         </div>
     </main>
 
     <script>
+        // Password toggle functionality
+        const togglePassword = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('password');
+
+        togglePassword.addEventListener('click', function () {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            this.classList.toggle('fa-eye');
+            this.classList.toggle('fa-eye-slash');
+        });
+
+        // Form validation and submission
+        document.getElementById('loginForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const submitBtn = document.getElementById('submitBtn');
+
+            // Reset errors
+            document.getElementById('emailError').classList.remove('show');
+            document.getElementById('passwordError').classList.remove('show');
+            document.getElementById('email').classList.remove('error');
+            document.getElementById('password').classList.remove('error');
+
+            let isValid = true;
+
+            // Email validation
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!email || !emailRegex.test(email)) {
+                document.getElementById('emailError').classList.add('show');
+                document.getElementById('email').classList.add('error');
+                isValid = false;
+            }
+
+            // Password validation
+            if (!password || password.length < 1) {
+                document.getElementById('passwordError').classList.add('show');
+                document.getElementById('password').classList.add('error');
+                isValid = false;
+            }
+
+            if (!isValid) return;
+
+            // Disable button and show loading
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Logging in...';
+
+            try {
+                const response = await fetch('backend/login.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        password: password,
+                        role: 'homeowner'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert(`Welcome back, ${data.user.name}!`);
+                    window.location.href = 'homeowner.html';
+                } else {
+                    alert('Login failed: ' + (data.message || 'Unknown error'));
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Log In';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred during login. Please try again.');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Log In';
+            }
+        });
+
+        // Google Sign-In callback
+        function handleGoogleLogin(response) {
+            console.log("Google Sign In initiated...");
+
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.textContent = 'Verifying...';
+            submitBtn.disabled = true;
+
+            fetch('backend/google_login.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    credential: response.credential,
+                    role: 'homeowner'
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(`Welcome back, ${data.user.name}!`);
+                        window.location.href = 'homeowner.html';
+                    } else {
+                        alert('Login failed: ' + (data.message || 'Unknown error'));
+                        submitBtn.textContent = 'Log In';
+                        submitBtn.disabled = false;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred during login. Please try again.');
+                    submitBtn.textContent = 'Log In';
+                    submitBtn.disabled = false;
+                });
+        }
+
+        // 3D Background Animation
         document.addEventListener('DOMContentLoaded', () => {
-            // === 3D BACKGROUND ANIMATION ===
             const initBackground3D = () => {
                 const container = document.getElementById('canvas-container');
                 if (!container) return;
@@ -281,12 +512,10 @@
                 blueLight.position.set(-5, 5, 5);
                 scene.add(blueLight);
 
-                // --- 3D Objects ---
+                // 3D Objects
                 const cityGroup = new THREE.Group();
                 scene.add(cityGroup);
 
-                // Create a grid of simple building structures
-                const buildingGeometry = new THREE.BoxGeometry(1, 1, 1);
                 const buildingMaterial = new THREE.MeshPhongMaterial({
                     color: 0x294033,
                     transparent: true,
@@ -295,7 +524,6 @@
                 });
                 const edgeMaterial = new THREE.LineBasicMaterial({ color: 0x294033, transparent: true, opacity: 0.3 });
 
-                // Generate a grid
                 const gridSize = 10;
                 const spacing = 3;
 
@@ -336,18 +564,14 @@
                 floatGroup.position.set(0, 0, 2);
                 scene.add(floatGroup);
 
-                // Animation Loop
+                // Animation
                 let mouseX = 0;
                 let mouseY = 0;
-                let targetRotationX = 0;
-                let targetRotationY = 0;
 
                 document.addEventListener('mousemove', (event) => {
                     mouseX = (event.clientX - window.innerWidth / 2) * 0.001;
                     mouseY = (event.clientY - window.innerHeight / 2) * 0.001;
                 });
-
-                let scrollY = 0;
 
                 const animate = () => {
                     requestAnimationFrame(animate);
@@ -355,20 +579,13 @@
                     floatGroup.rotation.y += 0.005;
                     floatGroup.position.y = Math.sin(Date.now() * 0.001) * 0.5 + 0.5;
 
-                    targetRotationX = mouseX;
-                    targetRotationY = mouseY;
-
-                    cityGroup.rotation.x += 0.05 * (targetRotationY - cityGroup.rotation.x);
-                    cityGroup.rotation.y += 0.05 * (targetRotationX - cityGroup.rotation.y);
-
-                    camera.position.y = 2 - scrollY * 2;
-                    camera.position.z = 8 + scrollY * 5;
+                    cityGroup.rotation.x += 0.05 * (mouseY - cityGroup.rotation.x);
+                    cityGroup.rotation.y += 0.05 * (mouseX - cityGroup.rotation.y);
 
                     renderer.render(scene, camera);
                 };
                 animate();
 
-                // Window Resize
                 window.addEventListener('resize', () => {
                     camera.aspect = window.innerWidth / window.innerHeight;
                     camera.updateProjectionMatrix();
