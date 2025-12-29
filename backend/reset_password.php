@@ -34,9 +34,9 @@ if (empty($password) || strlen($password) < 8) {
 try {
     $conn = getDatabaseConnection();
     
-    // Verify that OTP was verified for this email
-    $verifyStmt = $conn->prepare("SELECT id FROM password_otp WHERE email = ? AND role = ? AND verified = TRUE ORDER BY created_at DESC LIMIT 1");
-    $verifyStmt->bind_param("ss", $email, $role);
+    // Verify that OTP was verified for this email - lookup role from DB
+    $verifyStmt = $conn->prepare("SELECT id, role FROM password_otp WHERE email = ? AND verified = TRUE ORDER BY created_at DESC LIMIT 1");
+    $verifyStmt->bind_param("s", $email);
     $verifyStmt->execute();
     $verifyResult = $verifyStmt->get_result();
     
@@ -47,6 +47,10 @@ try {
         ]);
         exit;
     }
+    
+    // Get the correct role from the verified OTP session
+    $otpRow = $verifyResult->fetch_assoc();
+    $role = $otpRow['role'];
     
     // Hash the new password
     $hashedPassword = password_hash($password, PASSWORD_DEFAULT);

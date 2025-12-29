@@ -23,10 +23,10 @@ if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
     exit;
 }
 
-if (empty($otp) || !preg_match('/^\d{6}$/', $otp)) {
+if (empty($otp) || !preg_match('/^\d{4}$/', $otp)) {
     echo json_encode([
         'success' => false,
-        'message' => 'Please provide a valid 6-digit OTP.'
+        'message' => 'Please provide a valid 4-digit OTP.'
     ]);
     exit;
 }
@@ -34,9 +34,9 @@ if (empty($otp) || !preg_match('/^\d{6}$/', $otp)) {
 try {
     $conn = getDatabaseConnection();
     
-    // Check if OTP exists and is valid
-    $stmt = $conn->prepare("SELECT id, user_id, verified, expiry FROM password_otp WHERE email = ? AND role = ? AND otp = ? ORDER BY created_at DESC LIMIT 1");
-    $stmt->bind_param("sss", $email, $role, $otp);
+    // Check if OTP exists and is valid - ignore input role, match by email & OTP
+    $stmt = $conn->prepare("SELECT id, user_id, verified, expiry, role FROM password_otp WHERE email = ? AND otp = ? ORDER BY created_at DESC LIMIT 1");
+    $stmt->bind_param("ss", $email, $otp);
     $stmt->execute();
     $result = $stmt->get_result();
     

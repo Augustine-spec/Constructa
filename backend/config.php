@@ -78,6 +78,46 @@ function initializeDatabase() {
     }
 }
 
+/**
+ * Update table schema if needed
+ */
+function updateSchema() {
+    try {
+        $conn = getDatabaseConnection();
+        
+        // Check for password column
+        $result = $conn->query("SHOW COLUMNS FROM users LIKE 'password'");
+        if ($result->num_rows === 0) {
+            $conn->query("ALTER TABLE users ADD COLUMN password VARCHAR(255) AFTER email");
+            error_log("Added password column to users table");
+        }
+        
+        // Check for profile_picture column
+        $result = $conn->query("SHOW COLUMNS FROM users LIKE 'profile_picture'");
+        if ($result->num_rows === 0) {
+            $conn->query("ALTER TABLE users ADD COLUMN profile_picture VARCHAR(500) AFTER google_id");
+            error_log("Added profile_picture column to users table");
+        }
+
+        // Check for role column
+        $result = $conn->query("SHOW COLUMNS FROM users LIKE 'role'");
+        if ($result->num_rows === 0) {
+            $conn->query("ALTER TABLE users ADD COLUMN role ENUM('homeowner', 'engineer') DEFAULT 'homeowner' AFTER profile_picture");
+            error_log("Added role column to users table");
+        }
+        
+        $conn->close();
+        return true;
+    } catch (Exception $e) {
+        error_log("Schema update error: " . $e->getMessage());
+        return false;
+    }
+}
+
+// Initialize database on first load
+initializeDatabase();
+updateSchema();
+
 // Initialize database on first load
 initializeDatabase();
 ?>

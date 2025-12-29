@@ -1,0 +1,730 @@
+<?php
+session_start();
+
+// Redirect to login if not logged in
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'homeowner') {
+    header('Location: login.html');
+    exit();
+}
+
+$username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'User';
+?>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Homeowner Portal - Constructa</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #f6f7f2;
+            --text-dark: #121212;
+            --text-gray: #555555;
+            --primary-green: #294033;
+            --accent-green: #3d5a49;
+            --card-bg: #ffffff;
+            --input-bg: #f9f9f9;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: transparent;
+            color: var(--text-dark);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* 3D Background Canvas */
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            background: #f6f7f2;
+            pointer-events: none;
+        }
+
+        /* Navbar */
+        header {
+            padding: 1.5rem 3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1600px;
+            margin: 0 auto;
+            width: 100%;
+            background: rgba(246, 247, 242, 0.9);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary-green);
+            text-decoration: none;
+        }
+
+        .logo i {
+            font-size: 1.5rem;
+        }
+
+        nav {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: var(--text-dark);
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: color 0.2s;
+        }
+
+        nav a:hover {
+            color: var(--primary-green);
+        }
+
+        /* Login/Signup Form */
+        main {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 4rem 2rem;
+        }
+
+        .auth-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 3rem;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+            text-align: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        .auth-icon {
+            width: 64px;
+            height: 64px;
+            background-color: var(--primary-green);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin: 0 auto 1.5rem;
+        }
+
+        .auth-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--text-dark);
+        }
+
+        .auth-subtitle {
+            color: var(--text-gray);
+            font-size: 0.95rem;
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: var(--text-dark);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            background-color: var(--input-bg);
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-green);
+            background-color: white;
+        }
+
+        .btn-submit {
+            width: 100%;
+            background-color: var(--primary-green);
+            color: white;
+            padding: 1rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 1rem;
+        }
+
+        .btn-submit:hover {
+            background-color: var(--accent-green);
+        }
+
+        .auth-footer {
+            margin-top: 1.5rem;
+            font-size: 0.9rem;
+            color: var(--text-gray);
+        }
+
+        .auth-footer a {
+            color: var(--primary-green);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        /* Dashboard Layout */
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+            padding: 2rem 3rem;
+            display: flex;
+            flex-direction: column;
+            gap: 3rem;
+            z-index: 2;
+        }
+
+        .welcome-section {
+            text-align: center;
+            margin-bottom: 1rem;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .welcome-title {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #294033 0%, #3d5a49 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .welcome-subtitle {
+            color: var(--text-gray);
+            font-size: 1.1rem;
+        }
+
+        /* Features Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
+            perspective: 1000px;
+        }
+
+        @media (max-width: 1200px) {
+            .features-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border-radius: 24px;
+            padding: 2.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            transform-style: preserve-3d;
+            animation: fadeInUp 0.8s ease-out backwards;
+        }
+
+        /* Staggered Animation */
+        .feature-card:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .feature-card:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .feature-card:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        .feature-card:nth-child(4) {
+            animation-delay: 0.4s;
+        }
+
+        .feature-card:nth-child(5) {
+            animation-delay: 0.5s;
+        }
+
+        .feature-card:nth-child(6) {
+            animation-delay: 0.6s;
+        }
+
+        .feature-card:nth-child(7) {
+            animation-delay: 0.7s;
+        }
+
+        .feature-card:nth-child(8) {
+            animation-delay: 0.8s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+            background: rgba(255, 255, 255, 0.95);
+        }
+
+        .icon-wrapper {
+            width: 70px;
+            height: 70px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            color: white;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            margin-bottom: 0.5rem;
+            transform: translateZ(20px);
+        }
+
+        /* Gradients for Icons */
+        .gradient-1 {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        .gradient-2 {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+        }
+
+        .gradient-3 {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+        }
+
+        .gradient-4 {
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+        }
+
+        .gradient-5 {
+            background: linear-gradient(135deg, #ec4899, #db2777);
+        }
+
+        .gradient-6 {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+        }
+
+        .gradient-7 {
+            background: linear-gradient(135deg, #ef4444, #b91c1c);
+        }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            transform: translateZ(15px);
+        }
+
+        .feature-card p {
+            color: var(--text-gray);
+            line-height: 1.6;
+            font-size: 0.95rem;
+            transform: translateZ(10px);
+        }
+
+        /* 3D Decorative Blob in Card */
+        .card-bg-3d {
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 150px;
+            height: 150px;
+            background: radial-gradient(circle, rgba(41, 64, 51, 0.05) 0%, rgba(255, 255, 255, 0) 70%);
+            border-radius: 50%;
+            z-index: 0;
+            transition: all 0.5s ease;
+        }
+
+        .feature-card:hover .card-bg-3d {
+            transform: scale(1.5);
+            background: radial-gradient(circle, rgba(41, 64, 51, 0.1) 0%, rgba(255, 255, 255, 0) 70%);
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .welcome-title {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 3D Canvas Background -->
+    <div id="canvas-container"></div>
+
+    <!-- Navigation -->
+    <header>
+        <a href="landingpage.html" class="logo">
+            <i class="far fa-building"></i>
+            Constructa
+        </a>
+        <nav>
+            <a href="landingpage.html">Home</a>
+            <a href="login.html">Change Role</a>
+        </nav>
+    </header>
+
+    <main class="dashboard-container">
+        <div class="welcome-section">
+            <h1 class="welcome-title">Welcome back,
+                <?php echo htmlspecialchars($username); ?>
+            </h1>
+            <p class="welcome-subtitle">Manage your dream project from one central hub.</p>
+        </div>
+
+        <div class="features-grid">
+            <!-- Card 1: Budget Calculator -->
+            <div class="feature-card tilt-card" onclick="window.location.href='budget_calculator.php'">
+                <div class="card-content">
+                    <div class="icon-wrapper gradient-1">
+                        <i class="fas fa-calculator"></i>
+                    </div>
+                    <h3>Budget Calculator</h3>
+                    <p>Estimate costs for materials, labor, and permits instantly.</p>
+                </div>
+                <div class="card-bg-3d"></div>
+            </div>
+
+            <!-- Card 2: Material Shopping -->
+            <div class="feature-card tilt-card" onclick="window.location.href='material_market.php'">
+                <div class="card-content">
+                    <div class="icon-wrapper gradient-2">
+                        <i class="fas fa-shopping-basket"></i>
+                    </div>
+                    <h3>Material Market</h3>
+                    <p>Order high-quality construction materials at best rates.</p>
+                </div>
+                <div class="card-bg-3d"></div>
+            </div>
+
+            <!-- Card 3: Plans & Designs -->
+            <div class="feature-card tilt-card" onclick="window.location.href='plans_designs.php'">
+                <div class="card-content">
+                    <div class="icon-wrapper gradient-3">
+                        <i class="fas fa-layer-group"></i>
+                    </div>
+                    <h3>Plans & Designs</h3>
+                    <p>View 3D models, blueprints, and architectural drafts.</p>
+                </div>
+                <div class="card-bg-3d"></div>
+            </div>
+
+            <!-- Card 4: Engineer Directory -->
+            <div class="feature-card tilt-card" onclick="window.location.href='engineer_directory.php'">
+                <div class="card-content">
+                    <div class="icon-wrapper gradient-4">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                    <h3>Engineer Directory</h3>
+                    <p>Connect with vetted structural and civil engineers.</p>
+                </div>
+                <div class="card-bg-3d"></div>
+            </div>
+
+            <!-- Card 5: Find Contractor -->
+            <div class="feature-card tilt-card" onclick="window.location.href='find_contractors.php'">
+                <div class="card-content">
+                    <div class="icon-wrapper gradient-5">
+                        <i class="fas fa-tools"></i>
+                    </div>
+                    <h3>Find Contractors</h3>
+                    <p>Hire reliable contractors for your specific needs.</p>
+                </div>
+                <div class="card-bg-3d"></div>
+            </div>
+
+            <!-- Card 6: Hire Workers -->
+            <div class="feature-card tilt-card" onclick="window.location.href='hire_workers.php'">
+                <div class="card-content">
+                    <div class="icon-wrapper gradient-6">
+                        <i class="fas fa-user-friends"></i>
+                    </div>
+                    <h3>Hire Workers</h3>
+                    <p>Find skilled laborers, electricians, and plumbers.</p>
+                </div>
+                <div class="card-bg-3d"></div>
+            </div>
+
+            <!-- Card 7: Feedback -->
+            <div class="feature-card tilt-card" onclick="window.location.href='feedback.php'">
+                <div class="card-content">
+                    <div class="icon-wrapper gradient-3">
+                        <i class="fas fa-comment-dots"></i>
+                    </div>
+                    <h3>Feedback</h3>
+                    <p>Share your experience to help us improve.</p>
+                </div>
+                <div class="card-bg-3d"></div>
+            </div>
+
+            <!-- Card 8: Saved Favorites -->
+            <div class="feature-card tilt-card" onclick="window.location.href='saved_favorites.php'">
+                <div class="card-content">
+                    <div class="icon-wrapper gradient-7">
+                        <i class="fas fa-heart"></i>
+                    </div>
+                    <h3>Saved Favorites</h3>
+                    <p>Quick access to your liked designs, products, and experts.</p>
+                </div>
+                <div class="card-bg-3d"></div>
+            </div>
+        </div>
+    </main>
+    <script>document.addEventListener('DOMContentLoaded', () => {
+
+            // === 3D TILT EFFECT ===
+            const cards = document.querySelectorAll('.tilt-card');
+
+            cards.forEach(card => {
+                card.addEventListener('mousemove', (e) => {
+                    const rect = card.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+
+                    const centerX = rect.width / 2;
+                    const centerY = rect.height / 2;
+
+                    const rotateX = ((y - centerY) / centerY) * -10; // Max rotation deg
+                    const rotateY = ((x - centerX) / centerX) * 10;
+
+                    card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.02) translateY(-10px)`;
+                });
+
+                card.addEventListener('mouseleave', () => {
+                    card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale(1) translateY(0)';
+                });
+            });
+
+            // === 3D BACKGROUND ANIMATION ===
+            const initBackground3D = () => {
+                const container = document.getElementById('canvas-container');
+                if (!container) return;
+
+                const scene = new THREE.Scene();
+                scene.background = new THREE.Color('#f6f7f2');
+
+                const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+                camera.position.z = 8;
+                camera.position.y = 2;
+
+                const renderer = new THREE.WebGLRenderer({
+                    antialias: true, alpha: true
+                });
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                container.appendChild(renderer.domElement);
+
+                // Lighting
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+                scene.add(ambientLight);
+
+                const mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                mainLight.position.set(10, 10, 10);
+                scene.add(mainLight);
+
+                const blueLight = new THREE.PointLight(0x3d5a49, 0.5);
+                blueLight.position.set(-5, 5, 5);
+                scene.add(blueLight);
+
+                // --- 3D Objects ---
+                const cityGroup = new THREE.Group();
+                scene.add(cityGroup);
+
+                // Create a grid of simple building structures
+                const buildingGeometry = new THREE.BoxGeometry(1, 1, 1);
+
+                const buildingMaterial = new THREE.MeshPhongMaterial({
+                    color: 0x294033,
+                    transparent: true,
+                    opacity: 0.1,
+                    side: THREE.DoubleSide
+                });
+
+                const edgeMaterial = new THREE.LineBasicMaterial({
+                    color: 0x294033, transparent: true, opacity: 0.3
+                });
+
+                // Generate a grid
+                const gridSize = 10;
+                const spacing = 3;
+
+                for (let x = -gridSize; x < gridSize; x++) {
+                    for (let z = -gridSize; z < gridSize; z++) {
+                        const height = Math.random() * 2 + 0.5;
+                        const building = new THREE.Group();
+
+                        const geometry = new THREE.BoxGeometry(1, height, 1);
+                        const mesh = new THREE.Mesh(geometry, buildingMaterial);
+                        mesh.position.y = height / 2;
+
+                        const edges = new THREE.EdgesGeometry(geometry);
+                        const line = new THREE.LineSegments(edges, edgeMaterial);
+                        line.position.y = height / 2;
+
+                        building.add(mesh);
+                        building.add(line);
+
+                        building.position.set(x * spacing, -2, z * spacing);
+                        cityGroup.add(building);
+                    }
+                }
+
+                // Central Hero House
+                const houseGroup = new THREE.Group();
+                const baseGeo = new THREE.BoxGeometry(2, 2, 2);
+
+                const baseLine = new THREE.LineSegments(new THREE.EdgesGeometry(baseGeo), new THREE.LineBasicMaterial({
+                    color: 0x294033, linewidth: 2
+                }));
+                houseGroup.add(baseLine);
+                const roofGeo = new THREE.ConeGeometry(1.5, 1.2, 4);
+
+                const roofLine = new THREE.LineSegments(new THREE.EdgesGeometry(roofGeo), new THREE.LineBasicMaterial({
+                    color: 0x3d5a49, linewidth: 2
+                }));
+                roofLine.position.y = 1.6;
+                roofLine.rotation.y = Math.PI / 4;
+                houseGroup.add(roofLine);
+
+                const floatGroup = new THREE.Group();
+                floatGroup.add(houseGroup);
+                floatGroup.position.set(0, 0, 2);
+                scene.add(floatGroup);
+
+                // Animation Loop
+                let mouseX = 0;
+                let mouseY = 0;
+                let targetRotationX = 0;
+                let targetRotationY = 0;
+
+                document.addEventListener('mousemove', (event) => {
+                    mouseX = (event.clientX - window.innerWidth / 2) * 0.001;
+                    mouseY = (event.clientY - window.innerHeight / 2) * 0.001;
+                });
+
+                let scrollY = 0;
+
+                const animate = () => {
+                    requestAnimationFrame(animate);
+                    cityGroup.rotation.y += 0.001;
+                    floatGroup.rotation.y += 0.005;
+                    floatGroup.position.y = Math.sin(Date.now() * 0.001) * 0.5 + 0.5;
+
+                    targetRotationX = mouseX;
+                    targetRotationY = mouseY;
+
+                    cityGroup.rotation.x += 0.05 * (targetRotationY - cityGroup.rotation.x);
+                    cityGroup.rotation.y += 0.05 * (targetRotationX - cityGroup.rotation.y);
+
+                    camera.position.y = 2 - scrollY * 2;
+                    camera.position.z = 8 + scrollY * 5;
+
+                    renderer.render(scene, camera);
+                }
+
+                    ;
+                animate();
+
+                // Window Resize
+                window.addEventListener('resize', () => {
+                    camera.aspect = window.innerWidth / window.innerHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                });
+            }
+
+                ;
+
+            if (typeof THREE !== 'undefined') {
+                initBackground3D();
+            }
+        });
+    </script>
+</body>
+
+</html>

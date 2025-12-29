@@ -10,7 +10,7 @@ function isLoggedIn() {
     return isset($_SESSION['user_id']) && !empty($_SESSION['user_id']);
 }
 
-function requireLogin($redirectTo = 'loginrole.html') {
+function requireLogin($redirectTo = 'login.html') {
     if (!isLoggedIn()) {
         header("Location: ../" . $redirectTo);
         exit();

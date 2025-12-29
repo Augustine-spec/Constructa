@@ -14,6 +14,9 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST');
 header('Access-Control-Allow-Headers: Content-Type');
 
+// Enable MySQLi error reporting
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+
 // Handle preflight requests
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
@@ -73,6 +76,11 @@ try {
     
     // Create new user
     $stmt = $conn->prepare("INSERT INTO users (name, email, password, role, created_at) VALUES (?, ?, ?, ?, NOW())");
+    
+    if ($stmt === false) {
+        throw new Exception("SQL Prepare Error: " . $conn->error);
+    }
+    
     $stmt->bind_param("ssss", $name, $email, $hashedPassword, $role);
     
     if ($stmt->execute()) {
@@ -81,9 +89,9 @@ try {
         // Create session
         session_start();
         $_SESSION['user_id'] = $user_id;
-        $_SESSION['user_name'] = $name;
-        $_SESSION['user_email'] = $email;
-        $_SESSION['user_role'] = $role;
+        $_SESSION['full_name'] = $name;  // Changed from user_name to full_name
+        $_SESSION['email'] = $email;
+        $_SESSION['role'] = $role;  // Changed from user_role to role
         
         echo json_encode([
             'success' => true,

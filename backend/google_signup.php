@@ -64,9 +64,9 @@ try {
         $user = $result->fetch_assoc();
         session_start();
         $_SESSION['user_id'] = $user['id'];
-        $_SESSION['user_name'] = $user['name'];
-        $_SESSION['user_email'] = $user['email'];
-        $_SESSION['user_role'] = $role;
+        $_SESSION['full_name'] = $user['name'];  // Changed from user_name to full_name
+        $_SESSION['email'] = $user['email'];
+        $_SESSION['role'] = $role;  // Changed from user_role to role
         
         echo json_encode([
             'success' => true,
@@ -93,9 +93,9 @@ try {
             // Create session
             session_start();
             $_SESSION['user_id'] = $user_id;
-            $_SESSION['user_name'] = $name;
-            $_SESSION['user_email'] = $email;
-            $_SESSION['user_role'] = $role;
+            $_SESSION['full_name'] = $name;  // Changed from user_name to full_name
+            $_SESSION['email'] = $email;
+            $_SESSION['role'] = $role;  // Changed from user_role to role
             
             echo json_encode([
                 'success' => true,

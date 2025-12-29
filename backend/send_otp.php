@@ -4,8 +4,9 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST');
 header('Access-Control-Allow-Headers: Content-Type');
 
-// Database connection
+// Database connection and email configuration
 require_once 'config.php';
+require_once 'email_config.php';
 
 // Get JSON input
 $input = json_decode(file_get_contents('php://input'), true);
@@ -26,24 +27,25 @@ try {
     $conn = getDatabaseConnection();
     
     // Check if user exists
-    $stmt = $conn->prepare("SELECT id, name, email FROM users WHERE email = ? AND role = ?");
-    $stmt->bind_param("ss", $email, $role);
+    $stmt = $conn->prepare("SELECT id, name, email, role FROM users WHERE email = ?");
+    $stmt->bind_param("s", $email);
     $stmt->execute();
     $result = $stmt->get_result();
     
     if ($result->num_rows === 0) {
-        // For security, don't reveal if email doesn't exist
+        // Truly doesn't exist
         echo json_encode([
-            'success' => true,
-            'message' => 'If an account exists with this email, an OTP has been sent.'
+            'success' => false, // Changing to false to be helpful during debugging, normally true for security
+            'message' => 'No account found with this email address.'
         ]);
         exit;
     }
     
     $user = $result->fetch_assoc();
+    $role = $user['role']; // Override input role with actual role
     
-    // Generate a 6-digit OTP
-    $otp = sprintf("%06d", mt_rand(0, 999999));
+    // Generate a 4-digit OTP
+    $otp = sprintf("%04d", mt_rand(0, 9999));
     $expiry = date('Y-m-d H:i:s', strtotime('+10 minutes'));
     
     // Create the OTP table if it doesn't exist
@@ -73,7 +75,7 @@ try {
     
     // Send email with OTP
     $to = $email;
-    $subject = "Password Reset OTP - Constructa";
+    $subject = "🔐 Your 4-Digit OTP for Constructa Password Reset";
     $message = "
     <html>
     <head>
@@ -85,13 +87,13 @@ try {
             .otp-box { 
                 background-color: #294033; 
                 color: white; 
-                font-size: 32px; 
+                font-size: 42px; 
                 font-weight: bold; 
-                padding: 20px; 
+                padding: 24px; 
                 text-align: center; 
-                letter-spacing: 8px;
+                letter-spacing: 12px;
                 border-radius: 8px;
-                margin: 20px 0;
+                margin: 24px 0;
             }
             .warning { 
                 background-color: #fff3cd; 
@@ -106,31 +108,24 @@ try {
     <body>
         <div class='container'>
             <div class='header'>
-                <h1>Constructa - Password Reset</h1>
+                <h1>Password Reset Request</h1>
             </div>
             <div class='content'>
                 <p>Hello {$user['name']},</p>
-                <p>We received a request to reset your password. Use the following OTP to complete the password reset process:</p>
+                <p>Use the secret code below to reset your Constructa password:</p>
                 
                 <div class='otp-box'>
                     {$otp}
                 </div>
                 
                 <div class='warning'>
-                    <strong>⚠️ Important:</strong> This OTP will expire in <strong>10 minutes</strong>.
+                    <strong>⚠️ Valid for 10 minutes</strong>
                 </div>
                 
-                <p>If you didn't request a password reset, please ignore this email and your password will remain unchanged.</p>
-                
-                <p><strong>Security Tips:</strong></p>
-                <ul>
-                    <li>Never share your OTP with anyone</li>
-                    <li>Constructa will never ask for your OTP via phone or email</li>
-                    <li>If you suspect any suspicious activity, contact support immediately</li>
-                </ul>
+                <p>If you didn't ask for this code, you can safely ignore this email.</p>
             </div>
             <div class='footer'>
-                <p>© 2025 Constructa. All rights reserved.</p>
+                <p>© 2025 Constructa</p>
             </div>
         </div>
     </body>
@@ -140,23 +135,42 @@ try {
     $headers = "MIME-Version: 1.0" . "\r\n";
     $headers .= "Content-type:text/html;charset=UTF-8" . "\r\n";
     $headers .= "From: Constructa <noreply@constructa.com>" . "\r\n";
+    $headers .= "Reply-To: support@constructa.com" . "\r\n";
+    $headers .= "X-Mailer: PHP/" . phpversion();
     
-    // Note: For development, you might want to use a library like PHPMailer
-    // For now, we'll use PHP's mail() function
-    // In production, consider using services like SendGrid, AWS SES, or Mailgun
+    // Check if email is configured
+    $emailConfigured = isEmailConfigured();
     
-    // Uncomment this when you have mail configured:
-    // $mailSent = mail($to, $subject, $message, $headers);
+    // Send the email using centralized email configuration
+    $mailSent = sendEmail($to, $subject, $message);
     
-    // For development, just log the OTP
-    error_log("Password reset OTP for {$email}: {$otp}");
+    // Also log the OTP for development/debugging purposes
+    error_log("Password reset OTP for {$email}: {$otp} - Mail sent status: " . ($mailSent ? 'SUCCESS' : 'FAILED'));
     
-    echo json_encode([
+    // Build response
+    $response = [
         'success' => true,
         'message' => 'OTP sent successfully to your email.',
         // For development only - remove in production:
         'dev_otp' => $otp
-    ]);
+    ];
+    
+    // Add helpful debugging info
+    if (!$emailConfigured) {
+        $response['debug_info'] = 'Email service not fully configured. Check EMAIL_SETUP_GUIDE.md';
+        $response['dev_mode'] = true;
+        error_log("⚠️ EMAIL NOT CONFIGURED - OTP for {$email}: {$otp}");
+        error_log("📧 To enable email sending: See EMAIL_SETUP_GUIDE.md");
+    }
+    
+    if (!$mailSent) {
+        $response['success'] = false;
+        $response['message'] = 'Failed to send OTP email. Please try again later.';
+        $response['debug_info'] = 'Email sending failed. Check server logs.';
+        error_log("CRITICAL: Failed to send OTP email to {$email}. OTP was: {$otp}");
+    }
+    
+    echo json_encode($response);
     
 } catch (Exception $e) {
     error_log("Send OTP error: " . $e->getMessage());

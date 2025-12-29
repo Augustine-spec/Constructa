@@ -6,7 +6,7 @@
 
 // Enable error reporting for development
 error_reporting(E_ALL);
-ini_set('display_errors', 1);
+ini_set('display_errors', 0);
 
 // Set JSON response header
 header('Content-Type: application/json');
@@ -42,18 +42,23 @@ try {
     
     $email = trim($data['email']);
     $password = $data['password'];
-    $role = isset($data['role']) ? $data['role'] : 'homeowner';
+    $selectedRole = isset($data['role']) ? trim($data['role']) : null;
     
     // Validate email format
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         throw new Exception('Invalid email format');
     }
     
+    // Validate role if provided
+    if ($selectedRole && !in_array($selectedRole, ['homeowner', 'engineer', 'admin'])) {
+        throw new Exception('Invalid role selected');
+    }
+    
     // Connect to database
     $conn = getDatabaseConnection();
     
     // Check if user exists with this email
-    $stmt = $conn->prepare("SELECT id, name, email, password, role FROM users WHERE email = ? LIMIT 1");
+    $stmt = $conn->prepare("SELECT id, name, email, password, role, status FROM users WHERE email = ? LIMIT 1");
     $stmt->bind_param("s", $email);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -75,17 +80,52 @@ try {
         throw new Exception('Incorrect password. Please try again.');
     }
     
-    // Check if role matches
-    if ($user['role'] !== $role) {
-        throw new Exception('This account is registered as a ' . $user['role'] . '. Please use the correct login portal.');
+    // Validate role matches if role was provided
+    if ($selectedRole) {
+        // Normalize both roles to lowercase for comparison
+        $userRoleLower = strtolower(trim($user['role']));
+        $selectedRoleLower = strtolower(trim($selectedRole));
+        
+        // Debug logging (remove in production)
+        error_log("Role Validation - User Role: '{$userRoleLower}', Selected Role: '{$selectedRoleLower}'");
+        
+        if ($userRoleLower !== $selectedRoleLower) {
+            // Role mismatch - provide helpful error message
+            $actualRole = ucfirst($user['role']);
+            $selectedRoleDisplay = ucfirst($selectedRole);
+            throw new Exception("Role mismatch: This account is registered as a {$actualRole}, not a {$selectedRoleDisplay}. Please select the correct role.");
+        }
+    }
+
+    // Check Status for Engineers
+    if ($user['role'] === 'engineer' && isset($user['status'])) {
+        if ($user['status'] === 'pending') {
+            echo json_encode([
+                'success' => false,
+                'status_check' => true,
+                'status' => 'pending',
+                'email' => $user['email'],
+                'message' => 'Your account is pending approval.'
+            ]);
+            exit();
+        } else if ($user['status'] === 'rejected') {
+            echo json_encode([
+                'success' => false,
+                'status_check' => true,
+                'status' => 'rejected',
+                'email' => $user['email'],
+                'message' => 'Your application was not approved.'
+            ]);
+            exit();
+        }
     }
     
     // Login successful - Create session
     session_start();
     $_SESSION['user_id'] = $user['id'];
-    $_SESSION['user_name'] = $user['name'];
-    $_SESSION['user_email'] = $user['email'];
-    $_SESSION['user_role'] = $user['role'];
+    $_SESSION['full_name'] = $user['name'];  // Changed from user_name to full_name
+    $_SESSION['email'] = $user['email'];
+    $_SESSION['role'] = $user['role'];  // Changed from user_role to role
     
     echo json_encode([
         'success' => true,
@@ -94,7 +134,8 @@ try {
             'id' => $user['id'],
             'name' => $user['name'],
             'email' => $user['email'],
-            'role' => $user['role']
+            'role' => $user['role'],
+            'status' => isset($user['status']) ? $user['status'] : 'approved'
         ]
     ]);
     

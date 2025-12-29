@@ -66,17 +66,15 @@ try {
     
     $user = $result->fetch_assoc();
     
-    // Check if role matches
-    if ($user['role'] !== $role) {
-        throw new Exception('This account is registered as a ' . $user['role'] . '. Please use the correct login portal.');
-    }
+    // No role validation needed for Google Sign-In
+    // User will be redirected based on their registered role in the database
     
     // Login successful - Create session
     session_start();
     $_SESSION['user_id'] = $user['id'];
-    $_SESSION['user_name'] = $user['name'];
-    $_SESSION['user_email'] = $user['email'];
-    $_SESSION['user_role'] = $user['role'];
+    $_SESSION['full_name'] = $user['name'];  // Changed from user_name to full_name
+    $_SESSION['email'] = $user['email'];
+    $_SESSION['role'] = $user['role'];  // Changed from user_role to role
     
     echo json_encode([
         'success' => true,
