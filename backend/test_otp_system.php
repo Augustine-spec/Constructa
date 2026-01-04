@@ -53,13 +53,13 @@ VALUES ('Test User', 'test@example.com', '\$2y\$10\$92IXUNpkjO0rOQ5byMi.Ye4oKoEa
     echo "<p><em>Password for this user is: <strong>password</strong></em></p>";
 }
 
-// Test 3: Check password_otp Table
+// Test 3: Check password_reset_otp Table
 echo "<h2>3. Password OTP Table Check</h2>";
-$result = $conn->query("SHOW TABLES LIKE 'password_otp'");
+$result = $conn->query("SHOW TABLES LIKE 'password_reset_otp'");
 if ($result->num_rows > 0) {
-    echo "<div class='success'>✅ password_otp table exists</div>";
+    echo "<div class='success'>✅ password_reset_otp table exists</div>";
     
-    $otps = $conn->query("SELECT * FROM password_otp ORDER BY created_at DESC LIMIT 5");
+    $otps = $conn->query("SELECT * FROM password_reset_otp ORDER BY created_at DESC LIMIT 5");
     if ($otps->num_rows > 0) {
         echo "<h3>Recent OTP Requests:</h3>";
         echo "<table border='1' cellpadding='10' style='border-collapse: collapse; width: 100%; background: white;'>";

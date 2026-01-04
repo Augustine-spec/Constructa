@@ -61,16 +61,16 @@ try {
     }
     echo "</div>";
     
-    // Check if password_otp table exists
+    // Check if password_reset_otp table exists
     echo "<div class='section'><h2>🔐 OTP Table</h2>";
-    $result = $conn->query("SHOW TABLES LIKE 'password_otp'");
+    $result = $conn->query("SHOW TABLES LIKE 'password_reset_otp'");
     if ($result->num_rows > 0) {
-        echo "<p class='success'>✅ password_otp table exists</p>";
+        echo "<p class='success'>✅ password_reset_otp table exists</p>";
         
         // Check table structure
         echo "<h3>Table Structure:</h3>";
         echo "<table><tr><th>Column</th><th>Type</th><th>Null</th><th>Default</th></tr>";
-        $columns = $conn->query("DESCRIBE password_otp");
+        $columns = $conn->query("DESCRIBE password_reset_otp");
         $hasVerified = false;
         while ($col = $columns->fetch_assoc()) {
             if ($col['Field'] === 'verified') $hasVerified = true;
@@ -90,12 +90,12 @@ try {
         }
         
         // Show current OTPs
-        $otpCount = $conn->query("SELECT COUNT(*) as count FROM password_otp")->fetch_assoc();
+        $otpCount = $conn->query("SELECT COUNT(*) as count FROM password_reset_otp")->fetch_assoc();
         echo "<p>Active OTPs: <strong>" . $otpCount['count'] . "</strong></p>";
         
         if ($otpCount['count'] > 0) {
             echo "<table><tr><th>Email</th><th>OTP</th><th>Verified</th><th>Expiry</th><th>Status</th></tr>";
-            $otps = $conn->query("SELECT email, otp, verified, expiry FROM password_otp ORDER BY created_at DESC LIMIT 10");
+            $otps = $conn->query("SELECT email, otp, verified, expiry FROM password_reset_otp ORDER BY created_at DESC LIMIT 10");
             while ($otp = $otps->fetch_assoc()) {
                 $expired = strtotime($otp['expiry']) < time();
                 $status = $expired ? '🔴 Expired' : '🟢 Valid';
@@ -110,7 +110,7 @@ try {
             echo "</table>";
         }
     } else {
-        echo "<p class='error'>❌ password_otp table does NOT exist!</p>";
+        echo "<p class='error'>❌ password_reset_otp table does NOT exist!</p>";
         echo "<p>It will be created automatically when you first use the OTP system.</p>";
     }
     echo "</div>";

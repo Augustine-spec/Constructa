@@ -5,7 +5,8 @@ header('Access-Control-Allow-Methods: POST');
 header('Access-Control-Allow-Headers: Content-Type');
 
 // Database connection
-require_once 'db_connection.php';
+require_once 'config.php';
+$conn = getDatabaseConnection();
 
 // Get JSON input
 $input = json_decode(file_get_contents('php://input'), true);

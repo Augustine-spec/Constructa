@@ -4,6 +4,8 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     header('Location: login.html');
     exit();
 }
+header('Location: admin_user_management.php');
+exit();
 $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Admin';
 ?>
 <!DOCTYPE html>

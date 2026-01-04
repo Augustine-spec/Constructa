@@ -97,7 +97,7 @@ try {
         throw new Exception("SQL Prepare Error: " . $conn->error);
     }
     
-    $stmt->bind_param("sssssssss", $name, $email, $hashedPassword, $phone, $specialization, $experience, $license, $portfolio, $bio);
+    $stmt->bind_param("sssssisss", $name, $email, $hashedPassword, $phone, $specialization, $experience, $license, $portfolio, $bio);
     
     if ($stmt->execute()) {
         $user_id = $conn->insert_id;

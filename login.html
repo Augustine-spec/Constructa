@@ -387,7 +387,11 @@
                     data = JSON.parse(text);
                 } catch (e) {
                     console.error('Server response:', text);
-                    throw new Error('Invalid server response');
+                    // Check if the response looks like HTML (often an error page)
+                    if (text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')) {
+                        throw new Error('Server returned an error page (HTML). Check backend logs.');
+                    }
+                    throw new Error('Invalid server response: ' + (text.substring(0, 50) || 'empty response'));
                 }
 
                 if (data.success) {

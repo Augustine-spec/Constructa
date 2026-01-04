@@ -7,7 +7,6 @@
 // Enable error reporting for development
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
-ini_set('log_errors', 1);
 
 // Set JSON response header
 header('Content-Type: application/json');
@@ -33,7 +32,7 @@ require_once 'config.php';
 
 try {
     // Get POST data
-    $input = file_get_contents('php://input');
+    $input = '{"email":"homeowner1@gmail.com","password":"password"}';
     $data = json_decode($input, true);
     
     // Validate required fields
@@ -143,12 +142,11 @@ try {
     $stmt->close();
     $conn->close();
     
-} catch (Throwable $e) {
-    error_log("Login Error: " . $e->getMessage() . " in " . $e->getFile() . " on line " . $e->getLine());
-    http_response_code(500);
+} catch (Exception $e) {
+    http_response_code(400);
     echo json_encode([
         'success' => false,
-        'message' => 'Internal server error: ' . $e->getMessage()
+        'message' => $e->getMessage()
     ]);
 }
 ?>

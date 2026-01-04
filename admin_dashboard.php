@@ -319,7 +319,7 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Admin';
 
         <div class="features-grid">
             <!-- Card 1: User Management -->
-            <div class="feature-card tilt-card" onclick="window.location.href='admin_engineer_requests.php'">
+            <div class="feature-card tilt-card" onclick="window.location.href='admin_user_management.php'">
                 <div class="card-content">
                     <div class="icon-wrapper gradient-admin-1">
                         <i class="fas fa-users-cog"></i>

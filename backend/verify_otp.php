@@ -35,7 +35,7 @@ try {
     $conn = getDatabaseConnection();
     
     // Check if OTP exists and is valid - ignore input role, match by email & OTP
-    $stmt = $conn->prepare("SELECT id, user_id, verified, expiry, role FROM password_otp WHERE email = ? AND otp = ? ORDER BY created_at DESC LIMIT 1");
+    $stmt = $conn->prepare("SELECT id, user_id, verified, expiry, role FROM password_reset_otp WHERE email = ? AND otp = ? ORDER BY created_at DESC LIMIT 1");
     $stmt->bind_param("ss", $email, $otp);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -69,7 +69,7 @@ try {
     }
     
     // Mark OTP as verified
-    $updateStmt = $conn->prepare("UPDATE password_otp SET verified = TRUE WHERE id = ?");
+    $updateStmt = $conn->prepare("UPDATE password_reset_otp SET verified = TRUE WHERE id = ?");
     $updateStmt->bind_param("i", $otpData['id']);
     $updateStmt->execute();
     

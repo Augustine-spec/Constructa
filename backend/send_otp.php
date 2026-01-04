@@ -49,11 +49,11 @@ try {
     $expiry = date('Y-m-d H:i:s', strtotime('+10 minutes'));
     
     // Create the OTP table if it doesn't exist
-    $createTable = "CREATE TABLE IF NOT EXISTS password_otp (
+    $createTable = "CREATE TABLE IF NOT EXISTS password_reset_otp (
         id INT AUTO_INCREMENT PRIMARY KEY,
         user_id INT NOT NULL,
         email VARCHAR(255) NOT NULL,
-        role ENUM('homeowner', 'engineer') NOT NULL,
+        role ENUM('homeowner', 'engineer', 'admin') NOT NULL,
         otp VARCHAR(6) NOT NULL,
         expiry DATETIME NOT NULL,
         verified BOOLEAN DEFAULT FALSE,
@@ -64,12 +64,12 @@ try {
     $conn->query($createTable);
     
     // Delete any existing OTPs for this email
-    $deleteStmt = $conn->prepare("DELETE FROM password_otp WHERE email = ? AND role = ?");
+    $deleteStmt = $conn->prepare("DELETE FROM password_reset_otp WHERE email = ? AND role = ?");
     $deleteStmt->bind_param("ss", $email, $role);
     $deleteStmt->execute();
     
     // Insert new OTP
-    $insertStmt = $conn->prepare("INSERT INTO password_otp (user_id, email, role, otp, expiry) VALUES (?, ?, ?, ?, ?)");
+    $insertStmt = $conn->prepare("INSERT INTO password_reset_otp (user_id, email, role, otp, expiry) VALUES (?, ?, ?, ?, ?)");
     $insertStmt->bind_param("issss", $user['id'], $email, $role, $otp, $expiry);
     $insertStmt->execute();
     

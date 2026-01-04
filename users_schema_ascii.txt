@@ -1,0 +1,17 @@
+Field	Type	Null	Key	Default	Extra
+id	int(11)	NO	PRI	NULL	auto_increment
+name	varchar(255)	NO		NULL	
+email	varchar(255)	NO	UNI	NULL	
+password	varchar(255)	YES		NULL	
+phone	varchar(20)	YES		NULL	
+google_id	varchar(255)	YES	UNI	NULL	
+profile_picture	varchar(500)	YES		NULL	
+role	enum('homeowner','engineer','admin')	YES		homeowner	
+status	enum('pending','approved','rejected')	YES		approved	
+specialization	varchar(255)	YES		NULL	
+experience	int(11)	YES		NULL	
+license_number	varchar(100)	YES		NULL	
+portfolio_url	varchar(500)	YES		NULL	
+bio	text	YES		NULL	
+created_at	timestamp	NO		current_timestamp()	
+updated_at	timestamp	NO		current_timestamp()	on update current_timestamp()

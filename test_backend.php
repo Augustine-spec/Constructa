@@ -12,47 +12,68 @@ echo "PHP " . phpversion() . "<br><br>";
 
 // Test 2: Database Connection
 echo "<h2>Database Connection Test</h2>";
-$host = 'localhost';
-$user = 'root';
-$pass = '';
-$dbname = 'constructa';
+require_once 'backend/config.php';
 
-$conn = @new mysqli($host, $user, $pass);
-if ($conn->connect_error) {
-    echo "❌ <span style='color: red;'>MySQL Connection Failed: " . $conn->connect_error . "</span><br>";
-    echo "⚠️ <strong>Make sure MySQL is running in XAMPP!</strong><br><br>";
-} else {
-    echo "✓ <span style='color: green;'>MySQL Connection Successful</span><br>";
+try {
+    $conn = getDatabaseConnection();
+    echo "✓ <span style='color: green;'>MySQL Connection Successful (using config.php)</span><br>";
     
-    // Check if database exists
-    $result = $conn->query("SHOW DATABASES LIKE '$dbname'");
-    if ($result->num_rows > 0) {
-        echo "✓ <span style='color: green;'>Database '$dbname' exists</span><br>";
+    // Check if database exists (implied by connection success as getDatabaseConnection selects it)
+    echo "✓ <span style='color: green;'>Database '" . DB_NAME . "' selected</span><br>";
+    
+    // Check tables
+    $result = $conn->query("SHOW TABLES LIKE 'users'");
+    
+    if ($result === false) {
+        echo "❌ <span style='color: red;'>Query Failed: " . $conn->error . "</span><br>";
+    } elseif ($result->num_rows > 0) {
+        echo "✓ <span style='color: green;'>Table 'users' exists</span><br>";
         
-        // Select database and check tables
-        $conn->select_db($dbname);
-        $result = $conn->query("SHOW TABLES LIKE 'users'");
-        if ($result->num_rows > 0) {
-            echo "✓ <span style='color: green;'>Table 'users' exists</span><br>";
-            
-            // Check table structure
-            $result = $conn->query("DESCRIBE users");
-            echo "<br><strong>Users Table Structure:</strong><br>";
-            echo "<table border='1' cellpadding='5'>";
-            echo "<tr><th>Field</th><th>Type</th><th>Null</th><th>Key</th></tr>";
-            while ($row = $result->fetch_assoc()) {
-                echo "<tr><td>{$row['Field']}</td><td>{$row['Type']}</td><td>{$row['Null']}</td><td>{$row['Key']}</td></tr>";
-            }
-            echo "</table><br>";
+        // Check table structure
+        $result = $conn->query("DESCRIBE users");
+        
+        if ($result === false) {
+             echo "❌ <span style='color: red;'>DESCRIBE Failed: " . $conn->error . "</span><br>";
         } else {
-            echo "❌ <span style='color: red;'>Table 'users' does not exist</span><br>";
-            echo "⚠️ Run the database initialization script<br><br>";
+            echo "<br><strong>Users Table Structure:</strong><br>";
+        echo "<table border='1' cellpadding='5'>";
+        echo "<tr><th>Field</th><th>Type</th><th>Null</th><th>Key</th></tr>";
+        while ($row = $result->fetch_assoc()) {
+            $bg = '';
+            if ($row['Field'] === 'status') $bg = 'style="background-color: #d4edda;"';
+            echo "<tr $bg><td>{$row['Field']}</td><td>{$row['Type']}</td><td>{$row['Null']}</td><td>{$row['Key']}</td></tr>";
+        }
+        echo "</table><br>";
+        
+        // Verify status column specifically
+        $result = $conn->query("SHOW COLUMNS FROM users LIKE 'status'");
+        if ($result->num_rows > 0) {
+            echo "✓ <span style='color: green;'>Column 'status' exists</span><br>";
+        } else {
+            echo "❌ <span style='color: red;'>Column 'status' MISSING</span><br>";
+            // Try to force update
+            require_once 'backend/config.php';
+            // updateSchema() is called on include, but maybe we can call it explicitly if needed, but it's not exported if we are in function scope? 
+            // It is a function.
+            if (function_exists('updateSchema')) {
+                updateSchema();
+                echo "ℹ️ Triggered schema update... refreshing check...<br>";
+                $result = $conn->query("SHOW COLUMNS FROM users LIKE 'status'");
+                if ($result->num_rows > 0) echo "✓ <span style='color: green;'>Column 'status' created</span><br>";
+                 else echo "❌ <span style='color: red;'>Column 'status' still MISSING. Check error log.</span><br>";
+            }
+        }
         }
     } else {
-        echo "❌ <span style='color: red;'>Database '$dbname' does not exist</span><br>";
-        echo "⚠️ Database will be created automatically on first backend call<br><br>";
+        echo "❌ <span style='color: red;'>Table 'users' does not exist</span><br>";
+        echo "⚠️ Run the database initialization script<br><br>";
     }
+    
     $conn->close();
+
+} catch (Exception $e) {
+    echo "❌ <span style='color: red;'>MySQL Connection Failed: " . $e->getMessage() . "</span><br>";
+    echo "⚠️ <strong>Make sure MySQL is running in XAMPP!</strong><br><br>";
 }
 
 // Test 3: Backend File Paths
@@ -73,11 +94,12 @@ foreach ($files as $file) {
 // Test 4: Config Values
 echo "<h2>Configuration Check</h2>";
 if (file_exists('backend/config.php')) {
-    require_once 'backend/config.php';
+    // require_once 'backend/config.php'; // already included
     echo "✓ Google Client ID: " . substr($GOOGLE_CLIENT_ID, 0, 20) . "...<br>";
     echo "✓ Database Host: " . DB_HOST . "<br>";
     echo "✓ Database Name: " . DB_NAME . "<br>";
-    echo "✓ Database User: " . DB_USER . "<br><br>";
+    echo "✓ Database User: " . DB_USER . "<br>";
+    echo "✓ Database Port: " . DB_PORT . "<br><br>";
 }
 
 // Test 5: Session Support
@@ -97,5 +119,4 @@ echo "<li>If database doesn't exist: <strong>It will be created automatically on
 echo "<li>If all checks pass: <strong>Open Browser Console (F12) and try Google Sign-In again</strong></li>";
 echo "<li>Check the <strong>Network</strong> tab in browser console for the request to google_signup.php</li>";
 echo "</ol>";
-
 ?>

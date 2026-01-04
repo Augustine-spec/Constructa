@@ -35,7 +35,7 @@ try {
     $conn = getDatabaseConnection();
     
     // Verify that OTP was verified for this email - lookup role from DB
-    $verifyStmt = $conn->prepare("SELECT id, role FROM password_otp WHERE email = ? AND verified = TRUE ORDER BY created_at DESC LIMIT 1");
+    $verifyStmt = $conn->prepare("SELECT id, role FROM password_reset_otp WHERE email = ? AND verified = TRUE ORDER BY created_at DESC LIMIT 1");
     $verifyStmt->bind_param("s", $email);
     $verifyStmt->execute();
     $verifyResult = $verifyStmt->get_result();
@@ -61,7 +61,7 @@ try {
     
     if ($updateStmt->execute()) {
         // Delete used OTP
-        $deleteStmt = $conn->prepare("DELETE FROM password_otp WHERE email = ? AND role = ?");
+        $deleteStmt = $conn->prepare("DELETE FROM password_reset_otp WHERE email = ? AND role = ?");
         $deleteStmt->bind_param("ss", $email, $role);
         $deleteStmt->execute();
         
