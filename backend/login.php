@@ -4,32 +4,13 @@
  * Handles email/password login with validation
  */
 
-// Enable error reporting for development
+// Enable error reporting for logs but disable for output to prevent breaking JSON
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 
 // Set JSON response header
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST');
-header('Access-Control-Allow-Headers: Content-Type');
-
-// Handle preflight requests
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit();
-}
-
-// Only allow POST requests
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode(['success' => false, 'message' => 'Method not allowed']);
-    exit();
-}
-
-// Include configuration
-require_once 'config.php';
 
 try {
     // Get POST data
@@ -50,16 +31,17 @@ try {
         throw new Exception('Invalid email format');
     }
     
-    // Validate role if provided
-    if ($selectedRole && !in_array($selectedRole, ['homeowner', 'engineer', 'admin'])) {
-        throw new Exception('Invalid role selected');
-    }
+    // Include configuration
+    require_once 'config.php';
     
     // Connect to database
     $conn = getDatabaseConnection();
     
     // Check if user exists with this email
     $stmt = $conn->prepare("SELECT id, name, email, password, role, status FROM users WHERE email = ? LIMIT 1");
+    if (!$stmt) {
+        throw new Exception("Database prepare error: " . $conn->error);
+    }
     $stmt->bind_param("s", $email);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -78,23 +60,21 @@ try {
     
     // Verify password
     if (!password_verify($password, $user['password'])) {
+        // For security, you might want a generic message, but since this and 
+        // signup are separate, it's often okay to be specific in dev.
         throw new Exception('Incorrect password. Please try again.');
     }
     
     // Validate role matches if role was provided
-    if ($selectedRole) {
+    if ($selectedRole && $selectedRole !== 'null' && $selectedRole !== '') {
         // Normalize both roles to lowercase for comparison
         $userRoleLower = strtolower(trim($user['role']));
         $selectedRoleLower = strtolower(trim($selectedRole));
         
-        // Debug logging (remove in production)
-        error_log("Role Validation - User Role: '{$userRoleLower}', Selected Role: '{$selectedRoleLower}'");
-        
         if ($userRoleLower !== $selectedRoleLower) {
-            // Role mismatch - provide helpful error message
             $actualRole = ucfirst($user['role']);
             $selectedRoleDisplay = ucfirst($selectedRole);
-            throw new Exception("Role mismatch: This account is registered as a {$actualRole}, not a {$selectedRoleDisplay}. Please select the correct role.");
+            throw new Exception("Role mismatch: This account is registered as a {$actualRole}, not a {$selectedRoleDisplay}.");
         }
     }
 
@@ -122,11 +102,13 @@ try {
     }
     
     // Login successful - Create session
-    session_start();
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
     $_SESSION['user_id'] = $user['id'];
-    $_SESSION['full_name'] = $user['name'];  // Changed from user_name to full_name
+    $_SESSION['full_name'] = $user['name'];
     $_SESSION['email'] = $user['email'];
-    $_SESSION['role'] = $user['role'];  // Changed from user_role to role
+    $_SESSION['role'] = $user['role'];
     
     echo json_encode([
         'success' => true,
@@ -144,11 +126,12 @@ try {
     $conn->close();
     
 } catch (Throwable $e) {
-    error_log("Login Error: " . $e->getMessage() . " in " . $e->getFile() . " on line " . $e->getLine());
+    error_log("Login Error: " . $e->getMessage());
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'message' => 'Internal server error: ' . $e->getMessage()
+        'message' => 'Server error: ' . $e->getMessage()
     ]);
 }
+
 ?>

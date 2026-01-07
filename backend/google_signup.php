@@ -54,7 +54,7 @@ try {
     
     // Check if user already exists
     $email = $userInfo['email'];
-    $stmt = $conn->prepare("SELECT id, name, email FROM users WHERE email = ? LIMIT 1");
+    $stmt = $conn->prepare("SELECT id, name, email, role FROM users WHERE email = ? LIMIT 1");
     $stmt->bind_param("s", $email);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -62,11 +62,13 @@ try {
     if ($result->num_rows > 0) {
         // User exists - log them in instead
         $user = $result->fetch_assoc();
-        session_start();
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
         $_SESSION['user_id'] = $user['id'];
-        $_SESSION['full_name'] = $user['name'];  // Changed from user_name to full_name
+        $_SESSION['full_name'] = $user['name'];
         $_SESSION['email'] = $user['email'];
-        $_SESSION['role'] = $role;  // Changed from user_role to role
+        $_SESSION['role'] = $user['role']; // Use role from DB, not from request
         
         echo json_encode([
             'success' => true,
@@ -74,10 +76,12 @@ try {
             'user' => [
                 'id' => $user['id'],
                 'name' => $user['name'],
-                'email' => $user['email']
+                'email' => $user['email'],
+                'role' => $user['role']
             ],
             'existing_user' => true
         ]);
+
     } else {
         // Create new user
         $name = $userInfo['name'];

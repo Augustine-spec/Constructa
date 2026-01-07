@@ -15,6 +15,7 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Admin';
     <title>User Management - Admin Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         :root {
             --bg-color: #f6f7f2;
@@ -37,11 +38,23 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Admin';
         }
 
         body {
-            background-color: var(--bg-color);
+            background-color: transparent;
             color: var(--text-dark);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+        }
+
+        /* 3D Background Canvas */
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            background: #f6f7f2;
+            pointer-events: none;
         }
 
         /* Navbar */
@@ -342,6 +355,8 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Admin';
 </head>
 
 <body>
+    <!-- 3D Canvas Background -->
+    <div id="canvas-container"></div>
     <!-- Navigation -->
     <header>
         <a href="admin_dashboard.php" class="logo">
@@ -582,6 +597,110 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Admin';
         }
 
         loadUsers();
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // === 3D BACKGROUND ANIMATION ===
+            const initBackground3D = () => {
+                const container = document.getElementById('canvas-container');
+                if (!container) return;
+
+                const scene = new THREE.Scene();
+                scene.background = new THREE.Color('#f6f7f2');
+
+                const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+                camera.position.z = 8;
+                camera.position.y = 2;
+
+                const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                container.appendChild(renderer.domElement);
+
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+                scene.add(ambientLight);
+
+                const mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                mainLight.position.set(10, 10, 10);
+                scene.add(mainLight);
+
+                const blueLight = new THREE.PointLight(0x3d5a49, 0.5);
+                blueLight.position.set(-5, 5, 5);
+                scene.add(blueLight);
+
+                const cityGroup = new THREE.Group();
+                scene.add(cityGroup);
+
+                const buildingGeometry = new THREE.BoxGeometry(1, 1, 1);
+                const buildingMaterial = new THREE.MeshPhongMaterial({
+                    color: 0x294033, transparent: true, opacity: 0.1, side: THREE.DoubleSide
+                });
+                const edgeMaterial = new THREE.LineBasicMaterial({ color: 0x294033, transparent: true, opacity: 0.3 });
+
+                const gridSize = 10;
+                const spacing = 3;
+
+                for (let x = -gridSize; x < gridSize; x++) {
+                    for (let z = -gridSize; z < gridSize; z++) {
+                        const height = Math.random() * 2 + 0.5;
+                        const building = new THREE.Group();
+                        const geometry = new THREE.BoxGeometry(1, height, 1);
+                        const mesh = new THREE.Mesh(geometry, buildingMaterial);
+                        mesh.position.y = height / 2;
+                        const edges = new THREE.EdgesGeometry(geometry);
+                        const line = new THREE.LineSegments(edges, edgeMaterial);
+                        line.position.y = height / 2;
+                        building.add(mesh);
+                        building.add(line);
+                        building.position.set(x * spacing, -2, z * spacing);
+                        cityGroup.add(building);
+                    }
+                }
+
+                const houseGroup = new THREE.Group();
+                const baseGeo = new THREE.BoxGeometry(2, 2, 2);
+                const baseLine = new THREE.LineSegments(new THREE.EdgesGeometry(baseGeo), new THREE.LineBasicMaterial({ color: 0x294033, linewidth: 2 }));
+                houseGroup.add(baseLine);
+                const roofGeo = new THREE.ConeGeometry(1.5, 1.2, 4);
+                const roofLine = new THREE.LineSegments(new THREE.EdgesGeometry(roofGeo), new THREE.LineBasicMaterial({ color: 0x3d5a49, linewidth: 2 }));
+                roofLine.position.y = 1.6;
+                roofLine.rotation.y = Math.PI / 4;
+                houseGroup.add(roofLine);
+
+                const floatGroup = new THREE.Group();
+                floatGroup.add(houseGroup);
+                floatGroup.position.set(0, 0, 2);
+                scene.add(floatGroup);
+
+                let mouseX = 0; let mouseY = 0;
+                let targetRotationX = 0; let targetRotationY = 0;
+                document.addEventListener('mousemove', (event) => {
+                    mouseX = (event.clientX - window.innerWidth / 2) * 0.001;
+                    mouseY = (event.clientY - window.innerHeight / 2) * 0.001;
+                });
+                let scrollY = 0;
+                window.addEventListener('scroll', () => { scrollY = window.scrollY * 0.001; });
+
+                const animate = () => {
+                    requestAnimationFrame(animate);
+                    cityGroup.rotation.y += 0.001;
+                    floatGroup.rotation.y += 0.005;
+                    floatGroup.position.y = Math.sin(Date.now() * 0.001) * 0.5 + 0.5;
+                    targetRotationX = mouseX; targetRotationY = mouseY;
+                    cityGroup.rotation.x += 0.05 * (targetRotationY - cityGroup.rotation.x);
+                    cityGroup.rotation.y += 0.05 * (targetRotationX - cityGroup.rotation.y);
+                    camera.position.y = 2 - scrollY * 2;
+                    camera.position.z = 8 + scrollY * 5;
+                    renderer.render(scene, camera);
+                };
+                animate();
+                window.addEventListener('resize', () => {
+                    camera.aspect = window.innerWidth / window.innerHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                });
+            };
+            if (typeof THREE !== 'undefined') { initBackground3D(); }
+        });
     </script>
 </body>
 

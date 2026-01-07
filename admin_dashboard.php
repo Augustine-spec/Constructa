@@ -355,13 +355,13 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Admin';
             </div>
 
             <!-- Card 4: Feedback -->
-            <div class="feature-card tilt-card" onclick="window.location.href='#'">
+            <div class="feature-card tilt-card" onclick="window.location.href='admin_feedback_queue.php'">
                 <div class="card-content">
                     <div class="icon-wrapper gradient-admin-4">
                         <i class="fas fa-comments"></i>
                     </div>
-                    <h3>Feedback & Support</h3>
-                    <p>View user feedback and resolve support tickets.</p>
+                    <h3>Feedback Queue</h3>
+                    <p>Monitor operational quality scores and validate technical review sessions.</p>
                 </div>
                 <div class="card-bg-3d"></div>
             </div>

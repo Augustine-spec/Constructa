@@ -509,6 +509,26 @@ if (!isset($_SESSION['user_id'])) {
             border-radius: 2px;
             border: 1px solid #cbd5e1;
         }
+        
+        /* Export Buttons */
+        .btn-export {
+            background: rgba(41, 64, 51, 0.8);
+            color: white;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .btn-export:hover {
+            background: var(--primary);
+            transform: translateY(-1px);
+        }
 
         /* 3D Visualization Container */
         #viz-3d {
@@ -736,6 +756,121 @@ if (!isset($_SESSION['user_id'])) {
         
         .generated-state .floor-plan-panel { display: flex; opacity: 0.8; }
         .generated-state .floor-plan-panel:hover { opacity: 1; }
+        
+        /* Walk Mode Enhancements */
+        .mode-walk .floor-plan-panel {
+            width: 200px;
+            height: 200px;
+            bottom: 20px;
+            right: 20px;
+            left: auto;
+            opacity: 0.95;
+        }
+        
+        .mode-walk .live-summary {
+            display: none;
+        }
+        
+        /* Walk Mode HUD */
+        .walk-hud {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 200;
+            display: none;
+        }
+        
+        .mode-walk .walk-hud {
+            display: block;
+        }
+        
+        /* Crosshair */
+        .walk-crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            opacity: 0.3;
+        }
+        
+        .walk-crosshair::before,
+        .walk-crosshair::after {
+            content: '';
+            position: absolute;
+            background: white;
+        }
+        
+        .walk-crosshair::before {
+            width: 2px;
+            height: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .walk-crosshair::after {
+            width: 100%;
+            height: 2px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        /* Walk Controls Panel - REMOVED */
+        .walk-controls {
+            display: none !important;
+        }
+        
+        /* Walk Status Bar - REMOVED */
+        .walk-status {
+            display: none !important;
+        }
+        
+        /* Position Indicator */
+        .position-indicator {
+            position: absolute;
+            top: 20px;
+            right: 240px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 8px;
+            padding: 10px 16px;
+            color: white;
+            font-size: 0.75rem;
+            font-family: 'Courier New', monospace;
+            pointer-events: none;
+        }
+        
+        /* Room Label */
+        .room-label {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, calc(-50% - 100px));
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 8px;
+            padding: 12px 24px;
+            color: white;
+            font-family: 'Space Grotesk';
+            font-size: 1.2rem;
+            font-weight: 700;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .room-label.visible {
+            opacity: 1;
+        }
+        
+        /* Toggle Controls Button - REMOVED */
+        .toggle-controls-btn {
+            display: none !important;
+        }
         
 
         /* Generated State */
@@ -1187,22 +1322,56 @@ if (!isset($_SESSION['user_id'])) {
             <!-- 3D Visualization -->
             <div id="viz-3d"></div>
             
+            <!-- Walk Mode HUD -->
+            <div class="walk-hud">
+                <!-- Crosshair -->
+                <div class="walk-crosshair"></div>
+                
+                <!-- Room Label -->
+                <div class="room-label" id="room-label">Living Room</div>
+                
+                <!-- Position Indicator -->
+                <div class="position-indicator" id="position-indicator">
+                    X: 0.0 | Y: 0.7 | Z: 0.0
+                </div>
+                
+
+                
+
+                
+
+            </div>
+            
             <div id="walk-instructions" style="
                 display: none;
                 position: absolute;
                 top: 50%;
                 left: 50%;
                 transform: translate(-50%, -50%);
-                color: white;
+                color: #1e293b;
                 font-family: 'Space Grotesk';
                 font-size: 1.5rem;
                 text-align: center;
-                text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+                text-shadow: none;
                 pointer-events: none;
                 z-index: 300;
+                background: rgba(255, 255, 255, 0.95);
+                padding: 40px 60px;
+                border-radius: 16px;
+                backdrop-filter: blur(10px);
+                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             ">
-                Click to Start Walk<br>
-                <span style="font-size: 1rem; opacity: 0.8;">WASD to Move | Mouse to Look | ESC to Exit</span>
+                <div style="margin-bottom: 20px; font-size: 2rem; color: #294033;">
+                    <i class="fas fa-walking"></i> First-Person Walkthrough
+                </div>
+                <div style="font-size: 1.1rem; opacity: 0.8; margin-bottom: 15px; color: #1e293b;">
+                    Click anywhere to start exploring
+                </div>
+                <div style="font-size: 0.85rem; opacity: 0.7; line-height: 1.6; color: #475569;">
+                    Use <strong style="color: #294033;">WASD</strong> or <strong style="color: #294033;">Arrow Keys</strong> to move<br>
+                    <strong style="color: #294033;">Mouse</strong> to look around • <strong style="color: #294033;">SHIFT</strong> to sprint<br>
+                    Press <strong style="color: #294033;">ESC</strong> to exit walk mode
+                </div>
             </div>
         </main>
 
@@ -1784,6 +1953,8 @@ if (!isset($_SESSION['user_id'])) {
 
         let controls;
         let isWalking = false;
+        let isSprinting = false;
+        let currentRoom = 'Living Room';
         
         function switchView(mode) {
             const container = document.getElementById('viz-container');
@@ -1811,14 +1982,19 @@ if (!isset($_SESSION['user_id'])) {
             houseCamera.position.set(0, 0.7, 2); 
             houseCamera.lookAt(0, 0.7, 0);
             document.addEventListener('click', onWalkClick);
-            controls.addEventListener('lock', () => document.getElementById('walk-instructions').style.display = 'none');
+            controls.addEventListener('lock', () => {
+                document.getElementById('walk-instructions').style.display = 'none';
+            });
             controls.addEventListener('unlock', () => {
-                if(isWalking) document.getElementById('walk-instructions').style.display = 'block';
+                if(isWalking) {
+                    document.getElementById('walk-instructions').style.display = 'block';
+                }
             });
         }
 
         function exitWalkMode() {
             isWalking = false;
+            isSprinting = false;
             if(controls) controls.unlock();
             document.getElementById('walk-instructions').style.display = 'none';
             houseCamera.position.set(8, 6, 8);
@@ -1829,6 +2005,54 @@ if (!isset($_SESSION['user_id'])) {
 
         function onWalkClick() {
             if(isWalking && controls) controls.lock();
+        }
+        
+
+        
+        function updateWalkPosition() {
+            if(!isWalking || !houseCamera) return;
+            
+            const pos = houseCamera.position;
+            document.getElementById('position-indicator').innerText = 
+                `X: ${pos.x.toFixed(1)} | Y: ${pos.y.toFixed(1)} | Z: ${pos.z.toFixed(1)}`;
+            
+            // Detect current room based on position
+            detectCurrentRoom(pos.x, pos.z);
+        }
+        
+        function detectCurrentRoom(x, z) {
+            if(!houseLayout || !houseLayout.floors || !houseLayout.floors[0]) return;
+            
+            const rooms = houseLayout.floors[0].rooms;
+            const unitScale = 0.3;
+            const pW = formData.width * unitScale;
+            const pL = formData.length * unitScale;
+            
+            for(let room of rooms) {
+                const rW = room.width * unitScale;
+                const rL = room.length * unitScale;
+                const rX = -pW/2 + (room.x * pW) + (rW/2);
+                const rZ = -pL/2 + (room.y * pL) + (rL/2);
+                
+                // Check if position is within room bounds
+                if(Math.abs(x - rX) < rW/2 && Math.abs(z - rZ) < rL/2) {
+                    const roomName = room.type.charAt(0).toUpperCase() + room.type.slice(1);
+                    if(currentRoom !== roomName) {
+                        currentRoom = roomName;
+                        showRoomLabel(roomName);
+                    }
+                    return;
+                }
+            }
+        }
+        
+        function showRoomLabel(roomName) {
+            const label = document.getElementById('room-label');
+            label.innerText = roomName;
+            label.classList.add('visible');
+            setTimeout(() => {
+                label.classList.remove('visible');
+            }, 2000);
         }
 
         let time = 0;
@@ -1850,6 +2074,8 @@ if (!isset($_SESSION['user_id'])) {
                 case 'KeyS': moveBackward = true; break;
                 case 'ArrowRight':
                 case 'KeyD': moveRight = true; break;
+                case 'ShiftLeft':
+                case 'ShiftRight': isSprinting = true; break;
                 case 'Escape': 
                     if(isWalking) {
                         switchView('3d');
@@ -1867,6 +2093,8 @@ if (!isset($_SESSION['user_id'])) {
                 case 'KeyS': moveBackward = false; break;
                 case 'ArrowRight':
                 case 'KeyD': moveRight = false; break;
+                case 'ShiftLeft':
+                case 'ShiftRight': isSprinting = false; break;
             }
         });
 
@@ -1885,8 +2113,12 @@ if (!isset($_SESSION['user_id'])) {
                 direction.x = Number(moveRight) - Number(moveLeft);
                 direction.normalize();
 
-                if (moveForward || moveBackward) velocity.z -= direction.z * 40.0 * delta; // Speed
-                if (moveLeft || moveRight) velocity.x -= direction.x * 40.0 * delta;
+                // Sprint multiplier
+                const speedMultiplier = isSprinting ? 2.0 : 1.0;
+                const baseSpeed = 40.0 * speedMultiplier;
+
+                if (moveForward || moveBackward) velocity.z -= direction.z * baseSpeed * delta;
+                if (moveLeft || moveRight) velocity.x -= direction.x * baseSpeed * delta;
 
                 controls.moveRight(-velocity.x * delta);
                 controls.moveForward(-velocity.z * delta);
@@ -1898,6 +2130,7 @@ if (!isset($_SESSION['user_id'])) {
                 }
 
                 prevTime = time;
+                updateWalkPosition();
                 houseRenderer.render(houseScene, houseCamera);
             } else {
                 // Orbit/Idle Animation
