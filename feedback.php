@@ -3,15 +3,11 @@ session_start();
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'homeowner') { header('Location: login.html'); exit(); }
 require_once 'backend/config.php';
 
-$conn = getDatabaseConnection();
-$username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'User';
-
-// Institutional Engineering Questions
 $questions = [
-    ['id' => 1, 'text' => 'Structural Integrity Validation Accuracy', 'sub' => 'Assess the precision of load-bearing calculations and safety margin adherence.'],
-    ['id' => 2, 'text' => 'Technical Documentation Clarity', 'sub' => 'Evaluate the fidelity and detailing of structural blueprints and specifications.'],
-    ['id' => 3, 'text' => 'Consultation Professionalism Index', 'sub' => 'Adherence to engineering ethics and regulatory communication standards.'],
-    ['id' => 4, 'text' => 'Operational Efficiency', 'sub' => 'Evaluation of turnaround time relative to project complexity.'],
+    ['id' => 1, 'text' => 'Structural Integrity', 'sub' => 'Validation Accuracy', 'desc' => 'Assess the precision of load-bearing calculations and adherence to safety margins.'],
+    ['id' => 2, 'text' => 'Technical Documentation', 'sub' => 'Clarity Index', 'desc' => 'Evaluate the fidelity, detailing, and standard compliance of blueprints.'],
+    ['id' => 3, 'text' => 'Professional Conduct', 'sub' => 'Consultation Standard', 'desc' => 'Rating of engineering ethics, communication timeliness, and transparency.'],
+    ['id' => 4, 'text' => 'Operational Efficiency', 'sub' => 'Turnaround Time', 'desc' => 'Speed of delivery relative to the complexity of the structural project.'],
 ];
 ?>
 <!DOCTYPE html>
@@ -19,325 +15,745 @@ $questions = [
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Technical Review Session | Constructa</title>
+    <title>Review Station 01 | Constructa</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Outfit:wght@300;500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Outfit:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
-        :root { 
-            --bg: #f2f2f0;
-            --muted-green: #3d5a49;
-            --graphite: #2d2d2d;
-            --border: rgba(0,0,0,0.1);
-            --mono: 'JetBrains Mono', monospace;
+        :root {
+            --concrete: #e6e6e2;
+            --concrete-dark: #d1d1cc;
+            --glass-border: rgba(255, 255, 255, 0.4);
+            --glass-bg: rgba(242, 242, 240, 0.65);
+            --text-main: #1a1a1a;
+            --text-sub: #555555;
+            --accent-green: #294033;
+            --accent-green-dim: #3d5a49;
+            --danger: #d9534f;
+            --warning: #f0ad4e;
+            --success: #3d5a49;
+            --bg-color: #f6f7f2;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: transparent;
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+            user-select: none;
+        }
+
+        /* --- 3D Canvas --- */
+        #canvas-container {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 0;
+            pointer-events: none; /* Let clicks pass to UI */
+        }
+
+        /* --- UI Overlay --- */
+        #ui-layer {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 10;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            perspective: 2000px; /* Deep perspective for 3D UI */
+            pointer-events: none; /* Inner elements will re-enable pointer-events */
+        }
+
+        /* --- Main Feedback Panel (Glass/Concrete Hybrid) --- */
+        .review-panel {
+            width: 900px;
+            max-width: 95%;
+            /* height: 600px; */
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 4px; /* Engineered look, small radius */
+            box-shadow: 
+                0 20px 50px rgba(0,0,0,0.1),
+                0 0 0 1px rgba(255,255,255,0.5) inset;
+            pointer-events: auto;
+            transform-style: preserve-3d;
+            padding: 4rem 5rem;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.1s ease-out; /* Smooth tilt */
+        }
+
+        /* Decorative "Hardware" on Panel */
+        .panel-hardware {
+            position: absolute;
+            width: 10px; height: 10px;
+            background: #bbb;
+            border-radius: 50%;
+            box-shadow: inset 1px 1px 2px rgba(0,0,0,0.2);
+        }
+        .ph-tl { top: 15px; left: 15px; }
+        .ph-tr { top: 15px; right: 15px; }
+        .ph-bl { bottom: 15px; left: 15px; }
+        .ph-br { bottom: 15px; right: 15px; }
+
+        .panel-header {
+            border-bottom: 2px solid rgba(0,0,0,0.05);
+            padding-bottom: 2rem;
+            margin-bottom: 3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .step-indicator {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--text-sub);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .main-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 3rem;
+            font-weight: 300; /* Light weight for futuristic look */
+            line-height: 1;
+            color: var(--text-main);
+        }
+        .main-title strong {
+            font-weight: 700;
+            display: block;
+        }
+
+        .sub-desc {
+            font-size: 1rem;
+            color: var(--text-sub);
+            max-width: 400px;
+            line-height: 1.5;
+            margin-top: 1rem;
+            font-weight: 500;
+        }
+
+        /* --- 3D Rating Blocks --- */
+        .rating-stage {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin: 2rem 0 4rem 0;
+            transform-style: preserve-3d;
+        }
+
+        .rating-block {
+            position: relative;
+            width: 100px;
+            height: 120px;
+            background: linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 100%);
+            border: 1px solid #fff;
+            border-radius: 2px;
+            cursor: pointer;
+            transform-style: preserve-3d;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 
+                5px 5px 15px rgba(0,0,0,0.1),
+                inset 1px 1px 2px rgba(255,255,255,0.8);
+        }
+
+        /* "Thickness" Extrusion Effect via Pseudo-elements */
+        .rating-block::before {
+            content: '';
+            position: absolute;
+            top: 2px; left: 100%;
+            width: 10px; height: 100%;
+            background: #ccc;
+            transform: skewY(45deg);
+            transform-origin: top left;
+        }
+        .rating-block::after {
+            content: '';
+            position: absolute;
+            top: 100%; left: 2px;
+            width: 100%; height: 10px;
+            background: #bfbfbf;
+            transform: skewX(45deg);
+            transform-origin: top left;
+        }
+
+        .rating-block:hover {
+            transform: translateZ(20px) translateY(-5px);
+            background: #fff;
+            box-shadow: 
+                15px 15px 30px rgba(0,0,0,0.15),
+                inset 0 0 0 2px var(--accent-green);
+        }
+
+        .rating-block.selected {
+            background: var(--accent-green);
+            color: white;
+            border-color: var(--accent-green);
+            transform: translateZ(10px) translateY(2px); /* Pressed in logic */
+            box-shadow: 
+                2px 2px 5px rgba(0,0,0,0.2),
+                inset 0 0 20px rgba(0,0,0,0.2);
+        }
+
+        /* Fix extrusion color when selected */
+        .rating-block.selected::before { background: var(--accent-green-dim); }
+        .rating-block.selected::after { background: var(--accent-green-dim); }
+
+        .rb-num {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.2rem;
+            /* Engraved effect */
+            text-shadow: 1px 1px 0 rgba(255,255,255,0.5);
+        }
+        .rating-block.selected .rb-num { text-shadow: none; }
+
+        .rb-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.7;
+        }
+
+        /* --- Footer / Confidence Meter --- */
+        .panel-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid rgba(0,0,0,0.05);
+            padding-top: 2rem;
+        }
+
+        .confidence-meter {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
         }
         
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: var(--bg); color: var(--graphite); font-family: 'Inter', sans-serif; overflow: hidden; height: 100vh; }
-
-        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; opacity: 0.4; }
-
-        header { 
-            padding: 1.5rem 4rem; 
-            display: flex; justify-content: space-between; align-items: center; 
-            background: rgba(242, 242, 240, 0.9); backdrop-filter: blur(10px);
-            border-bottom: 1px solid var(--border);
-            position: fixed; top: 0; width: 100%; z-index: 1000;
+        .meter-track {
+            width: 200px;
+            height: 6px;
+            background: #ddd;
+            border-radius: 3px;
+            overflow: hidden;
+            position: relative;
         }
-        .logo { font-family: 'Outfit'; font-weight: 800; font-size: 1.1rem; color: var(--muted-green); text-decoration: none; letter-spacing: 1px; }
-
-        main { 
-            height: 100vh; display: flex; align-items: center; justify-content: center;
-            perspective: 1000px;
-        }
-
-        .review-container { 
-            width: 100%; max-width: 800px; 
-            position: relative; 
-            padding: 2rem;
-        }
-
-        .step-card {
-            background: #fff;
-            padding: 5rem;
-            border: 1px solid var(--border);
-            box-shadow: 0 40px 100px rgba(0,0,0,0.05);
-            display: none;
-            opacity: 0;
+        
+        .meter-fill {
             position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: 100%;
+            top: 0; left: 0;
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--danger), var(--warning), var(--success));
+            background-size: 200% 100%;
+            transition: width 0.5s ease-out;
         }
 
-        .step-card.active { display: block; }
-
-        .tag { font-family: var(--mono); font-size: 0.7rem; color: #999; margin-bottom: 1rem; display: block; }
-        .q-text { font-family: 'Outfit'; font-size: 2.5rem; font-weight: 800; line-height: 1.1; margin-bottom: 1rem; }
-        .q-sub { font-size: 1rem; color: #666; margin-bottom: 3rem; line-height: 1.6; }
-
-        .rating-matrix {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 1rem;
-            margin-bottom: 3rem;
-        }
-        .rate-btn {
-            padding: 1.5rem;
-            border: 1px solid var(--border);
-            background: var(--bg);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-align: center;
-        }
-        .rate-btn:hover, .rate-btn.selected {
-            background: var(--muted-green);
-            color: #fff;
-            border-color: var(--muted-green);
-            transform: scale(1.05);
-        }
-        .rate-num { font-family: var(--mono); font-size: 1.5rem; font-weight: 700; display: block; }
-        .rate-lbl { font-size: 0.7rem; text-transform: uppercase; margin-top: 0.5rem; opacity: 0.7; }
-
-        .final-input {
-            width: 100%;
-            padding: 2rem;
-            font-family: inherit;
-            font-size: 1.1rem;
-            border: 1px solid var(--border);
-            background: var(--bg);
-            resize: none;
-            height: 200px;
-            margin-bottom: 2rem;
+        .meter-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--text-sub);
         }
 
-        .action-tray { display: flex; justify-content: space-between; align-items: center; }
+        .nav-controls {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        /* --- Navigation Buttons --- */
         .btn-nav {
-            padding: 1.2rem 3rem;
-            background: var(--graphite);
-            color: #fff;
-            border: none;
-            font-family: var(--mono);
-            font-size: 0.8rem;
+            background: transparent;
+            border: 2px solid var(--text-main);
+            color: var(--text-main);
+            padding: 0.8rem 2rem;
+            font-family: 'JetBrains Mono', monospace;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 2px;
+            letter-spacing: 1px;
             cursor: pointer;
-            transition: background 0.2s;
-        }
-        .btn-nav:hover:not(:disabled) { background: var(--muted-green); }
-        .btn-nav:disabled { opacity: 0.2; cursor: not-allowed; }
-
-        .progress-bar {
-            position: fixed; bottom: 0; left: 0; height: 4px;
-            background: var(--muted-green);
-            transition: width 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
         }
 
-        #confirmation {
+        .btn-nav:hover:not(:disabled) {
+            background: var(--text-main);
+            color: white;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-nav:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            border-color: #ccc;
+            color: #ccc;
+        }
+
+        /* --- Step Sections --- */
+        .step-section {
             display: none;
-            text-align: center;
+            opacity: 0;
+            /* Transition handled by GSAP */
         }
-        #confirmation h2 { font-family: 'Outfit'; font-size: 4rem; margin-bottom: 1rem; }
+        .step-section.active {
+            display: block;
+            opacity: 1;
+        }
+
+        /* --- Final Comment Area --- */
+        .final-area {
+            width: 100%;
+        }
+        .glass-input {
+            width: 100%;
+            height: 150px;
+            background: rgba(255,255,255,0.5);
+            border: 1px solid #ccc;
+            padding: 1rem;
+            font-family: 'Inter', sans-serif;
+            font-size: 1.1rem;
+            border-radius: 4px;
+            resize: none;
+            outline: none;
+            transition: all 0.3s;
+        }
+        .glass-input:focus {
+            background: rgba(255,255,255,0.8);
+            border-color: var(--accent-green);
+            box-shadow: 0 0 15px rgba(61, 90, 73, 0.1);
+        }
+
+        /* Loading Overlay */
+        #loader {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-color);
+            z-index: 100;
+            display: flex; justify-content: center; align-items: center;
+            font-family: 'JetBrains Mono';
+            letter-spacing: 3px;
+        }
+
+        .top-nav-btn {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            z-index: 1000;
+            padding: 0.8rem 1.5rem;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0,0,0,0.1);
+            border-radius: 4px;
+            text-decoration: none;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text-main);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .top-nav-btn:hover {
+            background: var(--text-main);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
     </style>
 </head>
 <body>
-    <div id="bg-canvas"></div>
+    
+    <div id="loader">INITIALIZING_REVIEW_STATION...</div>
 
-    <header>
-        <a href="homeowner.php" class="logo">REVIEW_STATION_01</a>
-    </header>
+    <a href="homeowner.php" class="top-nav-btn">
+        <i class="fas fa-th-large"></i> Dashboard
+    </a>
 
-    <main>
-        <div class="review-container">
+    <!-- 3D Background -->
+    <div id="canvas-container"></div>
+
+    <!-- UI Overlay -->
+    <div id="ui-layer">
+        <div class="review-panel tilt-element">
+            <div class="panel-hardware ph-tl"></div>
+            <div class="panel-hardware ph-tr"></div>
+            <div class="panel-hardware ph-bl"></div>
+            <div class="panel-hardware ph-br"></div>
+
             <?php foreach($questions as $index => $q): ?>
-                <div class="step-card" data-step="<?php echo $index; ?>" id="step-<?php echo $index; ?>">
-                    <span class="tag">METRIC_EVAL_<?php echo str_pad($q['id'], 2, '0', STR_PAD_LEFT); ?></span>
-                    <h2 class="q-text"><?php echo $q['text']; ?></h2>
-                    <p class="q-sub"><?php echo $q['sub']; ?></p>
-                    
-                    <div class="rating-matrix">
+                <div class="step-section" id="step-<?php echo $index; ?>" data-index="<?php echo $index; ?>">
+                    <div class="panel-header">
+                        <div>
+                            <span class="step-indicator">Metric 0<?php echo $index + 1; ?> // 05</span>
+                            <h1 class="main-title"><?php echo htmlspecialchars($q['text']); ?> <strong><?php echo htmlspecialchars($q['sub']); ?></strong></h1>
+                        </div>
+                        <div class="sub-desc"><?php echo htmlspecialchars($q['desc']); ?></div>
+                    </div>
+
+                    <div class="rating-stage">
                         <?php 
                         $labels = ['Marginal', 'Sufficient', 'Compliant', 'Exemplary', 'Superior'];
                         for($i=1; $i<=5; $i++): ?>
-                            <div class="rate-btn" onclick="selectRating(<?php echo $index; ?>, <?php echo $i; ?>)">
-                                <span class="rate-num"><?php echo $i; ?></span>
-                                <span class="rate-lbl"><?php echo $labels[$i-1]; ?></span>
+                            <div class="rating-block" data-val="<?php echo $i; ?>" onclick="handleRating(<?php echo $index; ?>, <?php echo $i; ?>, this)">
+                                <span class="rb-num"><?php echo $i; ?></span>
+                                <span class="rb-label"><?php echo $labels[$i-1]; ?></span>
                             </div>
                         <?php endfor; ?>
-                    </div>
-
-                    <div class="action-tray">
-                        <button class="btn-nav" onclick="prevStep()" <?php echo $index === 0 ? 'disabled' : ''; ?>>Back</button>
-                        <button class="btn-nav" id="next-<?php echo $index; ?>" onclick="nextStep()" disabled>Next_Step</button>
                     </div>
                 </div>
             <?php endforeach; ?>
 
-            <!-- Final Qualitative Remarks -->
-            <div class="step-card" data-step="4" id="step-4">
-                <span class="tag">ADDITIONAL_VAL_REMARKS</span>
-                <h2 class="q-text">Consolidated Review</h2>
-                <p class="q-sub">Please provide any final professional remarks or technical clarifications regarding the consultation performance.</p>
-                
-                <textarea class="final-input" id="final-comment" placeholder="Input professional qualitative data..."></textarea>
-
-                <div class="action-tray">
-                    <button class="btn-nav" onclick="prevStep()">Back</button>
-                    <button class="btn-nav" id="submit-btn" onclick="submitReview()">Finalize_Session</button>
+            <!-- Final Step: Comment -->
+            <div class="step-section" id="step-4" data-index="4">
+                <div class="panel-header">
+                    <div>
+                        <span class="step-indicator">Metric 05 // 05</span>
+                        <h1 class="main-title">Consolidated <strong>Review</strong></h1>
+                    </div>
+                    <div class="sub-desc">Please provide any final technical logs or qualitative data for the engineering team.</div>
+                </div>
+                <div class="rating-stage" style="display:block;">
+                    <textarea class="glass-input" id="final-comment" placeholder="Input technical observations..."></textarea>
                 </div>
             </div>
 
-            <!-- Confirmation -->
-            <div id="confirmation" class="step-card">
-                <div id="success-3d-container" style="height: 300px; margin-bottom: 2rem;"></div>
-                <span class="tag">SESSION_COMPLETED</span>
-                <h2 class="q-text">Technical Review Logged</h2>
-                <p class="q-sub">All data points have been serialized and pushed to the administrative queue for engineering validation.</p>
-                <div class="action-tray" style="justify-content: center;">
-                    <a href="homeowner.php" class="btn-nav" style="text-decoration:none;">Initialize Dashboard</a>
+            <!-- Success Step -->
+            <div class="step-section" id="step-success" data-index="5">
+                <div class="panel-header" style="text-align:center; display:block; border:none; margin-bottom:1rem;">
+                    <i class="fas fa-check-circle" style="font-size: 4rem; color: var(--accent-green); margin-bottom: 2rem;"></i>
+                    <h1 class="main-title">Log <strong>Serialized</strong></h1>
+                    <p class="sub-desc" style="margin: 1rem auto;">Validation metrics have been pushed to the central grid.</p>
+                </div>
+                <div style="text-align: center;">
+                    <button class="btn-nav" onclick="window.location.href='homeowner.php'">Return to Dashboard</button>
+                </div>
+            </div>
+
+            <div class="panel-footer">
+                <div class="confidence-meter">
+                    <span class="meter-label">STRUCTURAL_CONFIDENCE</span>
+                    <div class="meter-track">
+                        <div class="meter-fill" id="conf-fill"></div>
+                    </div>
+                    <span class="meter-label" id="conf-text">PENDING...</span>
+                </div>
+                <div class="nav-controls">
+                    <button class="btn-nav" id="btn-back" onclick="prevStep()">Back</button>
+                    <button class="btn-nav" id="btn-next" onclick="nextStep()" disabled>Next Step</button>
                 </div>
             </div>
         </div>
-    </main>
+    </div>
 
-    <div class="progress-bar" id="p-bar" style="width: 0%;"></div>
-
+    <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <script src="js/architectural_bg.js"></script>
+
     <script>
-        if(window.initArchitecturalBackground) initArchitecturalBackground('bg-canvas');
-
+        // --- DATA & STATE ---
+        const totalSteps = 5; // 0-3 ratings, 4 comment
         let currentStep = 0;
-        const totalSteps = 5;
-        const responses = [];
+        const responses = {};
 
-        function showStep(s) {
-            gsap.to('.step-card.active', { opacity: 0, x: -50, duration: 0.4, onComplete: () => {
-                document.querySelectorAll('.step-card').forEach(c => c.classList.remove('active'));
-                const next = document.getElementById('step-' + s);
-                next.classList.add('active');
-                gsap.fromTo(next, { opacity: 0, x: 50 }, { opacity: 1, x: -250, transform: 'translate(0, -50%)', left: '50%', duration: 0.6, ease: 'power2.out' });
+        // --- 3D BACKGROUND (Standardized Wireframe City) ---
+        // This is the EXACT logic used in homeowner.php and landingpage.html
+        const initBackground3D = () => {
+            const container = document.getElementById('canvas-container');
+            if (!container) return;
+            const scene = new THREE.Scene();
+            scene.background = new THREE.Color('#f6f7f2');
+            const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 10;
+            camera.position.y = 2;
+            
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            container.appendChild(renderer.domElement);
+            
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+            
+            const mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            mainLight.position.set(10, 20, 10);
+            scene.add(mainLight);
+
+            // Reusable wireframe building elements
+            const floorGroup = new THREE.Group();
+            scene.add(floorGroup);
+            
+            const buildMat = new THREE.MeshPhongMaterial({ 
+                color: 0x294033, 
+                transparent: true, 
+                opacity: 0.1, 
+                side: THREE.DoubleSide 
+            });
+            const edgeMat = new THREE.LineBasicMaterial({ 
+                color: 0x294033, 
+                transparent: true, 
+                opacity: 0.2 
+            });
+
+            const gridSize = 8;
+            const spacing = 4;
+            for (let x = -gridSize; x <= gridSize; x++) {
+                for (let z = -gridSize; z <= gridSize; z++) {
+                    const h = Math.random() * 4 + 1;
+                    const geo = new THREE.BoxGeometry(1.5, h, 1.5);
+                    const mesh = new THREE.Mesh(geo, buildMat);
+                    mesh.position.y = h / 2;
+                    
+                    const edges = new THREE.EdgesGeometry(geo);
+                    const line = new THREE.LineSegments(edges, edgeMat);
+                    line.position.y = h / 2;
+                    
+                    const building = new THREE.Group();
+                    building.add(mesh);
+                    building.add(line);
+                    building.position.set(x * spacing, -5, z * spacing);
+                    floorGroup.add(building);
+                }
+            }
+
+            // Primary Hero Asset (Floating Wireframe House)
+            const heroGroup = new THREE.Group();
+            const floorGeo = new THREE.BoxGeometry(4, 0.2, 4);
+            const floorLine = new THREE.LineSegments(new THREE.EdgesGeometry(floorGeo), new THREE.LineBasicMaterial({color: 0x294033, opacity: 0.8}));
+            heroGroup.add(floorLine);
+
+            const wallGeo = new THREE.BoxGeometry(3.5, 2.5, 3.5);
+            const wallLines = new THREE.LineSegments(new THREE.EdgesGeometry(wallGeo), new THREE.LineBasicMaterial({color: 0x294033}));
+            wallLines.position.y = 1.35;
+            heroGroup.add(wallLines);
+
+            const roofGeo = new THREE.ConeGeometry(3, 2, 4);
+            const roofLines = new THREE.LineSegments(new THREE.EdgesGeometry(roofGeo), new THREE.LineBasicMaterial({color: 0x3d5a49}));
+            roofLines.position.y = 3.6;
+            roofLines.rotation.y = Math.PI / 4;
+            heroGroup.add(roofLines);
+
+            heroGroup.position.set(0, 0, 0);
+            scene.add(heroGroup);
+
+            // Parallax Mouse Effect
+            let mouseX = 0, mouseY = 0;
+            document.addEventListener('mousemove', (e) => {
+                mouseX = (e.clientX - window.innerWidth / 2) * 0.0005;
+                mouseY = (e.clientY - window.innerHeight / 2) * 0.0005;
+            });
+
+            const animate = () => {
+                requestAnimationFrame(animate);
                 
-                // Align step centering (since translate is active)
-                next.style.transform = 'translate(-50%, -50%)';
-            }});
+                const time = Date.now() * 0.001;
+                
+                // Floating rotation
+                heroGroup.rotation.y += 0.005;
+                heroGroup.position.y = Math.sin(time) * 0.5;
+                
+                // Grid movement
+                floorGroup.rotation.y += 0.001;
+                
+                // Mouse effect
+                floorGroup.rotation.x += 0.05 * (mouseY - floorGroup.rotation.x);
+                floorGroup.rotation.y += 0.05 * (mouseX - floorGroup.rotation.y);
+                
+                renderer.render(scene, camera);
+            };
+            animate();
 
-            document.getElementById('p-bar').style.width = ((s + 1) / totalSteps) * 100 + '%';
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        };
+
+        // --- UI LOGIC ---
+        
+        // Tilt Effect for Panel using CSS
+        const panel = document.querySelector('.review-panel');
+        document.addEventListener('mousemove', (e) => {
+            const x = (e.clientX / window.innerWidth - 0.5) * 2; // -1 to 1
+            const y = (e.clientY / window.innerHeight - 0.5) * 2;
             
-            // Background Re-alignment simulation
-            if (window.camera) {
-                gsap.to(window.camera.position, { x: s * 0.5, z: 8 - s * 0.2, duration: 2 });
-            }
-        }
+            gsap.to(panel, {
+                rotateY: x * 5, // Max 5 deg tilt
+                rotateX: -y * 5,
+                duration: 0.5
+            });
+        });
 
-        // Initial Show
-        const first = document.getElementById('step-0');
-        first.classList.add('active');
-        gsap.to(first, { opacity: 1, duration: 0.8 });
-        document.getElementById('p-bar').style.width = (1 / totalSteps) * 100 + '%';
+        // Initialize
+        if (typeof THREE !== 'undefined') initBackground3D();
+        
+        gsap.to('#loader', { opacity: 0, duration: 1, onComplete: () => {
+            document.getElementById('loader').style.display = 'none';
+        }});
+        document.getElementById('step-0').classList.add('active');
 
-        function selectRating(s, val) {
-            const btns = document.querySelectorAll(`#step-${s} .rate-btn`);
-            btns.forEach(b => b.classList.remove('selected'));
-            btns[val-1].classList.add('selected');
+        // Rating Handler
+        window.handleRating = (stepIndex, value, el) => {
+            // UI Update
+            const parent = el.parentElement;
+            parent.querySelectorAll('.rating-block').forEach(b => b.classList.remove('selected'));
+            el.classList.add('selected');
             
-            responses[s] = { question_id: s + 1, score: val };
-            document.getElementById('next-' + s).disabled = false;
-        }
+            // Data Update
+            responses[stepIndex] = { question_id: stepIndex + 1, score: value };
+            
+            document.getElementById('btn-next').disabled = false;
+            
+            // Confidence Meter
+            const fill = (value / 5) * 100;
+            const track = document.getElementById('conf-fill');
+            track.style.width = fill + '%';
+            
+            // Color logic
+            if(value < 3) track.style.background = 'var(--danger)';
+            else if(value === 3) track.style.background = 'var(--warning)';
+            else track.style.background = 'var(--success)';
 
-        function nextStep() {
-            if(currentStep < totalSteps - 1) {
-                currentStep++;
-                showStep(currentStep);
+            document.getElementById('conf-text').innerText = 'METRIC_VALIDATED';
+        };
+
+        // Navigation
+        window.nextStep = () => {
+            if (currentStep < 4) {
+                // Animate Out
+                gsap.to(`#step-${currentStep}`, { 
+                    opacity: 0, 
+                    x: -50, 
+                    duration: 0.4, 
+                    onComplete: () => {
+                        document.getElementById(`step-${currentStep}`).classList.remove('active');
+                        currentStep++;
+                        
+                        // Setup Next
+                        const next = document.getElementById(`step-${currentStep}`);
+                        next.classList.add('active');
+                        gsap.fromTo(next, 
+                            { opacity: 0, x: 50 }, 
+                            { opacity: 1, x: 0, duration: 0.4 }
+                        );
+
+                        // Reset button for next step (unless it's the comment step which is always valid)
+                        const btnNext = document.getElementById('btn-next');
+                        if (currentStep !== 4) {
+                            if (!responses[currentStep]) {
+                                btnNext.disabled = true;
+                                document.getElementById('conf-fill').style.width = '0%';
+                                document.getElementById('conf-text').innerText = 'AWAITING_INPUT...';
+                            } else {
+                                // Restore previous state if editing
+                                document.getElementById('btn-next').disabled = false;
+                            }
+                        } else {
+                            btnNext.innerText = "SUBMIT REVIEW";
+                            btnNext.disabled = false;
+                            btnNext.onclick = submitFinal;
+                        }
+                        
+                        // Slightly shift the header title with GSAP for effect
+                        gsap.fromTo(next.querySelector('.main-title'), { x: 20, opacity: 0 }, { x: 0, opacity: 1, duration: 0.5, delay: 0.1 });
+                    }
+                });
             }
-        }
+        };
 
-        function prevStep() {
-            if(currentStep > 0) {
-                currentStep--;
-                showStep(currentStep);
+        window.prevStep = () => {
+            if (currentStep > 0) {
+                 // Animate Out
+                 gsap.to(`#step-${currentStep}`, { 
+                    opacity: 0, 
+                    x: 50, 
+                    duration: 0.4, 
+                    onComplete: () => {
+                        document.getElementById(`step-${currentStep}`).classList.remove('active');
+                        currentStep--;
+                        
+                        // Setup Prev
+                        const prev = document.getElementById(`step-${currentStep}`);
+                        prev.classList.add('active');
+                        gsap.fromTo(prev, 
+                            { opacity: 0, x: -50 }, 
+                            { opacity: 1, x: 0, duration: 0.4 }
+                        );
+
+                        // Button logic
+                        const btnNext = document.getElementById('btn-next');
+                        btnNext.innerText = "NEXT STEP";
+                        btnNext.onclick = window.nextStep;
+                        
+                        // Re-enable if data exists
+                        if (responses[currentStep]) {
+                             btnNext.disabled = false;
+                        }
+                    }
+                });
             }
-        }
+        };
 
-        async function submitReview() {
-            const btn = document.getElementById('submit-btn');
+        window.submitFinal = async () => {
+            const btn = document.getElementById('btn-next');
+            btn.innerText = "PROCESSING...";
             btn.disabled = true;
-            btn.innerText = 'SERIALIZING...';
 
-            const finalComment = document.getElementById('final-comment').value;
-            if (responses[0]) responses[0].comment = finalComment;
+            const comment = document.getElementById('final-comment').value;
+            // Format for backend
+            const payload = [];
+            for (let i = 0; i < 4; i++) {
+                let item = responses[i];
+                if (i === 0) item.comment = comment; // Attach comment to first item as per legacy logic or new logic
+                payload.push(item);
+            }
 
             try {
                 const res = await fetch('backend/process_feedback.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ responses: responses })
+                    body: JSON.stringify({ responses: payload })
                 });
                 const data = await res.json();
-                if(data.success) {
-                    // Corrected transition: Fade out the active step, not the container
-                    gsap.to('.step-card.active', { opacity: 0, x: -50, duration: 0.5, onComplete: () => {
-                        document.querySelectorAll('.step-card').forEach(c => c.classList.remove('active'));
-                        const conf = document.getElementById('confirmation');
-                        conf.classList.add('active');
-                        conf.style.display = 'block';
-                        // Ensure it's centered
-                        conf.style.transform = 'translate(-50%, -50%)';
-                        gsap.fromTo(conf, { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.8, ease: 'back.out(1.7)' });
-                        document.getElementById('p-bar').style.width = '100%';
-                        initSuccess3D();
-                    }});
+                
+                if (data.success) {
+                    // Success View
+                    document.getElementById(`step-4`).classList.remove('active');
+                    const success = document.getElementById(`step-success`);
+                    success.classList.add('active');
+                    gsap.fromTo(success, { scale: 0.8, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.5, ease: "back.out" });
+                    
+                    document.querySelector('.panel-footer').style.display = 'none';
                 } else {
-                    alert('Log Error: ' + data.message);
+                    alert('Submission failed: ' + data.message);
                     btn.disabled = false;
                 }
             } catch (e) {
                 console.error(e);
+                alert('Network error.');
                 btn.disabled = false;
             }
-        }
-
-        function initSuccess3D() {
-            const container = document.getElementById('success-3d-container');
-            const scene = new THREE.Scene();
-            const camera = new THREE.PerspectiveCamera(45, container.offsetWidth / container.offsetHeight, 0.1, 100);
-            camera.position.z = 8;
-
-            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-            renderer.setSize(container.offsetWidth, container.offsetHeight);
-            container.appendChild(renderer.domElement);
-
-            const group = new THREE.Group();
-            scene.add(group);
-
-            // Construct structural success icon (Shield/Checkmark hybrid)
-            const box = new THREE.Mesh(
-                new THREE.BoxGeometry(2, 2, 2),
-                new THREE.MeshStandardMaterial({ color: 0x3d5a49, wireframe: true, transparent: true, opacity: 0.4 })
-            );
-            group.add(box);
-
-            const innerBox = new THREE.Mesh(
-                new THREE.BoxGeometry(1.2, 1.2, 1.2),
-                new THREE.MeshStandardMaterial({ color: 0x3d5a49, metalness: 0.8, roughness: 0.2 })
-            );
-            group.add(innerBox);
-
-            scene.add(new THREE.AmbientLight(0xffffff, 0.8));
-            const pointLight = new THREE.PointLight(0x3d5a49, 1.5, 10);
-            pointLight.position.set(2, 2, 2);
-            scene.add(pointLight);
-
-            function animate() {
-                requestAnimationFrame(animate);
-                group.rotation.y += 0.01;
-                group.rotation.x += 0.005;
-                innerBox.scale.setScalar(1 + Math.sin(Date.now() * 0.005) * 0.1);
-                renderer.render(scene, camera);
-            }
-            animate();
-        }
+        };
     </script>
 </body>
 </html>

@@ -14,7 +14,7 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Homeowner'
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Homeowner Dashboard - Constructa</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         :root {
@@ -54,53 +54,40 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Homeowner'
             pointer-events: none;
         }
 
-        /* Navbar */
-        header {
-            padding: 1.5rem 3rem;
+        /* Fixed Navigation Buttons */
+        .nav-fixed-container {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            z-index: 1000;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            max-width: 1600px;
-            margin: 0 auto;
-            width: 100%;
-            background: rgba(246, 247, 242, 0.85);
-            backdrop-filter: blur(10px);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            border-bottom: 1px solid rgba(0,0,0,0.05);
+            gap: 1rem;
         }
 
-        .logo {
+        .top-nav-btn {
+            padding: 0.8rem 1.5rem;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0,0,0,0.1);
+            border-radius: 4px;
+            text-decoration: none;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text-dark);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+            transition: all 0.3s ease;
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: var(--primary-green);
-            text-decoration: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
         }
-
-        .logo i {
-            font-size: 1.5rem;
-        }
-
-        nav {
-            display: flex;
-            gap: 2rem;
-            align-items: center;
-        }
-
-        nav a {
-            text-decoration: none;
-            color: var(--text-dark);
-            font-weight: 500;
-            font-size: 0.95rem;
-            transition: color 0.2s;
-        }
-
-        nav a:hover {
-            color: var(--primary-green);
+        .top-nav-btn:hover {
+            background: var(--primary-green);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.15);
         }
 
         /* Dashboard Layout */
@@ -108,7 +95,7 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Homeowner'
             max-width: 1400px;
             margin: 0 auto;
             width: 100%;
-            padding: 2rem 3rem;
+            padding: 6rem 3rem 2rem 3rem; /* Increased top padding */
             display: flex;
             flex-direction: column;
             gap: 3rem;
@@ -261,16 +248,14 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Homeowner'
     <div id="canvas-container"></div>
 
     <!-- Navigation -->
-    <header>
-        <a href="landingpage.html" class="logo">
-            <i class="far fa-building"></i>
-            Constructa
+    <div class="nav-fixed-container">
+        <a href="landingpage.html" class="top-nav-btn">
+            <i class="fas fa-home"></i> Home
         </a>
-        <nav>
-            <a href="landingpage.html">Home</a>
-            <a href="login.html">Logout</a>
-        </nav>
-    </header>
+        <a href="login.html" class="top-nav-btn">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+    </div>
 
     <main class="dashboard-container">
         <div class="welcome-section">

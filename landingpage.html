@@ -6,7 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Constructa</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <style>
@@ -21,6 +23,73 @@
             --footer-bg: #1c2b23;
         }
 
+        /* Fixed Navigation Buttons */
+        .nav-fixed-container {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            z-index: 1000;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .top-nav-btn {
+            padding: 0.8rem 1.5rem;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+            text-decoration: none;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text-dark);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .top-nav-btn:hover {
+            background: var(--primary-green);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        /* 3D Brand Title Styling */
+        .brand-3d {
+            position: fixed;
+            top: 2rem;
+            left: 2rem;
+            z-index: 1000;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: var(--primary-green);
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            display: flex;
+            pointer-events: none;
+            cursor: default;
+        }
+
+        .brand-3d span {
+            display: inline-block;
+            opacity: 0;
+            transform: translateY(10px) rotateX(-90deg);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .brand-3d span.visible {
+            opacity: 1;
+            transform: translateY(0) rotateX(0);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -30,7 +99,7 @@
 
         body {
             background-color: transparent;
-            /* Changed to allow canvas to show */
+
             color: var(--text-dark);
             min-height: 100vh;
             display: flex;
@@ -167,7 +236,7 @@
             flex-direction: column;
             gap: 6rem;
             /* Increased spacing */
-            padding-bottom: 4rem;
+            padding: 6rem 0 4rem 0;
         }
 
         /* Hero Grid Section */
@@ -782,17 +851,18 @@
         <div class="loading-text">CONSTRUCTA</div>
     </div>
 
+    <!-- 3D Brand Title -->
+    <div class="brand-3d" id="brand-3d-text">CONSTRUCTA</div>
+
     <!-- Navigation -->
-    <header>
-        <a href="#" class="logo">
-            <i class="far fa-building"></i>
-            Constructa
+    <div class="nav-fixed-container">
+        <a href="login.html" class="top-nav-btn">
+            <i class="fas fa-sign-in-alt"></i> Log In
         </a>
-        <nav>
-            <a href="login.html">Log In</a>
-            <a href="homeowner_signup.html" class="btn-start">Sign Up</a>
-        </nav>
-    </header>
+        <a href="homeowner_signup.html" class="top-nav-btn">
+            <i class="fas fa-user-plus"></i> Sign Up
+        </a>
+    </div>
 
     <main>
         <!-- Hero Section -->
@@ -1434,6 +1504,36 @@
             function resetTilt(e) {
                 this.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)';
             }
+
+            // 3D Brand Animation Logic
+            const brandContainer = document.getElementById('brand-3d-text');
+            const originalText = "CONSTRUCTA";
+            brandContainer.innerHTML = originalText.split('').map(char => `<span>${char}</span>`).join('');
+            const brandSpans = brandContainer.querySelectorAll('span');
+
+            const animateBrandLoop = () => {
+                // Show letters one by one
+                brandSpans.forEach((span, i) => {
+                    setTimeout(() => {
+                        span.classList.add('visible');
+                    }, i * 150);
+                });
+
+                // Hide letters one by one after a delay
+                setTimeout(() => {
+                    brandSpans.forEach((span, i) => {
+                        setTimeout(() => {
+                            span.classList.remove('visible');
+                        }, i * 100);
+                    });
+
+                    // Restart loop after hiding
+                    setTimeout(animateBrandLoop, brandSpans.length * 100 + 1000);
+                }, brandSpans.length * 150 + 4000);
+            };
+
+            // Start the animation
+            animateBrandLoop();
         });
     </script>
 </body>

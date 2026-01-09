@@ -12,345 +12,455 @@ $result = $conn->query($sql);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Structural Engineering Registry | Constructa</title>
+    <title>Structural Engineering Directory | Constructa</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <style>
-        :root { 
-            --panel-bg: #f2f2f0;
-            --slab-color: #ffffff;
-            --text-engrave: rgba(0,0,0,0.7);
-            --text-etch: rgba(0,0,0,0.5);
-            --border-rail: #d1d1cc;
-            --muted-green: #3d5a49;
-            --tech-font: 'JetBrains Mono', monospace;
-            --accent-glow: #e0e0db;
+        :root {
+            --bg-color: #f6f7f2;
+            --text-dark: #121212;
+            --text-gray: #555555;
+            --primary-green: #294033;
+            --accent-green: #3d5a49;
+            --card-bg: #ffffff;
         }
-        
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body { 
-            background: #e8e8e3; 
-            color: #1a1a1a; 
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
             font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: transparent;
+            color: var(--text-dark);
             min-height: 100vh;
+            display: flex;
+            flex-direction: column;
             overflow-x: hidden;
         }
 
-        #global-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; opacity: 0.4; }
-
-        header { 
-            padding: 1.5rem 4rem; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            background: rgba(232, 232, 227, 0.9); 
-            backdrop-filter: blur(10px); 
-            border-bottom: 2px solid var(--border-rail);
-            position: sticky; top: 0; z-index: 1000; 
-        }
-        .logo { font-family: 'Outfit'; font-weight: 800; font-size: 1.1rem; color: var(--muted-green); letter-spacing: 1px; text-decoration: none; display: flex; align-items: center; gap: 0.5rem; }
-        nav { display: flex; gap: 3rem; }
-        nav a { text-decoration: none; color: #444; font-family: var(--tech-font); font-size: 0.75rem; text-transform: uppercase; font-weight: 700; transition: color 0.2s; }
-        nav a:hover { color: var(--muted-green); }
-
-        main { max-width: 1400px; margin: 0 auto; padding: 5rem 4rem; }
-        
-        .registry-header { border-left: 2px solid var(--muted-green); padding-left: 2rem; margin-bottom: 6rem; }
-        .registry-header h1 { font-family: 'Outfit'; font-size: 2.5rem; font-weight: 800; color: #2d2d2d; line-height: 1; letter-spacing: -0.5px; margin-bottom: 0.5rem; }
-        .registry-header p { font-family: var(--tech-font); font-size: 0.8rem; color: #666; text-transform: uppercase; letter-spacing: 1px; }
-
-        /* Grid & Slabs */
-        .workspace-grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(440px, 1fr)); 
-            gap: 4rem; 
+        /* 3D Background Canvas */
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            background: #f6f7f2;
+            pointer-events: none;
         }
 
-        .slab-dock {
-            position: relative;
-            height: 520px;
-            background: var(--panel-bg);
-            border: 1px solid var(--border-rail);
-            padding: 10px;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.05);
+        /* Fixed Navigation Buttons */
+        .nav-fixed-container {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            z-index: 1000;
+            display: flex;
+            gap: 1rem;
         }
 
-        .slab-canvas {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 1;
+        .top-nav-btn {
+            padding: 0.8rem 1.5rem;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0,0,0,0.1);
+            border-radius: 4px;
+            text-decoration: none;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text-dark);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .top-nav-btn:hover {
+            background: var(--primary-green);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.15);
         }
 
-        .slab-ui {
-            position: relative;
-            z-index: 10;
-            padding: 3rem;
-            height: 100%;
+        /* Dashboard Layout */
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+            padding: 6rem 3rem 2rem 3rem; /* Increased top padding since header is gone */
             display: flex;
             flex-direction: column;
-            pointer-events: none;
-            user-select: none;
+            gap: 3rem;
+            z-index: 2;
+        }
+/* ... existing styles ... */
+        .welcome-section {
+            text-align: center;
+            margin-bottom: 1rem;
+            animation: fadeInDown 0.8s ease-out;
         }
 
-        /* Engraved Typography */
-        .slab-name {
-            font-family: 'Outfit';
-            font-size: 1.6rem;
-            font-weight: 800;
-            color: var(--text-engrave);
-            text-shadow: -1px -1px 1px rgba(255,255,255,0.8), 1px 1px 1px rgba(0,0,0,0.2);
-            margin-bottom: 0.2rem;
-            letter-spacing: -0.2px;
-        }
-        .slab-role {
-            font-family: var(--tech-font);
-            font-size: 0.75rem;
+        .welcome-title {
+            font-size: 3rem;
             font-weight: 700;
-            color: var(--text-etch);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 3rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary-green);
+            background: linear-gradient(135deg, #294033 0%, #3d5a49 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
-        .specs-panel {
-            flex: 1;
+        .welcome-subtitle {
+            color: var(--text-gray);
+            font-size: 1.1rem;
+        }
+
+        /* Features Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
+            perspective: 1000px;
+        }
+
+        @media (max-width: 1200px) {
+            .features-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+            .nav-fixed-container {
+                top: 1rem;
+                right: 1rem;
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border-radius: 24px;
+            padding: 2.5rem;
             display: flex;
             flex-direction: column;
             gap: 1.5rem;
-        }
-
-        .spec-item {
-            display: flex;
-            flex-direction: column;
-            gap: 0.3rem;
-            border-bottom: 1px solid rgba(0,0,0,0.05);
-            padding-bottom: 0.8rem;
-        }
-        .spec-label {
-            font-family: var(--tech-font);
-            font-size: 0.65rem;
-            color: #999;
-            text-transform: uppercase;
-        }
-        .spec-value {
-            font-family: var(--tech-font);
-            font-size: 0.85rem;
-            font-weight: 700;
-            color: #444;
-        }
-
-        .corner-mark {
-            position: absolute;
-            top: 2rem; right: 2rem;
-            width: 30px; height: 30px;
-            border-top: 1px solid #ccc;
-            border-right: 1px solid #ccc;
-            opacity: 0.5;
-        }
-        .seal-mark {
-            position: absolute;
-            bottom: 3.5rem; right: 3rem;
-            font-family: var(--tech-font);
-            font-size: 0.55rem;
-            color: #bbb;
-            transform: rotate(-90deg);
-            transform-origin: bottom right;
-        }
-
-        .btn-carved {
-            margin-top: 2rem;
-            width: 100%;
-            padding: 1.4rem;
-            background: #e0e0db;
-            border: 1px solid #d1d1cc;
-            color: #555;
-            font-family: var(--tech-font);
-            font-size: 0.75rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            text-align: center;
-            box-shadow: inset 2px 2px 5px rgba(0,0,0,0.1), inset -2px -2px 5px rgba(255,255,255,0.8);
             cursor: pointer;
-            pointer-events: auto;
-            transition: all 0.2s ease;
-            text-decoration: none;
-            display: block;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            transform-style: preserve-3d;
+            animation: fadeInUp 0.8s ease-out backwards;
+            min-height: 280px;
+            justify-content: center;
         }
-        .btn-carved:hover {
-            color: var(--muted-green);
-            background: #e8e8e3;
-            box-shadow: inset 1px 1px 3px rgba(0,0,0,0.1), inset -1px -1px 3px rgba(255,255,255,0.8);
+
+        .feature-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+            background: rgba(255, 255, 255, 0.95);
         }
+
+        .icon-wrapper {
+            width: 70px;
+            height: 70px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            color: white;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            margin-bottom: 0.5rem;
+            transform: translateZ(20px);
+        }
+
+        /* Gradients for Icons */
+        .gradient-1 { background: linear-gradient(135deg, #6366f1, #4f46e5); }
+        .gradient-2 { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .gradient-3 { background: linear-gradient(135deg, #10b981, #059669); }
+        .gradient-4 { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+        .gradient-5 { background: linear-gradient(135deg, #ec4899, #db2777); }
+        .gradient-6 { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+        .gradient-7 { background: linear-gradient(135deg, #f43f5e, #e11d48); }
+        .gradient-8 { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-green);
+            transform: translateZ(15px);
+        }
+
+        .feature-card p {
+            color: var(--text-gray);
+            line-height: 1.6;
+            font-size: 0.95rem;
+            transform: translateZ(10px);
+        }
+
+        .card-meta {
+            margin-top: auto;
+            border-top: 1px solid rgba(0,0,0,0.05);
+            padding-top: 1rem;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: var(--text-gray);
+            font-weight: 500;
+        }
+
+        /* 3D Decorative Blob in Card */
+        .card-bg-3d {
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 150px;
+            height: 150px;
+            background: radial-gradient(circle, rgba(41, 64, 51, 0.05) 0%, rgba(255, 255, 255, 0) 70%);
+            border-radius: 50%;
+            z-index: 0;
+            transition: all 0.5s ease;
+        }
+
+        .feature-card:hover .card-bg-3d {
+            transform: scale(1.5);
+            background: radial-gradient(circle, rgba(41, 64, 51, 0.1) 0%, rgba(255, 255, 255, 0) 70%);
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: var(--bg-color); }
+        ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 5px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary-green); }
+
     </style>
 </head>
+
 <body>
-    <div id="global-bg"></div>
+    <!-- 3D Canvas Background -->
+    <div id="canvas-container"></div>
 
-    <header>
-        <a href="homeowner.php" class="logo">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="square" stroke-linejoin="miter"><path d="M3 3h18v18H3z"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/><path d="M15 3v18"/></svg>
-            CONSTRUCTA_REGISTRY
+    <!-- Navigation Buttons -->
+    <div class="nav-fixed-container">
+        <a href="homeowner.php" class="top-nav-btn">
+            <i class="fas fa-th-large"></i> Dashboard
         </a>
-        <nav>
-            <a href="homeowner.php">Terminal</a>
-            <a href="material_market.php">Inventory</a>
-            <a href="login.html">Logout</a>
-        </nav>
-    </header>
+        <a href="material_market.php" class="top-nav-btn">
+            <i class="fas fa-shopping-cart"></i> Market
+        </a>
+        <a href="login.html" class="top-nav-btn">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+    </div>
 
-    <main>
-        <div class="registry-header">
-            <h1>Engineering Registry</h1>
-            <p>Validated Technical Entities // System Status: Active</p>
+    <main class="dashboard-container">
+        <div class="welcome-section">
+            <h1 class="welcome-title">Engineer Directory</h1>
+            <p class="welcome-subtitle">Connect with vetted experts for your structural needs.</p>
         </div>
 
-        <div class="workspace-grid" id="registry-grid">
+        <div class="features-grid">
             <?php if ($result && $result->num_rows > 0): ?>
-                <?php while($row = $result->fetch_assoc()): 
-                    $exp = $row['experience'] ?: 5.0;
-                    $projects = rand(40, 95);
-                    $fee = number_format(rand(12, 45) * 100, 0);
+                <?php 
+                $gradients = ['gradient-1', 'gradient-2', 'gradient-3', 'gradient-4', 'gradient-5', 'gradient-6', 'gradient-7', 'gradient-8'];
+                $i = 0;
+                while($row = $result->fetch_assoc()): 
+                    $exp = $row['experience'] ?: 5;
+                    $gradientClass = $gradients[$i % count($gradients)];
+                    $i++;
                 ?>
-                    <div class="slab-dock" 
-                         data-name="<?php echo htmlspecialchars($row['name']); ?>"
-                         data-email="<?php echo $row['email']; ?>">
-                        
-                        <div class="slab-canvas"></div>
-                        <div class="corner-mark"></div>
-                        <div class="seal-mark">AUTH_VAL_2026</div>
-
-                        <div class="slab-ui">
-                            <h3 class="slab-name"><?php echo htmlspecialchars($row['name']); ?></h3>
-                            <p class="slab-role"><?php echo htmlspecialchars($row['specialization'] ?: 'Structural Specialist'); ?></p>
-                            
-                            <div class="specs-panel">
-                                <div class="spec-item">
-                                    <span class="spec-label">Experience Metric</span>
-                                    <span class="spec-value"><?php echo number_format($exp, 1); ?> YRS PRACTICE</span>
-                                </div>
-                                <div class="spec-item">
-                                    <span class="spec-label">Project Output</span>
-                                    <span class="spec-value"><?php echo $projects; ?> VERIFIED PROJECTS</span>
-                                </div>
-                                <div class="spec-item">
-                                    <span class="spec-label">Accuracy Metric</span>
-                                    <span class="spec-value">99.8% STRUCTURAL VALIDATION</span>
-                                </div>
-                                <div class="spec-item">
-                                    <span class="spec-label">System Value</span>
-                                    <span class="spec-value">ID_REF: <?php echo str_pad($row['id'], 3, '0', STR_PAD_LEFT); ?> // FEE_VAL: ₹<?php echo $fee; ?></span>
-                                </div>
+                    <!-- Engineer Card Style 1 -->
+                    <div class="feature-card tilt-card" onclick="window.location.href='contact_engineer.php?id=<?php echo $row['id']; ?>'">
+                        <div class="card-content">
+                            <div class="icon-wrapper <?php echo $gradientClass; ?>">
+                                <i class="fas fa-user-tie"></i>
                             </div>
-
-                            <a href="mailto:<?php echo $row['email']; ?>" class="btn-carved">Initialize Consultation</a>
+                            <h3><?php echo htmlspecialchars($row['name']); ?></h3>
+                            <p>
+                                <?php echo htmlspecialchars($row['specialization'] ?: 'Structural Engineer'); ?>
+                            </p>
+                            <div class="card-meta">
+                                <span><?php echo $exp; ?> Yrs Exp</span>
+                                <span>Verified</span>
+                            </div>
                         </div>
+                        <div class="card-bg-3d"></div>
                     </div>
                 <?php endwhile; ?>
             <?php else: ?>
-                <div style="grid-column: 1/-1; padding: 10rem; text-align: center; font-family: var(--tech-font); color: #999; font-size: 0.7rem;">
-                    [SYSTEM_LOG: NO_ENTITIES_IDENTIFIED_IN_ACTIVE_GRID]
+                <div style="grid-column: 1/-1; text-align: center; padding: 4rem; color: var(--text-gray);">
+                    <i class="fas fa-search" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                    <h3>No Engineers Found</h3>
+                    <p>There are currently no active engineers in the directory.</p>
                 </div>
             <?php endif; ?>
         </div>
     </main>
 
-    <!-- Scripts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <script src="js/architectural_bg.js"></script>
-    
     <script>
-        if(window.initArchitecturalBackground) initArchitecturalBackground('global-bg');
+        document.addEventListener('DOMContentLoaded', () => {
+            // === 3D TILT EFFECT ===
+            const cards = document.querySelectorAll('.tilt-card');
+            cards.forEach(card => {
+                card.addEventListener('mousemove', (e) => {
+                    const rect = card.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    const centerX = rect.width / 2;
+                    const centerY = rect.height / 2;
+                    const rotateX = ((y - centerY) / centerY) * -15; // Increased tilt
+                    const rotateY = ((x - centerX) / centerX) * 15; // Increased tilt
+                    card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.03) translateY(-15px)`;
+                });
+                card.addEventListener('mouseleave', () => {
+                    card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale(1) translateY(0)';
+                });
+            });
 
-        class DataSlabModule {
-            constructor(el) {
-                this.el = el;
-                this.container = el.querySelector('.slab-canvas');
+            // === 3D BACKGROUND (Cinematic Intro) ===
+            const initBackground3D = () => {
+                const container = document.getElementById('canvas-container');
+                if (!container) return;
+                const scene = new THREE.Scene();
+                scene.background = new THREE.Color('#f6f7f2');
+                const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
                 
-                this.scene = new THREE.Scene();
-                this.camera = new THREE.PerspectiveCamera(40, this.container.offsetWidth / this.container.offsetHeight, 0.1, 100);
-                this.camera.position.z = 6;
+                // Initial Camera Position (Zoomed Out)
+                camera.position.set(0, 20, 40);
+                
+                const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                container.appendChild(renderer.domElement);
+                
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+                scene.add(ambientLight);
+                
+                const mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                mainLight.position.set(10, 20, 10);
+                scene.add(mainLight);
 
-                this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-                this.renderer.setSize(this.container.offsetWidth, this.container.offsetHeight);
-                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-                this.container.appendChild(this.renderer.domElement);
-
-                // Slab Geometry (Thick Physical Slab)
-                const geometry = new THREE.BoxGeometry(4.6, 6.2, 0.4);
-                const material = new THREE.MeshStandardMaterial({ 
-                    color: 0xffffff, 
-                    roughness: 0.9, 
-                    metalness: 0.02 
+                // Grid of buildings
+                const floorGroup = new THREE.Group();
+                scene.add(floorGroup);
+                
+                const buildMat = new THREE.MeshPhongMaterial({ 
+                    color: 0x294033, 
+                    transparent: true, 
+                    opacity: 0.1, 
+                    side: THREE.DoubleSide 
                 });
-                this.slab = new THREE.Mesh(geometry, material);
-                this.scene.add(this.slab);
-
-                // Structural Rails (Docking feel)
-                const railLines = new THREE.LineSegments(
-                    new THREE.EdgesGeometry(new THREE.BoxGeometry(4.8, 6.4, 0.1)),
-                    new THREE.LineBasicMaterial({ color: 0xd1d1cc, transparent: true, opacity: 0.5 })
-                );
-                railLines.position.z = -0.3;
-                this.scene.add(railLines);
-
-                // Lighting
-                const ambient = new THREE.AmbientLight(0xffffff, 0.7);
-                this.scene.add(ambient);
-
-                this.frontLight = new THREE.DirectionalLight(0xffffff, 0.3);
-                this.frontLight.position.set(0, 0, 5);
-                this.scene.add(this.frontLight);
-
-                this.bindEvents();
-                this.animate();
-            }
-
-            bindEvents() {
-                this.el.addEventListener('mousemove', (e) => {
-                    const rect = this.el.getBoundingClientRect();
-                    const x = (e.clientX - rect.left) / rect.width - 0.5;
-                    const y = (e.clientY - rect.top) / rect.height - 0.5;
-
-                    // Forward movement on Z-axis (Machinery alignment feel)
-                    gsap.to(this.slab.position, {
-                        z: 0.15,
-                        x: x * 0.05,
-                        y: -y * 0.05,
-                        duration: 0.6,
-                        ease: 'power2.inOut'
-                    });
-
-                    // Light intensification
-                    gsap.to(this.frontLight, {
-                        intensity: 0.6,
-                        duration: 0.4
-                    });
+                const edgeMat = new THREE.LineBasicMaterial({ 
+                    color: 0x294033, 
+                    transparent: true, 
+                    opacity: 0.2 
                 });
 
-                this.el.addEventListener('mouseleave', () => {
-                    gsap.to(this.slab.position, {
-                        z: 0, x: 0, y: 0,
-                        duration: 1.2,
-                        ease: 'power3.out'
-                    });
-                    gsap.to(this.frontLight, {
-                        intensity: 0.3,
-                        duration: 0.8
+                const gridSize = 8;
+                const spacing = 4;
+                const buildings = [];
+
+                for (let x = -gridSize; x <= gridSize; x++) {
+                    for (let z = -gridSize; z <= gridSize; z++) {
+                        const h = Math.random() * 4 + 1;
+                        const geo = new THREE.BoxGeometry(1.5, h, 1.5);
+                        const mesh = new THREE.Mesh(geo, buildMat);
+                        mesh.position.y = h / 2;
+                        
+                        const edges = new THREE.EdgesGeometry(geo);
+                        const line = new THREE.LineSegments(edges, edgeMat);
+                        line.position.y = h / 2;
+                        
+                        const building = new THREE.Group();
+                        building.add(mesh);
+                        building.add(line);
+                        
+                        // Set initial position (below ground for intro)
+                        building.position.set(x * spacing, -20, z * spacing);
+                        
+                        floorGroup.add(building);
+                        buildings.push({
+                            obj: building,
+                            targetY: -5,
+                            delay: Math.random() * 1
+                        });
+                    }
+                }
+
+                // INTRO ANIMATION SEQUENCE
+                const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
+
+                // 1. Camera swoop in
+                tl.to(camera.position, { z: 10, y: 5, duration: 2.5, ease: "power2.inOut" });
+
+                // 2. City rises from below
+                buildings.forEach(b => {
+                    gsap.to(b.obj.position, {
+                        y: b.targetY,
+                        duration: 1.5,
+                        delay: 0.5 + b.delay,
+                        ease: "back.out(1.2)"
                     });
                 });
-            }
 
-            animate() {
-                requestAnimationFrame(() => this.animate());
-                this.renderer.render(this.scene, this.camera);
-            }
-        }
+                // Parallax Mouse Effect
+                let mouseX = 0, mouseY = 0;
+                document.addEventListener('mousemove', (e) => {
+                    mouseX = (e.clientX - window.innerWidth / 2) * 0.0005;
+                    mouseY = (e.clientY - window.innerHeight / 2) * 0.0005;
+                });
 
-        // Initialize all slabs
-        document.querySelectorAll('.slab-dock').forEach(dock => new DataSlabModule(dock));
+                const animate = () => {
+                    requestAnimationFrame(animate);
+                    
+                    // City rotation
+                    if(tl.progress() > 0.3) {
+                        floorGroup.rotation.y += 0.001;
+                        
+                        // Mouse effect
+                        floorGroup.rotation.x += 0.05 * (mouseY - floorGroup.rotation.x);
+                        floorGroup.rotation.y += 0.05 * (mouseX - floorGroup.rotation.y);
+                    }
+                    
+                    renderer.render(scene, camera);
+                };
+                animate();
+
+                window.addEventListener('resize', () => {
+                    camera.aspect = window.innerWidth / window.innerHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                });
+            };
+            if (typeof THREE !== 'undefined') initBackground3D();
+        });
     </script>
 </body>
 </html>

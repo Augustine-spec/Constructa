@@ -10,7 +10,7 @@ session_start();
     <title>Dynamic Material Market - Constructa</title>
     <!-- Fonts & Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Three.js Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -56,56 +56,41 @@ session_start();
             pointer-events: none;
         }
 
-        /* Navbar */
-        header {
-            padding: 1.5rem 3rem;
+        /* Fixed Navigation Buttons */
+        .nav-fixed-container {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            z-index: 1000;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            max-width: 1600px;
-            margin: 0 auto;
-            width: 100%;
-            background: rgba(246, 247, 242, 0.8);
-            backdrop-filter: blur(12px);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            border-bottom: 1px solid rgba(0,0,0,0.05);
+            gap: 1rem;
         }
 
-        .logo {
+        .top-nav-btn {
+            padding: 0.8rem 1.5rem;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0,0,0,0.1);
+            border-radius: 4px;
+            text-decoration: none;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text-dark);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+            transition: all 0.3s ease;
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: var(--primary-green);
-            text-decoration: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
         }
-        .logo i { font-size: 1.5rem; }
-
-        nav { display: flex; gap: 2rem; align-items: center; }
-
-        nav a {
-            text-decoration: none;
-            color: var(--text-dark);
-            font-weight: 500;
-            font-size: 0.95rem;
-            transition: color 0.2s;
-        }
-        nav a:hover { color: var(--primary-green); }
-
-        .btn-start {
-            background-color: var(--primary-green);
+        .top-nav-btn:hover {
+            background: var(--primary-green);
             color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 6px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 0.95rem;
-            transition: background-color 0.2s;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.15);
         }
-        .btn-start:hover { background-color: var(--accent-green); }
 
         /* Layout */
         .layout-container {
@@ -113,7 +98,7 @@ session_start();
             max-width: 1600px;
             margin: 0 auto;
             width: 100%;
-            padding: 2rem;
+            padding: 6rem 2rem 2rem 2rem; /* Increased top padding */
             gap: 2rem;
         }
 
@@ -126,7 +111,7 @@ session_start();
             padding: 1.5rem;
             height: calc(100vh - 120px);
             position: sticky;
-            top: 100px;
+            top: 2rem; /* Adjusted top since header is gone */
             overflow-y: auto;
             border: 1px solid rgba(255,255,255,0.6);
         }
@@ -484,24 +469,29 @@ session_start();
 <body>
     <div id="bg-canvas-container"></div>
 
-    <header>
-        <a href="landingpage.html" class="logo">
-            <i class="far fa-building"></i>
-            Constructa
+    <div class="nav-fixed-container">
+        <a href="landingpage.html" class="top-nav-btn">
+            <i class="fas fa-home"></i> Home
         </a>
-        <nav>
-            <a href="landingpage.html">Home</a>
-            <?php if(isset($_SESSION['user_id'])): ?>
-                <?php if($_SESSION['role'] === 'homeowner'): ?>
-                    <a href="homeowner.php" class="btn-start">Dashboard</a>
-                <?php else: ?>
-                    <a href="engineer.php" class="btn-start">Dashboard</a>
-                <?php endif; ?>
+        <?php if(isset($_SESSION['user_id'])): ?>
+            <?php if($_SESSION['role'] === 'homeowner'): ?>
+                <a href="homeowner.php" class="top-nav-btn">
+                    <i class="fas fa-th-large"></i> Dashboard
+                </a>
             <?php else: ?>
-                <a href="login.html" class="btn-start">Login</a>
+                <a href="engineer.php" class="top-nav-btn">
+                    <i class="fas fa-th-large"></i> Dashboard
+                </a>
             <?php endif; ?>
-        </nav>
-    </header>
+            <a href="login.html" class="top-nav-btn">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        <?php else: ?>
+            <a href="login.html" class="top-nav-btn">
+                <i class="fas fa-sign-in-alt"></i> Login
+            </a>
+        <?php endif; ?>
+    </div>
 
     <div class="layout-container">
         <!-- Sidebar Navigation -->

@@ -14,7 +14,7 @@ if (!isset($_SESSION['user_id'])) {
     <title>AI Architect Studio | Constructa</title>
     
     <!-- Fonts & Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Libraries -->
@@ -58,49 +58,71 @@ if (!isset($_SESSION['user_id'])) {
             background: #f6f7f2;
         }
 
-        /* Nav */
-        nav {
-            position: fixed; 
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 72px;
-            background: rgba(255,255,255,0.8); 
-            backdrop-filter: var(--surface-blur);
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center;
-            padding: 0 40px; 
-            border-bottom: 1px solid var(--border); 
+        /* Fixed Navigation Buttons */
+        .nav-fixed-container {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
             z-index: 1000;
+            display: flex;
+            gap: 1rem;
         }
-        .brand { 
-            font-family: 'Space Grotesk', sans-serif; 
-            font-size: 1.4rem; 
-            font-weight: 700; 
-            color: var(--primary); 
-            text-decoration: none; 
-            display: flex; 
-            align-items: center; 
-            gap: 10px; 
+
+        .top-nav-btn {
+            padding: 0.8rem 1.5rem;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0,0,0,0.1);
+            border-radius: 4px;
+            text-decoration: none;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text-main);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
         }
-        .back-link { 
-            text-decoration: none; 
-            color: var(--text-muted); 
-            font-size: 0.9rem; 
-            font-weight: 500; 
-            transition:0.3s; 
+        .top-nav-btn:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.15);
         }
-        .back-link:hover { color: var(--primary); }
+        
+        /* Floating Brand */
+        .brand-floating {
+            position: fixed;
+            top: 2rem;
+            left: 2rem;
+            z-index: 1000;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255,255,255,0.8);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            backdrop-filter: blur(5px);
+        }
 
         /* Main Layout */
         #app-container {
             position: relative; 
             z-index: 10;
             width: 100%; 
-            height: calc(100vh - 72px); 
-            top: 72px;
+            height: 100vh;
+            top: 0;
             display: flex;
+            padding-top: 6rem; /* Push content down slightly or handle with internal padding */
         }
 
         /* Left Panel */
@@ -108,12 +130,13 @@ if (!isset($_SESSION['user_id'])) {
             width: 480px;
             background: var(--surface);
             backdrop-filter: var(--surface-blur);
-            height: 100%;
+            height: calc(100vh - 6rem); /* Subtract top padding */
             border-right: 1px solid var(--border);
             display: flex; 
             flex-direction: column;
             box-shadow: 10px 0 40px rgba(0,0,0,0.05);
             transition: width 0.3s ease;
+            border-top-right-radius: 12px; /* Visual refinement */
         }
 
         /* Progress Header */
@@ -908,10 +931,21 @@ if (!isset($_SESSION['user_id'])) {
         <div class="gen-text">Generating Conceptual Design...</div>
     </div>
 
-    <nav>
-        <a href="#" class="brand"><i class="fas fa-drafting-compass"></i>Constructa <span style="font-weight:400; font-size:1rem; opacity:0.7;">| AI Architect Studio</span></a>
-        <a href="homeowner.php" class="back-link">Exit to Dashboard</a>
-    </nav>
+    <a href="homeowner.php" class="brand-floating">
+        <i class="far fa-building"></i> Constructa AI
+    </a>
+
+    <div class="nav-fixed-container">
+        <a href="homeowner.php" class="top-nav-btn">
+            <i class="fas fa-th-large"></i> Dashboard
+        </a>
+        <a href="material_market.php" class="top-nav-btn">
+            <i class="fas fa-shopping-cart"></i> Market
+        </a>
+        <a href="login.html" class="top-nav-btn">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+    </div>
 
     <div id="app-container">
         
@@ -1250,6 +1284,21 @@ if (!isset($_SESSION['user_id'])) {
                 <button class="btn-pdf" onclick="downloadPlan()"><i class="fas fa-file-pdf"></i> Download PDF</button>
                 <button class="btn-estimate-budget" onclick="location.href='budget_calculator.php'"><i class="fas fa-calculator"></i> Estimate Budget</button>
             </div>
+            <a href="homeowner.php" class="brand-floating">
+        <i class="far fa-building"></i> Constructa AI
+    </a>
+
+    <div class="nav-fixed-container">
+        <a href="homeowner.php" class="top-nav-btn">
+            <i class="fas fa-th-large"></i> Dashboard
+        </a>
+        <a href="material_market.php" class="top-nav-btn">
+            <i class="fas fa-shopping-cart"></i> Market
+        </a>
+        <a href="login.html" class="top-nav-btn">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+    </div>
 
             <!-- Live Summary -->
             <div class="live-summary">
