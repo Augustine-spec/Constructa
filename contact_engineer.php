@@ -119,28 +119,31 @@ $homeowner_name = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Home
         .nav-btn {
             background: white;
             border: 1px solid var(--border-color);
-            padding: 0.6rem 1.2rem;
-            border-radius: 8px;
-            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 800;
             font-size: 0.85rem;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.1em;
             text-transform: uppercase;
             color: var(--text-main);
+            text-decoration: none;
             display: inline-flex;
             align-items: center;
-            gap: 0.5rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            gap: 0.75rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: all 0.2s ease;
         }
 
         .nav-btn:hover {
-            background: var(--bg-color);
-            border-color: var(--primary);
-            color: var(--primary);
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            background: #fff;
+            border-color: var(--text-main);
+            color: var(--text-main);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
 
         .nav-btn i {
-            font-size: 0.9rem;
+            font-size: 1rem;
         }
 
         /* Main Layout */
@@ -685,7 +688,7 @@ $homeowner_name = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Home
             <i class="far fa-building"></i>
             Constructa
         </a>
-        <a href="engineer_directory.php" class="nav-link nav-btn">
+        <a href="engineer_directory.php" class="nav-btn">
             <i class="fas fa-arrow-left"></i> BACK TO DIRECTORY
         </a>
     </nav>

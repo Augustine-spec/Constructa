@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Cart Test - Constructa</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <!-- PREMIUM CART CSS -->
+    <link rel="stylesheet" href="css/premium_cart.css">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .test-container {
+            max-width: 800px;
+            width: 100%;
+            background: white;
+            border-radius: 24px;
+            padding: 3rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 2rem;
+        }
+
+        .test-grid {
+            display: grid;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .test-item {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 2px solid #e9ecef;
+        }
+
+        .test-item h3 {
+            font-size: 1.2rem;
+            margin-bottom: 0.75rem;
+            color: #212529;
+        }
+
+        .test-product {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 12px;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .test-product:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .test-product-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #294033 0%, #3d5a49 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.8rem;
+        }
+
+        .test-product-details {
+            flex: 1;
+        }
+
+        .test-product-name {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .test-product-price {
+            color: #294033;
+            font-weight: 600;
+        }
+
+        .test-add-btn {
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(135deg, #294033 0%, #3d5a49 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .test-add-btn:hover {
+            transform: scaleX, 105);
+            box-shadow: 0 4px 12px rgba(41, 64, 51, 0.3);
+        }
+
+        .cart-toggle-btn {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 1.8rem;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .cart-toggle-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 28px;
+            height: 28px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: 700;
+            border: 3px solid white;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #10b981;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .test-note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 2rem;
+        }
+
+        .test-note strong {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #856404;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="test-container">
+        <h1>🎨 Premium Cart Test</h1>
+        <p class="subtitle">Test the premium 3D shopping cart with live previews</p>
+
+        <div class="status-indicator">
+            <div class="status-dot"></div>
+            <span>Premium Cart System Active</span>
+        </div>
+
+        <div class="test-grid">
+            <div class="test-item">
+                <h3>Test Product 1</h3>
+                <div class="test-product" data-product-id="test-001" data-product-name="TMT Steel Bars (Fe-550)"
+                    data-product-price="65" data-product-unit="per kg">
+                    <div class="test-product-icon">
+                        <i class="fas fa-bars"></i>
+                    </div>
+                    <div class="test-product-details">
+                        <div class="test-product-name">TMT Steel Bars (Fe-550)</div>
+                        <div class="test-product-price">₹65 per kg</div>
+                    </div>
+                    <button class="test-add-btn" onclick="addToCart(event, this.closest('.test-product'))">
+                        <i class="fas fa-cart-plus"></i> Add to Cart
+                    </button>
+                </div>
+            </div>
+
+            <div class="test-item">
+                <h3>Test Product 2</h3>
+                <div class="test-product" data-product-id="test-002" data-product-name="Premium Cement (OPC 53)"
+                    data-product-price="420" data-product-unit="per bag">
+                    <div class="test-product-icon">
+                        <i class="fas fa-box"></i>
+                    </div>
+                    <div class="test-product-details">
+                        <div class="test-product-name">Premium Cement (OPC 53)</div>
+                        <div class="test-product-price">₹420 per bag</div>
+                    </div>
+                    <button class="test-add-btn" onclick="addToCart(event, this.closest('.test-product'))">
+                        <i class="fas fa-cart-plus"></i> Add to Cart
+                    </button>
+                </div>
+            </div>
+
+            <div class="test-item">
+                <h3>Test Product 3</h3>
+                <div class="test-product" data-product-id="test-003" data-product-name="Red Clay Bricks"
+                    data-product-price="8" data-product-unit="per piece">
+                    <div class="test-product-icon">
+                        <i class="fas fa-th-large"></i>
+                    </div>
+                    <div class="test-product-details">
+                        <div class="test-product-name">Red Clay Bricks</div>
+                        <div class="test-product-price">₹8 per piece</div>
+                    </div>
+                    <button class="test-add-btn" onclick="addToCart(event, this.closest('.test-product'))">
+                        <i class="fas fa-cart-plus"></i> Add to Cart
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-note">
+            <strong>✨ What to Expect:</strong>
+            Click "Add to Cart" then click the floating cart button (bottom-right).
+            You should see:
+            <ul style="margin-top: 0.5rem; margin-left: 1.5rem;">
+                <li>Glassmorphism frosted glass background</li>
+                <li>3D floating product cards with depth shadows</li>
+                <li>Live rotating 3D models (if Three.js loaded)</li>
+                <li>Trust badges (Secure, Fast Delivery, Quality)</li>
+                <li>Smooth slide-in animation</li>
+                <li>Animated price updates</li>
+                <li>Premium checkout button gradient</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Floating Cart Button -->
+    <button class="cart-toggle-btn" onclick="toggleCart()">
+        <i class="fas fa-shopping-cart"></i>
+        <span class="cart-badge" id="cartBadge">0</span>
+    </button>
+
+    <!-- Cart Overlay -->
+    <div id="cartOverlay" onclick="toggleCart()"></div>
+
+    <!-- Premium Cart Panel -->
+    <div id="cartPanel">
+        <div class="cart-header">
+            <div class="cart-title-row">
+                <h2 class="cart-title">
+                    <span>C</span><span>A</span><span>R</span><span>T</span>
+                </h2>
+            </div>
+            <button class="cart-close-btn" onclick="toggleCart()">
+                <i class="fas fa-times"></i>
+            </button>
+            <p class="cart-subtitle" id="cartItemCount">0 items</p>
+
+            <div class="cart-trust-badges">
+                <div class="trust-badge">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Secure</span>
+                </div>
+                <div class="trust-badge">
+                    <i class="fas fa-truck"></i>
+                    <span>Fast Delivery</span>
+                </div>
+                <div class="trust-badge">
+                    <i class="fas fa-certificate"></i>
+                    <span>Quality Assured</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="cart-items-wrapper">
+            <div id="cartItemsContainer">
+                <div class="cart-empty">
+                    <i class="fas fa-shopping-cart"></i>
+                    <p>Your cart is empty</p>
+                    <p style="font-size: 0.9rem; color: #888;">Add construction materials to get started!</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="cart-summary">
+            <div class="summary-row subtotal">
+                <span class="summary-label">Subtotal</span>
+                <span class="summary-value" id="cartSubtotal">₹0</span>
+            </div>
+
+            <div class="summary-row">
+                <span class="summary-label">
+                    <i class="fas fa-info-circle" style="font-size: 0.85rem; opacity: 0.7;"></i>
+                    Taxes & delivery calculated at checkout
+                </span>
+            </div>
+
+            <div class="summary-row total">
+                <span class="summary-label">Total</span>
+                <span class="summary-value" id="cartTotalAmount">₹0</span>
+            </div>
+
+            <button class="checkout-btn" id="checkoutBtn" onclick="proceedToCheckout()" disabled>
+                <i class="fas fa-lock"></i>
+                Proceed to Checkout
+                <i class="fas fa-arrow-right"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Premium Cart JavaScript -->
+    <script src="js/shopping_cart.js"></script>
+</body>
+
+</html>

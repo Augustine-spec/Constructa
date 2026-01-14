@@ -84,12 +84,37 @@ session_start();
             align-items: center;
             gap: 0.5rem;
             box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            cursor: pointer;
+            position: relative;
         }
         .top-nav-btn:hover {
             background: var(--primary-green);
             color: white;
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+        }
+
+        /* Cart Navigation Button Badge */
+        .cart-badge-nav {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #dc2626;
+            color: white;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 700;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .cart-badge-nav.show {
+            display: flex;
         }
 
         /* Layout */
@@ -260,13 +285,49 @@ session_start();
             margin-top: auto;
             display: flex;
             justify-content: space-between;
-            align-items: flex-end;
+            align-items: center;
             padding-top: 1rem;
             border-top: 1px solid #f0f0f0;
+            gap: 1rem;
+        }
+
+        .price-info {
+            display: flex;
+            flex-direction: column;
         }
 
         .price { font-size: 1.4rem; font-weight: 700; color: var(--primary-green); }
         .unit { font-size: 0.85rem; color: #888; }
+
+        .add-to-cart-btn {
+            padding: 0.6rem 1.2rem;
+            background: var(--primary-green);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            white-space: nowrap;
+        }
+
+        .add-to-cart-btn:hover {
+            background: var(--accent-green);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(41, 64, 51, 0.3);
+        }
+
+        .add-to-cart-btn:active {
+            transform: translateY(0);
+        }
+
+        .add-to-cart-btn i {
+            font-size: 1rem;
+        }
 
         /* Detail Modal */
         #product-3d-modal {
@@ -464,7 +525,54 @@ session_start();
             pointer-events: none;
         }
 
+        /* Shopping Cart Styles */
+        .cart-float-btn {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 70px;
+            height: 70px;
+            background: var(--primary-green);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(41, 64, 51, 0.4);
+            transition: all 0.3s ease;
+            z-index: 1500;
+            display: none; /* Hidden - using top nav button instead */
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .cart-float-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 32px rgba(41, 64, 51, 0.5);
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #dc2626;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            border: 3px solid white;
+        }
+
+
     </style>
+    <link rel="stylesheet" href="css/premium_cart.css">
 </head>
 <body>
     <div id="bg-canvas-container"></div>
@@ -483,10 +591,18 @@ session_start();
                     <i class="fas fa-th-large"></i> Dashboard
                 </a>
             <?php endif; ?>
+            <button class="top-nav-btn cart-nav-btn" onclick="toggleCart()">
+                <i class="fas fa-shopping-cart"></i> Cart
+                <span class="cart-badge-nav" id="cartBadgeNav">0</span>
+            </button>
             <a href="login.html" class="top-nav-btn">
                 <i class="fas fa-sign-out-alt"></i> Logout
             </a>
         <?php else: ?>
+            <button class="top-nav-btn cart-nav-btn" onclick="toggleCart()">
+                <i class="fas fa-shopping-cart"></i> Cart
+                <span class="cart-badge-nav" id="cartBadgeNavGuest">0</span>
+            </button>
             <a href="login.html" class="top-nav-btn">
                 <i class="fas fa-sign-in-alt"></i> Login
             </a>
@@ -522,26 +638,36 @@ session_start();
             <section id="structural" class="category-section active">
                 <h2 class="section-title">Structural</h2>
                 <div class="market-grid">
-                    <div class="material-card">
+                    <div class="material-card" data-product-id="1" data-product-name="TMT Steel Bars (Fe-550)" data-product-price="65" data-product-unit="per kg">
                         <div class="product-viewer" data-type="steel" data-color="#5a6872">
                             <span class="viewer-hint">Interactive 3D</span>
                         </div>
                         <div class="material-name">TMT Steel Bars (Fe-550)</div>
                         <div class="spec">High tensile strength for core structure.</div>
                         <div class="price-row">
-                            <div><div class="price">&#8377;65</div><span class="unit">per kg</span></div>
-                            
+                            <div class="price-info">
+                                <div class="price">&#8377;65</div>
+                                <span class="unit">per kg</span>
+                            </div>
+                            <button class="add-to-cart-btn" onclick="addToCart(event, this.closest('.material-card'))">
+                                <i class="fas fa-cart-plus"></i> Add
+                            </button>
                         </div>
                     </div>
-                    <div class="material-card">
+                    <div class="material-card" data-product-id="2" data-product-name="I-Beam Girder" data-product-price="82" data-product-unit="per kg">
                         <div class="product-viewer" data-type="girder" data-color="#b83b3b">
                             <span class="viewer-hint">Interactive 3D</span>
                         </div>
                         <div class="material-name">I-Beam Girder</div>
                         <div class="spec">Heavy duty structural steel beam.</div>
                         <div class="price-row">
-                            <div><div class="price">&#8377;82</div><span class="unit">per kg</span></div>
-                            
+                            <div class="price-info">
+                                <div class="price">&#8377;82</div>
+                                <span class="unit">per kg</span>
+                            </div>
+                            <button class="add-to-cart-btn" onclick="addToCart(event, this.closest('.material-card'))">
+                                <i class="fas fa-cart-plus"></i> Add
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -551,26 +677,36 @@ session_start();
             <section id="foundation" class="category-section">
                 <h2 class="section-title">Foundation & RCC</h2>
                 <div class="market-grid">
-                     <div class="material-card">
+                     <div class="material-card" data-product-id="3" data-product-name="OPC 53 Grade Cement" data-product-price="390" data-product-unit="per bag">
                         <div class="product-viewer" data-type="cement" data-color="#a0a09a">
                             <span class="viewer-hint">Interactive 3D</span>
                         </div>
                         <div class="material-name">OPC 53 Grade Cement</div>
                         <div class="spec">Fast setting, high strength cement.</div>
                         <div class="price-row">
-                            <div><div class="price">&#8377;390</div><span class="unit">per bag</span></div>
-                            
+                            <div class="price-info">
+                                <div class="price">&#8377;390</div>
+                                <span class="unit">per bag</span>
+                            </div>
+                            <button class="add-to-cart-btn" onclick="addToCart(event, this.closest('.material-card'))">
+                                <i class="fas fa-cart-plus"></i> Add
+                            </button>
                         </div>
                     </div>
-                    <div class="material-card">
+                    <div class="material-card" data-product-id="4" data-product-name="20mm Aggregate" data-product-price="45" data-product-unit="per cft">
                         <div class="product-viewer" data-type="gravel" data-color="#777">
                             <span class="viewer-hint">Interactive 3D</span>
                         </div>
                         <div class="material-name">20mm Aggregate</div>
                         <div class="spec">Blue metal for concrete mixing.</div>
                         <div class="price-row">
-                            <div><div class="price">&#8377;45</div><span class="unit">per cft</span></div>
-                            
+                            <div class="price-info">
+                                <div class="price">&#8377;45</div>
+                                <span class="unit">per cft</span>
+                            </div>
+                            <button class="add-to-cart-btn" onclick="addToCart(event, this.closest('.material-card'))">
+                                <i class="fas fa-cart-plus"></i> Add
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -580,26 +716,36 @@ session_start();
             <section id="masonry" class="category-section">
                 <h2 class="section-title">Masonry</h2>
                 <div class="market-grid">
-                    <div class="material-card">
+                    <div class="material-card" data-product-id="5" data-product-name="Red Clay Bricks" data-product-price="12" data-product-unit="per piece">
                         <div class="product-viewer" data-type="brick" data-color="#a53f3f">
                             <span class="viewer-hint">Interactive 3D</span>
                         </div>
                         <div class="material-name">Red Clay Bricks</div>
                         <div class="spec">Traditional kiln burnt bricks.</div>
                         <div class="price-row">
-                            <div><div class="price">&#8377;12</div><span class="unit">per piece</span></div>
-                            
+                            <div class="price-info">
+                                <div class="price">&#8377;12</div>
+                                <span class="unit">per piece</span>
+                            </div>
+                            <button class="add-to-cart-btn" onclick="addToCart(event, this.closest('.material-card'))">
+                                <i class="fas fa-cart-plus"></i> Add
+                            </button>
                         </div>
                     </div>
-                    <div class="material-card">
+                    <div class="material-card" data-product-id="6" data-product-name="Solid Concrete Blocks" data-product-price="38" data-product-unit="per block">
                         <div class="product-viewer" data-type="block" data-color="#999">
                             <span class="viewer-hint">Interactive 3D</span>
                         </div>
                         <div class="material-name">Solid Concrete Blocks</div>
                         <div class="spec">6 Inch solid blocks for load bearing.</div>
                         <div class="price-row">
-                            <div><div class="price">&#8377;38</div><span class="unit">per block</span></div>
-                            
+                            <div class="price-info">
+                                <div class="price">&#8377;38</div>
+                                <span class="unit">per block</span>
+                            </div>
+                            <button class="add-to-cart-btn" onclick="addToCart(event, this.closest('.material-card'))">
+                                <i class="fas fa-cart-plus"></i> Add
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -609,26 +755,36 @@ session_start();
             <section id="roofing" class="category-section">
                 <h2 class="section-title">Roofing & Waterproofing</h2>
                 <div class="market-grid">
-                    <div class="material-card">
+                    <div class="material-card" data-product-id="7" data-product-name="Polycarbonate Sheet" data-product-price="85" data-product-unit="per sq.ft">
                         <div class="product-viewer" data-type="sheet" data-color="#3b82f6">
                             <span class="viewer-hint">Interactive 3D</span>
                         </div>
                         <div class="material-name">Polycarbonate Sheet</div>
                         <div class="spec">UV coated roofing sheet.</div>
                         <div class="price-row">
-                            <div><div class="price">&#8377;85</div><span class="unit">per sq.ft</span></div>
-                            
+                            <div class="price-info">
+                                <div class="price">&#8377;85</div>
+                                <span class="unit">per sq.ft</span>
+                            </div>
+                            <button class="add-to-cart-btn" onclick="addToCart(event, this.closest('.material-card'))">
+                                <i class="fas fa-cart-plus"></i> Add
+                            </button>
                         </div>
                     </div>
-                    <div class="material-card">
+                    <div class="material-card" data-product-id="8" data-product-name="Waterproof Chemical" data-product-price="4200" data-product-unit="per bucket">
                         <div class="product-viewer" data-type="bucket" data-color="#f59e0b">
                             <span class="viewer-hint">Interactive 3D</span>
                         </div>
                         <div class="material-name">Waterproof Chemical</div>
                         <div class="spec">Dr. Fixit 20L Bucket</div>
                         <div class="price-row">
-                            <div><div class="price">&#8377;4,200</div><span class="unit">per bucket</span></div>
-                            
+                            <div class="price-info">
+                                <div class="price">&#8377;4,200</div>
+                                <span class="unit">per bucket</span>
+                            </div>
+                            <button class="add-to-cart-btn" onclick="addToCart(event, this.closest('.material-card'))">
+                                <i class="fas fa-cart-plus"></i> Add
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -638,26 +794,36 @@ session_start();
              <section id="flooring" class="category-section">
                 <h2 class="section-title">Flooring</h2>
                 <div class="market-grid">
-                    <div class="material-card">
+                    <div class="material-card" data-product-id="9" data-product-name="Vitrified Tiles (2x2)" data-product-price="55" data-product-unit="per sq.ft">
                         <div class="product-viewer" data-type="tile" data-color="#e2e8f0">
                             <span class="viewer-hint">Interactive 3D</span>
                         </div>
                         <div class="material-name">Vitrified Tiles (2x2)</div>
                         <div class="spec">Double charge, glossy finish.</div>
                         <div class="price-row">
-                            <div><div class="price">&#8377;55</div><span class="unit">per sq.ft</span></div>
-                            
+                            <div class="price-info">
+                                <div class="price">&#8377;55</div>
+                                <span class="unit">per sq.ft</span>
+                            </div>
+                            <button class="add-to-cart-btn" onclick="addToCart(event, this.closest('.material-card'))">
+                                <i class="fas fa-cart-plus"></i> Add
+                            </button>
                         </div>
                     </div>
-                    <div class="material-card">
+                    <div class="material-card" data-product-id="10" data-product-name="Granite Slab" data-product-price="140" data-product-unit="per sq.ft">
                         <div class="product-viewer" data-type="tile" data-color="#1e1e1e">
                             <span class="viewer-hint">Interactive 3D</span>
                         </div>
                         <div class="material-name">Granite Slab</div>
                         <div class="spec">Black Galaxy Granite.</div>
                         <div class="price-row">
-                            <div><div class="price">&#8377;140</div><span class="unit">per sq.ft</span></div>
-                            
+                            <div class="price-info">
+                                <div class="price">&#8377;140</div>
+                                <span class="unit">per sq.ft</span>
+                            </div>
+                            <button class="add-to-cart-btn" onclick="addToCart(event, this.closest('.material-card'))">
+                                <i class="fas fa-cart-plus"></i> Add
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -667,15 +833,20 @@ session_start();
             <section id="wallfinishes" class="category-section">
                 <h2 class="section-title">Wall Finishes</h2>
                 <div class="market-grid">
-                    <div class="material-card">
+                    <div class="material-card" data-product-id="11" data-product-name="Interior Emulsion" data-product-price="3800" data-product-unit="per bucket">
                         <div class="product-viewer" data-type="bucket" data-color="#ffffff">
                             <span class="viewer-hint">Interactive 3D</span>
                         </div>
                         <div class="material-name">Interior Emulsion</div>
                         <div class="spec">Premium smooth finish (20L).</div>
                         <div class="price-row">
-                            <div><div class="price">&#8377;3,800</div><span class="unit">per bucket</span></div>
-                            
+                            <div class="price-info">
+                                <div class="price">&#8377;3,800</div>
+                                <span class="unit">per bucket</span>
+                            </div>
+                            <button class="add-to-cart-btn" onclick="addToCart(event, this.closest('.material-card'))">
+                                <i class="fas fa-cart-plus"></i> Add
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -685,15 +856,20 @@ session_start();
             <section id="doors" class="category-section">
                 <h2 class="section-title">Doors & Windows</h2>
                 <div class="market-grid">
-                    <div class="material-card">
+                    <div class="material-card" data-product-id="12" data-product-name="Teak Wood Door" data-product-price="25000" data-product-unit="per unit">
                         <div class="product-viewer" data-type="door" data-color="#8b4513">
                             <span class="viewer-hint">Interactive 3D</span>
                         </div>
                         <div class="material-name">Teak Wood Door</div>
                         <div class="spec">Solid teak main door frame & shutter.</div>
                         <div class="price-row">
-                            <div><div class="price">&#8377;25,000</div><span class="unit">per unit</span></div>
-                            
+                            <div class="price-info">
+                                <div class="price">&#8377;25,000</div>
+                                <span class="unit">per unit</span>
+                            </div>
+                            <button class="add-to-cart-btn" onclick="addToCart(event, this.closest('.material-card'))">
+                                <i class="fas fa-cart-plus"></i> Add
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -703,15 +879,20 @@ session_start();
              <section id="electrical" class="category-section">
                 <h2 class="section-title">Electrical</h2>
                 <div class="market-grid">
-                    <div class="material-card">
+                    <div class="material-card" data-product-id="13" data-product-name="Copper Wire (2.5 sqmm)" data-product-price="1850" data-product-unit="per coil">
                         <div class="product-viewer" data-type="coil" data-color="#dc2626">
                             <span class="viewer-hint">Interactive 3D</span>
                         </div>
                         <div class="material-name">Copper Wire (2.5 sqmm)</div>
                         <div class="spec">Flame retardant house wiring (90m).</div>
                         <div class="price-row">
-                            <div><div class="price">&#8377;1,850</div><span class="unit">per coil</span></div>
-                            
+                            <div class="price-info">
+                                <div class="price">&#8377;1,850</div>
+                                <span class="unit">per coil</span>
+                            </div>
+                            <button class="add-to-cart-btn" onclick="addToCart(event, this.closest('.material-card'))">
+                                <i class="fas fa-cart-plus"></i> Add
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -721,15 +902,20 @@ session_start();
              <section id="plumbing" class="category-section">
                 <h2 class="section-title">Plumbing</h2>
                 <div class="market-grid">
-                    <div class="material-card">
+                    <div class="material-card" data-product-id="14" data-product-name="PVC Pipe (4 inch)" data-product-price="450" data-product-unit="per length">
                         <div class="product-viewer" data-type="pipe" data-color="#f5f5f5">
                             <span class="viewer-hint">Interactive 3D</span>
                         </div>
                         <div class="material-name">PVC Pipe (4 inch)</div>
                         <div class="spec">High pressure water line pipe.</div>
                         <div class="price-row">
-                            <div><div class="price">&#8377;450</div><span class="unit">per length</span></div>
-                            
+                            <div class="price-info">
+                                <div class="price">&#8377;450</div>
+                                <span class="unit">per length</span>
+                            </div>
+                            <button class="add-to-cart-btn" onclick="addToCart(event, this.closest('.material-card'))">
+                                <i class="fas fa-cart-plus"></i> Add
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -739,15 +925,20 @@ session_start();
              <section id="kitchen" class="category-section">
                 <h2 class="section-title">Kitchen & Utility</h2>
                 <div class="market-grid">
-                    <div class="material-card">
+                    <div class="material-card" data-product-id="15" data-product-name="SS Kitchen Sink" data-product-price="3200" data-product-unit="per unit">
                         <div class="product-viewer" data-type="sink" data-color="#c0c0c0">
                             <span class="viewer-hint">Interactive 3D</span>
                         </div>
                         <div class="material-name">SS Kitchen Sink</div>
                         <div class="spec">Single bowl with drainboard.</div>
                         <div class="price-row">
-                            <div><div class="price">&#8377;3,200</div><span class="unit">per unit</span></div>
-                            
+                            <div class="price-info">
+                                <div class="price">&#8377;3,200</div>
+                                <span class="unit">per unit</span>
+                            </div>
+                            <button class="add-to-cart-btn" onclick="addToCart(event, this.closest('.material-card'))">
+                                <i class="fas fa-cart-plus"></i> Add
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -757,14 +948,20 @@ session_start();
              <section id="external" class="category-section">
                 <h2 class="section-title">External Works</h2>
                 <div class="market-grid">
-                    <div class="material-card">
+                    <div class="material-card" data-product-id="16" data-product-name="Interlocking Pavers" data-product-price="42" data-product-unit="per sq.ft">
                         <div class="product-viewer" data-type="brick" data-color="#808080">
                             <span class="viewer-hint">Interactive 3D</span>
                         </div>
                         <div class="material-name">Interlocking Pavers</div>
                         <div class="spec">Zig-zag heavy duty pavers.</div>
                         <div class="price-row">
-                            <div><div class="price">&#8377;42</div><span class="unit">per sq.ft</span></div>
+                            <div class="price-info">
+                                <div class="price">&#8377;42</div>
+                                <span class="unit">per sq.ft</span>
+                            </div>
+                            <button class="add-to-cart-btn" onclick="addToCart(event, this.closest('.material-card'))">
+                                <i class="fas fa-cart-plus"></i> Add
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -824,6 +1021,44 @@ session_start();
                     
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Shopping Cart Overlay -->
+    <div class="cart-overlay" id="cartOverlay" onclick="toggleCart()"></div>
+
+    <!-- Floating Cart Button -->
+    <button class="cart-float-btn" id="cartFloatBtn" onclick="toggleCart()">
+        <i class="fas fa-shopping-cart"></i>
+        <span class="cart-badge" id="cartBadge">0</span>
+    </button>
+
+    <!-- Shopping Cart Panel -->
+    <div class="cart-panel" id="cartPanel">
+        <div class="cart-header">
+            <h2><i class="fas fa-shopping-bag"></i> My Cart</h2>
+            <button class="cart-close" onclick="toggleCart()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="cart-items" id="cartItemsContainer">
+            <div class="cart-empty">
+                <i class="fas fa-shopping-cart"></i>
+                <p>Your cart is empty</p>
+                <p style="font-size: 0.9rem;">Add materials to get started!</p>
+            </div>
+        </div>
+
+        <div class="cart-footer">
+            <div class="cart-total">
+                <span class="cart-total-label">Total:</span>
+                <span class="cart-total-amount" id="cartTotalAmount">₹0</span>
+            </div>
+            <button class="checkout-btn" id="checkoutBtn" onclick="proceedToCheckout()" disabled>
+                <i class="fas fa-check-circle"></i>
+                Proceed to Checkout
+            </button>
         </div>
     </div>
 
@@ -1734,6 +1969,84 @@ session_start();
             }
         };
     </script>                    
+    
+    <!-- ==================== PREMIUM 3D SHOPPING CART PANEL ==================== -->
+    <div id="cartOverlay" onclick="toggleCart()"></div>
+    
+    <div id="cartPanel">
+        <!-- Cart Header -->
+        <div class="cart-header">
+            <div class="cart-title-row">
+                <h2 class="cart-title">
+                    <span>C</span><span>A</span><span>R</span><span>T</span>
+                </h2>
+            </div>
+            <button class="cart-close-btn" onclick="toggleCart()" title="Close cart">
+                <i class="fas fa-times"></i>
+            </button>
+            <p class="cart-subtitle" id="cartItemCount">0 items</p>
+            
+            <!-- Trust Indicators -->
+            <div class="cart-trust-badges">
+                <div class="trust-badge">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Secure</span>
+                </div>
+                <div class="trust-badge">
+                    <i class="fas fa-truck"></i>
+                    <span>Fast Delivery</span>
+                </div>
+                <div class="trust-badge">
+                    <i class="fas fa-certificate"></i>
+                    <span>Quality Assured</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Cart Items Container -->
+        <div class="cart-items-wrapper">
+            <div id="cartItemsContainer">
+                <!-- Cart items will be dynamically inserted here -->
+                <div class="cart-empty">
+                    <i class="fas fa-shopping-cart"></i>
+                    <p>Your cart is empty</p>
+                    <p style="font-size: 0.9rem; color: #888;">Add construction materials to get started!</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Cart Summary - Glassmorphism Panel -->
+        <div class="cart-summary">
+            <!-- Subtotal Row -->
+            <div class="summary-row subtotal">
+                <span class="summary-label">Subtotal</span>
+                <span class="summary-value" id="cartSubtotal">₹0</span>
+            </div>
+            
+            <!-- Tax/Delivery Info (Optional) -->
+            <div class="summary-row">
+                <span class="summary-label">
+                    <i class="fas fa-info-circle" style="font-size: 0.85rem; opacity: 0.7;"></i>
+                    Taxes & delivery calculated at checkout
+                </span>
+            </div>
+            
+            <!-- Total Row -->
+            <div class="summary-row total">
+                <span class="summary-label">Total</span>
+                <span class="summary-value" id="cartTotalAmount">₹0</span>
+            </div>
+            
+            <!-- Checkout Button -->
+            <button class="checkout-btn" id="checkoutBtn" onclick="proceedToCheckout()" disabled>
+                <i class="fas fa-lock"></i>
+                Proceed to Checkout
+                <i class="fas fa-arrow-right"></i>
+            </button>
+        </div>
+    </div>
+    
+    <script src="js/shopping_cart.js"></script>
 </body>
 </html>
 

@@ -1,0 +1,762 @@
+/* ==================== PREMIUM 3D SHOPPING CART STYLES ==================== */
+
+:root {
+    --cart-primary: #294033;
+    --cart-accent: #3d5a49;
+    --cart-bg: #f6f7f2;
+    --cart-glass: rgba(255, 255, 255, 0.85);
+    --cart-glass-border: rgba(255, 255, 255, 0.4);
+    --cart-shadow: rgba(0, 0, 0, 0.1);
+    --cart-shadow-deep: rgba(0, 0, 0, 0.15);
+    --cart-text-dark: #121212;
+    --cart-text-gray: #555555;
+    --cart-success: #10b981;
+    --cart-danger: #ef4444;
+}
+
+/* ==================== CART OVERLAY ==================== */
+#cartOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0);
+    backdrop-filter: blur(0px);
+    z-index: 9998;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#cartOverlay.active {
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    opacity: 1;
+    pointer-events: all;
+}
+
+/* ==================== CART PANEL - PREMIUM GLASSMORPHISM ==================== */
+#cartPanel {
+    position: fixed;
+    top: 0;
+    right: -550px;
+    width: 500px;
+    height: 100vh;
+    background: linear-gradient(135deg,
+            rgba(255, 255, 255, 0.95) 0%,
+            rgba(255, 255, 255, 0.9) 100%);
+    backdrop-filter: blur(30px) saturate(180%);
+    -webkit-backdrop-filter: blur(30px) saturate(180%);
+    border-left: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: -20px 0 60px rgba(0, 0, 0, 0.15);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    transition: right 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+#cartPanel.open {
+    right: 0;
+}
+
+/* ==================== CART HEADER ==================== */
+.cart-header {
+    padding: 2rem 1.5rem 1.5rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    background: linear-gradient(180deg,
+            rgba(255, 255, 255, 0.6) 0%,
+            rgba(255, 255, 255, 0) 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.cart-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg,
+            var(--cart-primary) 0%,
+            var(--cart-accent) 100%);
+    animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.6;
+    }
+}
+
+.cart-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+}
+
+.cart-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--cart-text-dark);
+    display: flex;
+    align-items: center;
+    gap: 0;
+    letter-spacing: 3px;
+    font-family: 'JetBrains Mono', monospace;
+    text-transform: uppercase;
+}
+
+.cart-title span {
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(10px) rotateX(-90deg);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.cart-title span.letter-visible {
+    opacity: 1;
+    transform: translateY(0) rotateX(0);
+}
+
+.cart-close-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(0, 0, 0, 0.05);
+    color: var(--cart-text-gray);
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+}
+
+.cart-close-btn:hover {
+    background: var(--cart-danger);
+    color: white;
+    transform: rotate(90deg);
+}
+
+.cart-subtitle {
+    font-size: 0.9rem;
+    color: var(--cart-text-gray);
+    font-weight: 500;
+}
+
+/* ==================== TRUST INDICATORS ==================== */
+.cart-trust-badges {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background: rgba(16, 185, 129, 0.05);
+    border-radius: 12px;
+    border: 1px solid rgba(16, 185, 129, 0.1);
+}
+
+.trust-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.75rem;
+    color: var(--cart-success);
+    font-weight: 600;
+}
+
+.trust-badge i {
+    font-size: 0.9rem;
+}
+
+/* ==================== CART ITEMS CONTAINER ==================== */
+.cart-items-wrapper {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+    position: relative;
+}
+
+.cart-items-wrapper::-webkit-scrollbar {
+    width: 6px;
+}
+
+.cart-items-wrapper::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 10px;
+}
+
+.cart-items-wrapper::-webkit-scrollbar-thumb {
+    background: rgba(41, 64, 51, 0.3);
+    border-radius: 10px;
+}
+
+.cart-items-wrapper::-webkit-scrollbar-thumb:hover {
+    background: rgba(41, 64, 51, 0.5);
+}
+
+/* ==================== CART ITEM CARDS - FLOATING 3D DEPTH ==================== */
+.cart-item {
+    background: linear-gradient(135deg,
+            rgba(255, 255, 255, 0.95) 0%,
+            rgba(255, 255, 255, 0.85) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 16px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    box-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.08),
+        0 2px 4px rgba(0, 0, 0, 0.04),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    transform-style: preserve-3d;
+    animation: slideInCart 0.5s ease-out backwards;
+}
+
+@keyframes slideInCart {
+    from {
+        opacity: 0;
+        transform: translateX(50px) rotateY(-15deg);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0) rotateY(0);
+    }
+}
+
+.cart-item:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow:
+        0 12px 24px rgba(0, 0, 0, 0.12),
+        0 4px 8px rgba(0, 0, 0, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.cart-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(180deg,
+            var(--cart-primary) 0%,
+            var(--cart-accent) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.cart-item:hover::before {
+    opacity: 1;
+}
+
+/* ==================== PRODUCT PREVIEW - 3D REALISTIC ==================== */
+.cart-item-image {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg,
+            rgba(41, 64, 51, 0.05) 0%,
+            rgba(61, 90, 73, 0.08) 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: var(--cart-primary);
+    border: 1px solid rgba(41, 64, 51, 0.1);
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+    box-shadow:
+        0 4px 8px rgba(0, 0, 0, 0.06),
+        inset 0 1px 2px rgba(255, 255, 255, 0.5);
+}
+
+.cart-item-image::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg,
+            transparent 30%,
+            rgba(255, 255, 255, 0.3) 50%,
+            transparent 70%);
+    animation: shine 3s infinite;
+    z-index: 0;
+}
+
+@keyframes shine {
+    0% {
+        transform: translateX(-100%) translateY(-100%) rotate(45deg);
+    }
+
+    100% {
+        transform: translateX(100%) translateY(100%) rotate(45deg);
+    }
+}
+
+.cart-item-image i {
+    position: relative;
+    z-index: 1;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+/* 3D Canvas Preview */
+.cart-item-3d-preview {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 2;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.cart-item-3d-preview canvas {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+}
+
+/* ==================== CART ITEM LAYOUT ==================== */
+.cart-item-content {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+.cart-item-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.cart-item-name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--cart-text-dark);
+    margin-bottom: 0.25rem;
+    line-height: 1.3;
+}
+
+.cart-item-spec {
+    font-size: 0.85rem;
+    color: var(--cart-text-gray);
+    margin-bottom: 0.75rem;
+    font-weight: 500;
+}
+
+/* ==================== QUANTITY CONTROLS - MICRO-INTERACTIONS ==================== */
+.cart-item-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.qty-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(41, 64, 51, 0.05);
+    padding: 0.4rem 0.6rem;
+    border-radius: 10px;
+    border: 1px solid rgba(41, 64, 51, 0.1);
+}
+
+.qty-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    border: none;
+    background: white;
+    color: var(--cart-primary);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+}
+
+.qty-btn:hover {
+    background: var(--cart-primary);
+    color: white;
+    transform: scale(1.1);
+}
+
+.qty-btn:active {
+    transform: scale(0.95);
+}
+
+.qty-display {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--cart-text-dark);
+    min-width: 30px;
+    text-align: center;
+}
+
+/* ==================== PRICE ANIMATIONS ==================== */
+.cart-item-price {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--cart-primary);
+    margin-left: auto;
+    transition: all 0.3s ease;
+}
+
+.cart-item-price.updating {
+    animation: priceUpdate 0.5s ease;
+}
+
+@keyframes priceUpdate {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.15);
+        color: var(--cart-success);
+    }
+}
+
+/* ==================== REMOVE BUTTON ==================== */
+.cart-item-remove {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--cart-danger);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+}
+
+.cart-item:hover .cart-item-remove {
+    opacity: 1;
+}
+
+.cart-item-remove:hover {
+    background: var(--cart-danger);
+    color: white;
+    transform: rotate(90deg) scale(1.1);
+}
+
+/* ==================== EMPTY CART STATE ==================== */
+.cart-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    text-align: center;
+    color: var(--cart-text-gray);
+}
+
+.cart-empty i {
+    font-size: 4rem;
+    color: var(--cart-primary);
+    opacity: 0.3;
+    margin-bottom: 1.5rem;
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.cart-empty p {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+/* ==================== SUMMARY PANEL - GLASSMORPHISM ==================== */
+.cart-summary {
+    padding: 1.5rem;
+    background: linear-gradient(180deg,
+            rgba(255, 255, 255, 0.95) 0%,
+            rgba(255, 255, 255, 0.98) 100%);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.08);
+    position: relative;
+}
+
+.cart-summary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg,
+            transparent 0%,
+            rgba(255, 255, 255, 0.8) 50%,
+            transparent 100%);
+}
+
+/* ==================== SUMMARY ROWS ==================== */
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding: 0.75rem 0;
+}
+
+.summary-row.subtotal {
+    border-bottom: 1px dashed rgba(0, 0, 0, 0.1);
+}
+
+.summary-label {
+    font-size: 0.95rem;
+    color: var(--cart-text-gray);
+    font-weight: 500;
+}
+
+.summary-value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--cart-text-dark);
+}
+
+.summary-row.total {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 2px solid rgba(41, 64, 51, 0.15);
+}
+
+.summary-row.total .summary-label {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--cart-text-dark);
+}
+
+.summary-row.total .summary-value {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--cart-primary);
+    animation: totalPulse 2s ease-in-out infinite;
+}
+
+@keyframes totalPulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+/* ==================== SAVINGS INDICATOR ==================== */
+.savings-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.8rem;
+    background: linear-gradient(135deg,
+            rgba(16, 185, 129, 0.1) 0%,
+            rgba(16, 185, 129, 0.15) 100%);
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--cart-success);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+/* ==================== CHECKOUT BUTTON - PREMIUM ==================== */
+.checkout-btn {
+    width: 100%;
+    padding: 1.2rem;
+    border: none;
+    border-radius: 14px;
+    background: linear-gradient(135deg,
+            var(--cart-primary) 0%,
+            var(--cart-accent) 100%);
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    box-shadow:
+        0 8px 20px rgba(41, 64, 51, 0.3),
+        0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-top: 1rem;
+}
+
+.checkout-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg,
+            transparent,
+            rgba(255, 255, 255, 0.3),
+            transparent);
+    transition: left 0.5s ease;
+}
+
+.checkout-btn:hover::before {
+    left: 100%;
+}
+
+.checkout-btn:hover {
+    transform: translateY(-2px);
+    box-shadow:
+        0 12px 28px rgba(41, 64, 51, 0.4),
+        0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.checkout-btn:active {
+    transform: translateY(0);
+}
+
+.checkout-btn:disabled {
+    background: linear-gradient(135deg,
+            rgba(0, 0, 0, 0.1) 0%,
+            rgba(0, 0, 0, 0.15) 100%);
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.checkout-btn i {
+    margin-left: 0.5rem;
+    transition: transform 0.3s ease;
+}
+
+.checkout-btn:hover i {
+    transform: translateX(5px);
+}
+
+/* ==================== AMBIENT MOTION EFFECTS ==================== */
+@keyframes ambientFloat {
+
+    0%,
+    100% {
+        transform: translateY(0) rotate(0deg);
+    }
+
+    33% {
+        transform: translateY(-5px) rotate(1deg);
+    }
+
+    66% {
+        transform: translateY(5px) rotate(-1deg);
+    }
+}
+
+.cart-item:nth-child(odd) {
+    animation-delay: 0.1s;
+}
+
+.cart-item:nth-child(even) {
+    animation-delay: 0.2s;
+}
+
+/* ==================== RESPONSIVE DESIGN ==================== */
+@media (max-width: 768px) {
+    #cartPanel {
+        width: 100%;
+        right: -100%;
+    }
+
+    .cart-title {
+        font-size: 1.5rem;
+    }
+
+    .cart-item {
+        padding: 1rem;
+    }
+
+    .cart-item-image {
+        width: 60px;
+        height: 60px;
+        font-size: 1.5rem;
+    }
+}
+
+/* ==================== LOADING STATES ==================== */
+.cart-loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 50px;
+    height: 50px;
+    border: 4px solid rgba(41, 64, 51, 0.1);
+    border-top-color: var(--cart-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: translate(-50%, -50%) rotate(360deg);
+    }
+}
+
+/* ==================== SUCCESS ANIMATION ==================== */
+@keyframes successPop {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+
+    50% {
+        transform: scale(1.2);
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.success-indicator {
+    animation: successPop 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}

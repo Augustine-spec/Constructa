@@ -2546,11 +2546,18 @@ if (!isset($_SESSION['user_id'])) {
         }
 
         // Consolidate Global Initialization
-        generateHouseLayout();
-        init2DFloorPlan();
-        init3DHouse();
-        updateCalculations();
-        updateConfidence();
+        document.addEventListener('DOMContentLoaded', () => {
+             console.log("Initializing Plans & Designs Wizard...");
+             try {
+                if(typeof generateHouseLayout === 'function') generateHouseLayout();
+                if(typeof init2DFloorPlan === 'function') init2DFloorPlan();
+                if(typeof init3DHouse === 'function') init3DHouse();
+                if(typeof updateCalculations === 'function') updateCalculations();
+                if(typeof updateConfidence === 'function') updateConfidence();
+             } catch (e) {
+                 console.error("Initialization error:", e);
+             }
+        });
     </script>
 </body>
 </html>

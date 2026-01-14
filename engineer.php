@@ -87,20 +87,38 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Engineer';
 
         nav {
             display: flex;
-            gap: 2rem;
+            gap: 1.5rem;
             align-items: center;
         }
 
-        nav a {
-            text-decoration: none;
+        .nav-btn {
+            background: white;
+            border: 1px solid #e2e8f0;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 800;
+            font-size: 0.85rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
             color: var(--text-dark);
-            font-weight: 500;
-            font-size: 0.95rem;
-            transition: color 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: all 0.2s ease;
         }
 
-        nav a:hover {
-            color: var(--primary-green);
+        .nav-btn:hover {
+            background: #fff;
+            border-color: var(--text-dark);
+            color: var(--text-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .nav-btn i {
+            font-size: 1rem;
         }
 
         /* Dashboard Layout */
@@ -339,8 +357,12 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Engineer';
             Constructa
         </a>
         <nav>
-            <a href="landingpage.html">Home</a>
-            <a href="login.html">Logout</a>
+            <a href="landingpage.html" class="nav-btn">
+                <i class="fas fa-home"></i> HOME
+            </a>
+            <a href="login.html" class="nav-btn">
+                <i class="fas fa-sign-out-alt"></i> LOGOUT
+            </a>
         </nav>
     </header>
 

@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium 3D Shopping Cart - Demo</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="css/premium_cart.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .demo-container {
+            max-width: 1200px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 3rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 3rem;
+        }
+
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .demo-card {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .demo-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+            border-color: #667eea;
+        }
+
+        .demo-card-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            color: white;
+            margin-bottom: 1rem;
+        }
+
+        .demo-card h3 {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            color: #121212;
+        }
+
+        .demo-card p {
+            font-size: 0.95rem;
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .demo-card-price {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #294033;
+            margin-bottom: 1rem;
+        }
+
+        .add-btn {
+            width: 100%;
+            padding: 0.9rem;
+            background: linear-gradient(135deg, #294033 0%, #3d5a49 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .add-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(41, 64, 51, 0.3);
+        }
+
+        .cart-toggle-btn {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 1.8rem;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .cart-toggle-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.6);
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 28px;
+            height: 28px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: 700;
+            border: 3px solid white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .features-list {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+
+        .features-list h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: #121212;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .feature-item i {
+            color: #667eea;
+            font-size: 1.2rem;
+            margin-top: 0.2rem;
+        }
+
+        .feature-item div {
+            flex: 1;
+        }
+
+        .feature-item strong {
+            display: block;
+            margin-bottom: 0.25rem;
+            color: #121212;
+        }
+
+        .feature-item span {
+            font-size: 0.9rem;
+            color: #666;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="demo-container">
+        <h1>🏗️ Premium 3D Shopping Cart</h1>
+        <p class="subtitle">Experience the next generation of e-commerce UI for construction materials</p>
+
+        <div class="demo-grid">
+            <!-- Product 1 -->
+            <div class="demo-card" data-product-id="prod-001" data-product-name="TMT Steel Bars (Fe-550)"
+                data-product-price="65" data-product-unit="per kg">
+                <div class="demo-card-icon">
+                    <i class="fas fa-bars"></i>
+                </div>
+                <h3>TMT Steel Bars (Fe-550)</h3>
+                <p>High-strength corrosion-resistant steel bars for structural reinforcement</p>
+                <div class="demo-card-price">₹65 per kg</div>
+                <button class="add-btn" onclick="addToCart(event, this.parentElement)">
+                    <i class="fas fa-cart-plus"></i>
+                    Add to Cart
+                </button>
+            </div>
+
+            <!-- Product 2 -->
+            <div class="demo-card" data-product-id="prod-002" data-product-name="Premium Cement (OPC 53)"
+                data-product-price="420" data-product-unit="per bag">
+                <div class="demo-card-icon">
+                    <i class="fas fa-box"></i>
+                </div>
+                <h3>Premium Cement (OPC 53)</h3>
+                <p>High-grade ordinary portland cement for superior strength</p>
+                <div class="demo-card-price">₹420 per bag</div>
+                <button class="add-btn" onclick="addToCart(event, this.parentElement)">
+                    <i class="fas fa-cart-plus"></i>
+                    Add to Cart
+                </button>
+            </div>
+
+            <!-- Product 3 -->
+            <div class="demo-card" data-product-id="prod-003" data-product-name="Red Clay Bricks" data-product-price="8"
+                data-product-unit="per piece">
+                <div class="demo-card-icon">
+                    <i class="fas fa-th-large"></i>
+                </div>
+                <h3>Red Clay Bricks</h3>
+                <p>Standard size fire-resistant clay bricks for construction</p>
+                <div class="demo-card-price">₹8 per piece</div>
+                <button class="add-btn" onclick="addToCart(event, this.parentElement)">
+                    <i class="fas fa-cart-plus"></i>
+                    Add to Cart
+                </button>
+            </div>
+
+            <!-- Product 4 -->
+            <div class="demo-card" data-product-id="prod-004" data-product-name="PVC Pipes (4 inch)"
+                data-product-price="180" data-product-unit="per meter">
+                <div class="demo-card-icon">
+                    <i class="fas fa-grip-lines"></i>
+                </div>
+                <h3>PVC Pipes (4 inch)</h3>
+                <p>Durable PVC pipes for plumbing and drainage systems</p>
+                <div class="demo-card-price">₹180 per meter</div>
+                <button class="add-btn" onclick="addToCart(event, this.parentElement)">
+                    <i class="fas fa-cart-plus"></i>
+                    Add to Cart
+                </button>
+            </div>
+
+            <!-- Product 5 -->
+            <div class="demo-card" data-product-id="prod-005" data-product-name="Vitrified Tiles (2x2 ft)"
+                data-product-price="45" data-product-unit="per sq ft">
+                <div class="demo-card-icon">
+                    <i class="fas fa-th"></i>
+                </div>
+                <h3>Vitrified Tiles (2x2 ft)</h3>
+                <p>Premium quality glossy vitrified floor tiles</p>
+                <div class="demo-card-price">₹45 per sq ft</div>
+                <button class="add-btn" onclick="addToCart(event, this.parentElement)">
+                    <i class="fas fa-cart-plus"></i>
+                    Add to Cart
+                </button>
+            </div>
+
+            <!-- Product 6 -->
+            <div class="demo-card" data-product-id="prod-006" data-product-name="Wooden Door (Teak)"
+                data-product-price="8500" data-product-unit="per unit">
+                <div class="demo-card-icon">
+                    <i class="fas fa-door-closed"></i>
+                </div>
+                <h3>Wooden Door (Teak)</h3>
+                <p>Solid teak wood door with premium finish</p>
+                <div class="demo-card-price">₹8,500 per unit</div>
+                <button class="add-btn" onclick="addToCart(event, this.parentElement)">
+                    <i class="fas fa-cart-plus"></i>
+                    Add to Cart
+                </button>
+            </div>
+        </div>
+
+        <div class="features-list">
+            <h2>✨ Premium Features</h2>
+            <div class="features-grid">
+                <div class="feature-item">
+                    <i class="fas fa-cube"></i>
+                    <div>
+                        <strong>3D Floating Cards</strong>
+                        <span>Depth-based design with smooth shadows</span>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-magic"></i>
+                    <div>
+                        <strong>Micro-interactions</strong>
+                        <span>Haptic-style feedback on every action</span>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-sparkles"></i>
+                    <div>
+                        <strong>Glassmorphism</strong>
+                        <span>Modern frosted glass aesthetic</span>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-chart-line"></i>
+                    <div>
+                        <strong>Price Animations</strong>
+                        <span>Smooth number transitions</span>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-shield-alt"></i>
+                    <div>
+                        <strong>Trust Indicators</strong>
+                        <span>Security and quality badges</span>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-wind"></i>
+                    <div>
+                        <strong>Ambient Motion</strong>
+                        <span>Subtle floating animations</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Cart Button -->
+    <button class="cart-toggle-btn" onclick="toggleCart()" title="Open Cart">
+        <i class="fas fa-shopping-cart"></i>
+        <span class="cart-badge" id="cartBadge">0</span>
+    </button>
+
+    <!-- Cart Overlay -->
+    <div id="cartOverlay" onclick="toggleCart()"></div>
+
+    <!-- Premium Cart Panel -->
+    <div id="cartPanel">
+        <!-- Cart Header -->
+        <div class="cart-header">
+            <div class="cart-title-row">
+                <h2 class="cart-title">
+                    <i class="fas fa-shopping-cart"></i>
+                    My Cart
+                </h2>
+                <button class="cart-close-btn" onclick="toggleCart()" title="Close cart">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <p class="cart-subtitle" id="cartItemCount">0 items</p>
+
+            <!-- Trust Indicators -->
+            <div class="cart-trust-badges">
+                <div class="trust-badge">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Secure</span>
+                </div>
+                <div class="trust-badge">
+                    <i class="fas fa-truck"></i>
+                    <span>Fast Delivery</span>
+                </div>
+                <div class="trust-badge">
+                    <i class="fas fa-certificate"></i>
+                    <span>Quality Assured</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cart Items Container -->
+        <div class="cart-items-wrapper">
+            <div id="cartItemsContainer">
+                <div class="cart-empty">
+                    <i class="fas fa-shopping-cart"></i>
+                    <p>Your cart is empty</p>
+                    <p style="font-size: 0.9rem; color: #888;">Add construction materials to get started!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cart Summary -->
+        <div class="cart-summary">
+            <div class="summary-row subtotal">
+                <span class="summary-label">Subtotal</span>
+                <span class="summary-value" id="cartSubtotal">₹0</span>
+            </div>
+
+            <div class="summary-row">
+                <span class="summary-label">
+                    <i class="fas fa-info-circle" style="font-size: 0.85rem; opacity: 0.7;"></i>
+                    Taxes & delivery calculated at checkout
+                </span>
+            </div>
+
+            <div class="summary-row total">
+                <span class="summary-label">Total</span>
+                <span class="summary-value" id="cartTotalAmount">₹0</span>
+            </div>
+
+            <button class="checkout-btn" id="checkoutBtn" onclick="proceedToCheckout()" disabled>
+                <i class="fas fa-lock"></i>
+                Proceed to Checkout
+                <i class="fas fa-arrow-right"></i>
+            </button>
+        </div>
+    </div>
+
+    <script src="js/shopping_cart.js"></script>
+</body>
+
+</html>

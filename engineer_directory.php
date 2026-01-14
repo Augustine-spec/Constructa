@@ -297,7 +297,7 @@ $result = $conn->query($sql);
                     $i++;
                 ?>
                     <!-- Engineer Card Style 1 -->
-                    <div class="feature-card tilt-card" onclick="window.location.href='contact_engineer.php?id=<?php echo $row['id']; ?>'">
+                    <div class="feature-card tilt-card" onclick="window.location.href='view_engineer_profile.php?engineer_id=<?php echo $row['id']; ?>'">
                         <div class="card-content">
                             <div class="icon-wrapper <?php echo $gradientClass; ?>">
                                 <i class="fas fa-user-tie"></i>

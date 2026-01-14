@@ -86,26 +86,31 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Engineer';
         .nav-btn {
             background: white;
             border: 1px solid var(--border-color);
-            padding: 0.6rem 1.2rem;
-            border-radius: 8px;
-            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 800;
             font-size: 0.85rem;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.1em;
             text-transform: uppercase;
             color: var(--text-main);
             text-decoration: none;
             display: inline-flex;
             align-items: center;
-            gap: 0.5rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            transition: var(--transition);
+            gap: 0.75rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: all 0.2s ease;
         }
 
         .nav-btn:hover {
-            background: var(--bg-color);
-            border-color: var(--primary);
-            color: var(--primary);
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            background: #fff;
+            border-color: var(--text-main);
+            color: var(--text-main);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .nav-btn i {
+            font-size: 1rem;
         }
 
         /* Main Container */
@@ -125,6 +130,29 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Engineer';
             font-weight: 800;
             color: var(--primary);
             margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .animated-title {
+            display: inline-flex;
+            gap: 0;
+            perspective: 1000px;
+        }
+
+        .animated-title span {
+            display: inline-block;
+            opacity: 0;
+            transform: translateY(10px) rotateX(-90deg);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            min-width: 0.2em;
+        }
+
+        .animated-title span.visible {
+            opacity: 1;
+            transform: translateY(0) rotateX(0);
         }
 
         .page-subtitle {
@@ -511,7 +539,10 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Engineer';
 
     <div class="main-container">
         <div class="page-header">
-            <h1 class="page-title"><i class="fas fa-clipboard-list"></i> Project Requests</h1>
+            <h1 class="page-title">
+                <i class="fas fa-clipboard-list"></i> 
+                <span id="animated-project-title" class="animated-title">Project Requests</span>
+            </h1>
             <p class="page-subtitle">Review and manage incoming project requests from homeowners</p>
         </div>
 
@@ -525,7 +556,7 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Engineer';
                 SELECT pr.*, u.name as homeowner_name, u.email as homeowner_email 
                 FROM project_requests pr 
                 JOIN users u ON pr.homeowner_id = u.id 
-                WHERE pr.engineer_id = ? 
+                WHERE pr.engineer_id = ? AND pr.status = 'pending'
                 ORDER BY pr.created_at DESC
             ");
             $stmt->bind_param("i", $engineer_id);
@@ -705,7 +736,11 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Engineer';
 
                 if (result.success) {
                     alert(result.message);
-                    location.reload();
+                    if (newStatus === 'accepted') {
+                        window.location.href = 'my_projects.php';
+                    } else {
+                        location.reload();
+                    }
                 } else {
                     alert(result.message || 'Failed to update status');
                 }
@@ -857,6 +892,42 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Engineer';
                 renderer.setSize(window.innerWidth, window.innerHeight);
             });
         };
+
+        // 3D Title Animation Logic
+        const animateProjectTitle = () => {
+            const titleContainer = document.getElementById('animated-project-title');
+            if (!titleContainer) return;
+            
+            const text = "Project Requests";
+            titleContainer.innerHTML = text.split('').map(char => {
+                if (char === ' ') return `<span style="min-width: 0.3em;">&nbsp;</span>`;
+                return `<span>${char}</span>`;
+            }).join('');
+            
+            const spans = titleContainer.querySelectorAll('span');
+            
+            const reveal = () => {
+                spans.forEach((span, i) => {
+                    setTimeout(() => {
+                        span.classList.add('visible');
+                    }, i * 150);
+                });
+
+                // Reset and loop like the landing page
+                setTimeout(() => {
+                    spans.forEach((span, i) => {
+                        setTimeout(() => {
+                            span.classList.remove('visible');
+                        }, i * 100);
+                    });
+                    setTimeout(reveal, (spans.length * 100) + 1000);
+                }, (spans.length * 150) + 5000);
+            };
+
+            reveal();
+        };
+
+        animateProjectTitle();
 
         if (typeof THREE !== 'undefined') initBackground3D();
     </script>

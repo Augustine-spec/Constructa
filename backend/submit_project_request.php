@@ -64,7 +64,7 @@ try {
         project_size VARCHAR(100),
         description TEXT NOT NULL,
         contact_phone VARCHAR(20),
-        status ENUM('pending', 'accepted', 'rejected') DEFAULT 'pending',
+        status ENUM('pending', 'accepted', 'rejected', 'completed') DEFAULT 'pending',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         FOREIGN KEY (engineer_id) REFERENCES users(id) ON DELETE CASCADE,
