@@ -793,9 +793,6 @@ require_once 'backend/config.php';
                     <button class="action-btn primary" onclick="requestProject()">
                         <i class="fas fa-paper-plane"></i> Request Project
                     </button>
-                    <button class="action-btn secondary" onclick="contactEngineer()">
-                        <i class="fas fa-envelope"></i> Contact Engineer
-                    </button>
                 `;
             } else if (permissions.can_admin_actions && admin_data) {
                 // Admin actions
@@ -806,18 +803,8 @@ require_once 'backend/config.php';
                         </button>
                     `;
                 }
-                if (admin_data.can_suspend) {
-                    actionsContainer.innerHTML += `
-                        <button class="action-btn admin-suspend" onclick="suspendEngineer()">
-                            <i class="fas fa-ban"></i> Suspend Account
-                        </button>
-                    `;
-                }
-                actionsContainer.innerHTML += `
-                    <button class="action-btn admin-assign" onclick="assignProject()">
-                        <i class="fas fa-tasks"></i> Assign Project
-                    </button>
-                `;
+                // Removed Suspend and Assign buttons as requested
+
 
                 // Show admin activity
                 displayAdminActivity(admin_data.recent_activity);
@@ -892,12 +879,6 @@ require_once 'backend/config.php';
             }
         }
 
-        function suspendEngineer() {
-            if (confirm('Suspend this engineer? This will hide them from homeowner directory and block new projects.')) {
-                performAdminAction('suspend');
-            }
-        }
-
         async function performAdminAction(action) {
             try {
                 const formData = new FormData();
@@ -913,7 +894,6 @@ require_once 'backend/config.php';
 
                 if (result.success) {
                     alert(result.message);
-                    // Reload profile to show updated status
                     location.reload();
                 } else {
                     alert('Error: ' + result.message);
@@ -924,9 +904,6 @@ require_once 'backend/config.php';
             }
         }
 
-        function assignProject() {
-            alert('Project assignment feature coming soon');
-        }
 
         function goBack() {
             window.history.back();
@@ -939,76 +916,147 @@ require_once 'backend/config.php';
         });
 
         // 3D Background
+        // 3D Background - Unified from budget_calculator.php
         function init3DBackground() {
             const container = document.getElementById('canvas-container');
             if (!container || typeof THREE === 'undefined') return;
 
             const scene = new THREE.Scene();
             scene.background = new THREE.Color('#f8fafc');
-            
+
+            // Camera setup
             const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 5, 10);
-            
+            camera.position.z = 8;
+            camera.position.y = 2;
+
             const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             container.appendChild(renderer.domElement);
-            
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
             scene.add(ambientLight);
-            
+
             const mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
-            mainLight.position.set(10, 20, 10);
+            mainLight.position.set(10, 10, 10);
             scene.add(mainLight);
 
-            // Create building grid
-            const buildingGroup = new THREE.Group();
-            scene.add(buildingGroup);
-            
-            const buildMat = new THREE.MeshPhongMaterial({ 
-                color: 0x294033, 
-                transparent: true, 
-                opacity: 0.08
-            });
-            const edgeMat = new THREE.LineBasicMaterial({ 
-                color: 0x294033, 
-                transparent: true, 
-                opacity: 0.15
-            });
+            const blueLight = new THREE.PointLight(0x3d5a49, 0.5);
+            blueLight.position.set(-5, 5, 5);
+            scene.add(blueLight);
 
-            for (let x = -6; x <= 6; x += 1.5) {
-                for (let z = -6; z <= 6; z += 1.5) {
-                    const h = Math.random() * 2 + 0.5;
-                    const geo = new THREE.BoxGeometry(0.8, h, 0.8);
-                    const mesh = new THREE.Mesh(geo, buildMat);
-                    mesh.position.set(x, -5 + h / 2, z);
-                    
-                    const edges = new THREE.EdgesGeometry(geo);
-                    const line = new THREE.LineSegments(edges, edgeMat);
-                    line.position.copy(mesh.position);
-                    
-                    buildingGroup.add(mesh);
-                    buildingGroup.add(line);
+            // --- 3D Objects ---
+            const cityGroup = new THREE.Group();
+            scene.add(cityGroup);
+
+            // Create a grid of simple building structures
+            const buildingGeometry = new THREE.BoxGeometry(1, 1, 1);
+            const buildingMaterial = new THREE.MeshPhongMaterial({
+                color: 0x294033,
+                transparent: true,
+                opacity: 0.1,
+                side: THREE.DoubleSide
+            });
+            const edgeMaterial = new THREE.LineBasicMaterial({ color: 0x294033, transparent: true, opacity: 0.3 });
+
+            // Generate a grid of "blueprints"
+            const gridSize = 10;
+            const spacing = 3;
+
+            for (let x = -gridSize; x < gridSize; x++) {
+                for (let z = -gridSize; z < gridSize; z++) {
+                    // Random heights for buildings
+                    const height = Math.random() * 2 + 0.5;
+                    const building = new THREE.Group();
+
+                    // Solid (faint)
+                    const geometry = new THREE.BoxGeometry(1, height, 1);
+                    const mesh = new THREE.Mesh(geometry, buildingMaterial);
+                    mesh.position.y = height / 2;
+
+                    // Wireframe
+                    const edges = new THREE.EdgesGeometry(geometry);
+                    const line = new THREE.LineSegments(edges, edgeMaterial);
+                    line.position.y = height / 2;
+
+                    building.add(mesh);
+                    building.add(line);
+
+                    building.position.set(x * spacing, -2, z * spacing);
+                    cityGroup.add(building);
                 }
             }
 
-            let mouseX = 0, mouseY = 0;
-            document.addEventListener('mousemove', (e) => {
-                mouseX = (e.clientX - window.innerWidth / 2) * 0.0003;
-                mouseY = (e.clientY - window.innerHeight / 2) * 0.0003;
+            // Central Hero House (More detailed)
+            const houseGroup = new THREE.Group();
+
+            // Base
+            const baseGeo = new THREE.BoxGeometry(2, 2, 2);
+            const baseEdges = new THREE.EdgesGeometry(baseGeo);
+            const baseLine = new THREE.LineSegments(baseEdges, new THREE.LineBasicMaterial({ color: 0x294033, linewidth: 2 }));
+            houseGroup.add(baseLine);
+
+            // Roof
+            const roofGeo = new THREE.ConeGeometry(1.5, 1.2, 4);
+            const roofEdges = new THREE.EdgesGeometry(roofGeo);
+            const roofLine = new THREE.LineSegments(roofEdges, new THREE.LineBasicMaterial({ color: 0x3d5a49, linewidth: 2 }));
+            roofLine.position.y = 1.6;
+            roofLine.rotation.y = Math.PI / 4;
+            houseGroup.add(roofLine);
+
+            // Float animation group
+            const floatGroup = new THREE.Group();
+            floatGroup.add(houseGroup);
+            floatGroup.position.set(0, 0, 2); // Bring closer
+            scene.add(floatGroup);
+
+            // Animation Loop
+            let mouseX = 0;
+            let mouseY = 0;
+            let targetRotationX = 0;
+            let targetRotationY = 0;
+
+            // Mouse interaction
+            document.addEventListener('mousemove', (event) => {
+                mouseX = (event.clientX - window.innerWidth / 2) * 0.001;
+                mouseY = (event.clientY - window.innerHeight / 2) * 0.001;
             });
 
-            function animate() {
+            // Scroll interaction
+            let scrollY = 0;
+            window.addEventListener('scroll', () => {
+                scrollY = window.scrollY * 0.001;
+            });
+
+            const animate = () => {
                 requestAnimationFrame(animate);
-                
-                buildingGroup.rotation.y += 0.001;
-                buildingGroup.rotation.x += 0.03 * (mouseY - buildingGroup.rotation.x);
-                buildingGroup.rotation.y += 0.03 * (mouseX - buildingGroup.rotation.y);
-                
+
+                // Rotate entire city slowly
+                cityGroup.rotation.y += 0.001;
+
+                // Hero house rotation
+                floatGroup.rotation.y += 0.005;
+                floatGroup.position.y = Math.sin(Date.now() * 0.001) * 0.5 + 0.5;
+
+                // Interactive camera movement
+                targetRotationX = mouseX;
+                targetRotationY = mouseY;
+
+                // Smooth follow
+                cityGroup.rotation.x += 0.05 * (targetRotationY - cityGroup.rotation.x);
+                cityGroup.rotation.y += 0.05 * (targetRotationX - cityGroup.rotation.y);
+
+                // Scroll effect
+                camera.position.y = 2 - scrollY * 2;
+                camera.position.z = 8 + scrollY * 5;
+
                 renderer.render(scene, camera);
-            }
+            };
+
             animate();
 
+            // Handle Window Resize
             window.addEventListener('resize', () => {
                 camera.aspect = window.innerWidth / window.innerHeight;
                 camera.updateProjectionMatrix();

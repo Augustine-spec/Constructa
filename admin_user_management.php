@@ -4,7 +4,31 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     header('Location: login.html');
     exit();
 }
-$username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Admin';
+
+require_once 'backend/config.php';
+$conn = getDatabaseConnection();
+
+// Fetch Engineers
+$engineers_query = "SELECT id, name, email, phone, status, specialization, created_at FROM users WHERE role = 'engineer' ORDER BY created_at DESC";
+$engineers_result = $conn->query($engineers_query);
+
+// Fetch Homeowners
+$homeowners_query = "SELECT id, name, email, phone, status, created_at FROM users WHERE role = 'homeowner' ORDER BY created_at DESC";
+$homeowners_result = $conn->query($homeowners_query);
+
+function getInitials($name) {
+    $parts = explode(' ', trim($name));
+    $initials = strtoupper(substr($parts[0], 0, 1));
+    if (isset($parts[1])) {
+        $initials .= strtoupper(substr($parts[1], 0, 1));
+    }
+    return $initials;
+}
+
+function getRandomColor($name) {
+    $hash = md5($name);
+    return '#' . substr($hash, 0, 6);
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -14,20 +38,19 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Admin';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Management - Admin Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <style>
         :root {
-            --bg-color: #f6f7f2;
-            --text-dark: #121212;
-            --text-gray: #555555;
-            --primary-green: #294033;
-            --accent-green: #3d5a49;
-            --card-bg: #ffffff;
-            --warning-yellow: #f59e0b;
-            --success-green: #16a34a;
-            --error-red: #dc2626;
-            --info-blue: #3b82f6;
+            --bg-color: #f0f2f5;
+            --text-dark: #1e293b;
+            --text-gray: #64748b;
+            --primary-blue: #3b82f6;
+            --primary-green: #10b981;
+            --primary-gold: #f59e0b;
+            --glass-bg: rgba(255, 255, 255, 0.85);
+            --card-border: rgba(255, 255, 255, 0.5);
         }
 
         * {
@@ -41,6 +64,7 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Admin';
             background-color: transparent;
             color: var(--text-dark);
             min-height: 100vh;
+            overflow-x: hidden;
             display: flex;
             flex-direction: column;
         }
@@ -53,73 +77,85 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Admin';
             width: 100vw;
             height: 100vh;
             z-index: -1;
-            background: #f6f7f2;
             pointer-events: none;
         }
 
         /* Navbar */
         header {
-            padding: 1.5rem 3rem;
+            padding: 1.2rem 3rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
             max-width: 1600px;
             margin: 0 auto;
             width: 100%;
-            background: white;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
         }
 
         .logo {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            font-size: 1.25rem;
+            gap: 0.8rem;
+            font-size: 1.4rem;
             font-weight: 700;
-            color: var(--primary-green);
+            color: #1e293b;
             text-decoration: none;
+            letter-spacing: -0.5px;
         }
+        
+        .logo i { color: var(--primary-gold); }
 
-        .logo i {
-            font-size: 1.5rem;
-        }
-
-        nav {
-            display: flex;
-            gap: 2rem;
+        .top-nav-btn {
+            padding: 0.6rem 1.2rem;
+            background: rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(0,0,0,0.05);
+            border-radius: 8px;
+            text-decoration: none;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--text-dark);
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
             align-items: center;
+            gap: 0.5rem;
         }
 
-        nav a {
-            text-decoration: none;
-            color: var(--text-dark);
-            font-weight: 500;
-            font-size: 0.95rem;
-            transition: color 0.2s;
+        .top-nav-btn:hover {
+            background: #fff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
 
-        nav a:hover {
-            color: var(--primary-green);
-        }
-
-        /* Main Content */
-        main {
-            flex: 1;
+        /* Main Container */
+        .container {
             max-width: 1400px;
-            margin: 0 auto;
+            margin: 3rem auto;
+            padding: 0 2rem;
             width: 100%;
-            padding: 3rem;
+            animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        .page-header {
-            margin-bottom: 2rem;
+        .page-header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 3rem;
         }
 
-        .page-title {
+        .page-title h1 {
             font-size: 2.5rem;
-            font-weight: 700;
+            font-weight: 800;
+            letter-spacing: -1px;
+            background: linear-gradient(135deg, #1e293b 0%, #475569 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
             margin-bottom: 0.5rem;
-            color: var(--text-dark);
         }
 
         .page-subtitle {
@@ -127,581 +163,515 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Admin';
             font-size: 1rem;
         }
 
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 1.5rem;
+        /* Controls Bar */
+        .controls-bar {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(15px);
+            padding: 0.8rem;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.6);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+            display: flex;
+            gap: 1rem;
+            align-items: center;
             margin-bottom: 2rem;
         }
 
-        .stat-card {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        .search-wrapper {
+            position: relative;
+            flex-grow: 1;
         }
 
-        .stat-label {
-            font-size: 0.9rem;
+        .search-wrapper i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.8rem 1rem 0.8rem 2.8rem;
+            border: 1px solid rgba(0,0,0,0.05);
+            border-radius: 12px;
+            background: rgba(255,255,255,0.8);
+            font-size: 0.95rem;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .search-input:focus {
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+            border-color: var(--primary-blue);
+        }
+
+        .filter-chips {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .filter-chip {
+            padding: 0.6rem 1.2rem;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            background: rgba(255,255,255,0.5);
             color: var(--text-gray);
+        }
+
+        .filter-chip.active {
+            background: #fff;
+            color: var(--text-dark);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            transform: scale(1.05);
+        }
+        
+        .filter-chip[data-filter="engineer"].active { color: var(--primary-blue); border-color: rgba(59, 130, 246, 0.2); }
+        .filter-chip[data-filter="homeowner"].active { color: var(--primary-green); border-color: rgba(16, 185, 129, 0.2); }
+
+        /* GRID SYSTEM - "Menu Card" Style */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 2rem;
+            perspective: 1000px;
+        }
+
+        .feature-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border-radius: 24px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+            cursor: default;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 1px solid var(--card-border);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            transform-style: preserve-3d;
+            animation: fadeInUp 0.5s ease-out backwards;
+            min-height: 280px;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+            background: rgba(255, 255, 255, 0.95);
+            border-color: #fff;
+            z-index: 10;
+        }
+
+        .icon-wrapper {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            margin-bottom: 0.5rem;
+            transform: translateZ(20px);
+        }
+
+        /* Role Gradients */
+        .grad-engineer { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+        .grad-homeowner { background: linear-gradient(135deg, #10b981, #059669); }
+
+        .card-content h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 0.2rem;
+            transform: translateZ(15px);
+        }
+
+        .card-content p {
+            color: var(--text-gray);
+            font-size: 0.9rem;
+            line-height: 1.4;
+            transform: translateZ(10px);
             margin-bottom: 0.5rem;
         }
 
-        .stat-value {
-            font-size: 2rem;
-            font-weight: 700;
-        }
-
-        .stat-value.homeowners { color: var(--info-blue); }
-        .stat-value.engineers { color: var(--primary-green); }
-        .stat-value.pending { color: var(--warning-yellow); }
-        .stat-value.total { color: var(--text-dark); }
-
-        .requests-container {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            overflow: hidden;
-        }
-
-        .requests-header {
-            padding: 1.5rem;
-            border-bottom: 1px solid #e5e7eb;
-            display: flex;
-            justify-content: space-between;
+        .status-badge {
+            display: inline-flex;
             align-items: center;
-        }
-
-        .requests-title {
-            font-size: 1.25rem;
-            font-weight: 700;
-        }
-
-        .filter-tabs {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .filter-tab {
-            padding: 0.5rem 1rem;
-            border: none;
-            background: #f3f4f6;
-            color: var(--text-gray);
-            font-weight: 500;
-            cursor: pointer;
-            border-radius: 8px;
-            transition: all 0.2s;
-        }
-
-        .filter-tab.active {
-            color: white;
-            background-color: var(--primary-green);
-        }
-
-        .user-card {
-            padding: 1.5rem;
-            border-bottom: 1px solid #e5e7eb;
-            transition: background-color 0.2s;
-        }
-
-        .user-card:hover {
-            background-color: #f9fafb;
-        }
-
-        .user-card:last-child {
-            border-bottom: none;
-        }
-
-        .user-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: start;
-            margin-bottom: 1rem;
-        }
-
-        .user-info h3 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 0.25rem;
-        }
-
-        .user-subinfo {
-            color: var(--text-gray);
-            font-size: 0.9rem;
-            display: flex;
-            gap: 1rem;
-        }
-
-        .role-badge {
-            padding: 0.3rem 0.6rem;
-            border-radius: 6px;
+            gap: 0.4rem;
+            padding: 0.3rem 0.8rem;
+            border-radius: 50px;
             font-size: 0.75rem;
             font-weight: 700;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transform: translateZ(12px);
         }
 
-        .role-badge.homeowner {
-            background-color: rgba(59, 130, 246, 0.1);
-            color: var(--info-blue);
-        }
+        .status-badge.approved { background: #ecfdf5; color: #059669; }
+        .status-badge.pending { background: #fffbeb; color: #d97706; }
+        .status-badge.suspended { background: #fef2f2; color: #dc2626; }
 
-        .role-badge.engineer {
-            background-color: rgba(41, 64, 51, 0.1);
-            color: var(--primary-green);
-        }
-
-        .status-badge {
-            padding: 0.3rem 0.6rem;
-            border-radius: 6px;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-
-        .status-badge.pending {
-            background-color: rgba(245, 158, 11, 0.1);
-            color: var(--warning-yellow);
-        }
-
-        .status-badge.approved {
-            background-color: rgba(22, 163, 74, 0.1);
-            color: var(--success-green);
-        }
-
-        .status-badge.rejected {
-            background-color: rgba(220, 38, 38, 0.1);
-            color: var(--error-red);
-        }
-
-        .user-details {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        .detail-item {
+        .card-meta {
+            margin-top: auto;
+            border-top: 1px solid rgba(0,0,0,0.05);
+            padding-top: 1rem;
             display: flex;
-            flex-direction: column;
-        }
-
-        .detail-label {
-            font-size: 0.8rem;
-            color: var(--text-gray);
-            margin-bottom: 0.25rem;
-        }
-
-        .detail-value {
-            font-weight: 500;
-            font-size: 0.9rem;
-        }
-
-        .user-actions {
-            display: flex;
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-
-        .btn {
-            padding: 0.5rem 1rem;
-            border: none;
-            border-radius: 6px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 0.85rem;
-            display: flex;
+            justify-content: space-between;
             align-items: center;
+            transform: translateZ(25px); /* Pop out more */
+        }
+
+        /* 3D Decorative Blob */
+        .card-bg-3d {
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 150px;
+            height: 150px;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.05) 0%, rgba(255, 255, 255, 0) 70%);
+            border-radius: 50%;
+            z-index: 0;
+            transition: all 0.5s ease;
+        }
+
+        .feature-card[data-role="homeowner"] .card-bg-3d {
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.05) 0%, rgba(255, 255, 255, 0) 70%);
+        }
+
+        .feature-card:hover .card-bg-3d {
+            transform: scale(1.5);
+        }
+
+        /* Action Buttons in Card */
+        .action-btn-group {
+            display: flex;
             gap: 0.5rem;
         }
 
-        .btn-approve { background-color: var(--success-green); color: white; }
-        .btn-reject { background-color: var(--error-red); color: white; }
-        .btn-delete { background-color: #f3f4f6; color: var(--error-red); }
-        
-        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
-
-        .empty-state {
-            padding: 4rem 2rem;
-            text-align: center;
-            color: var(--text-gray);
+        .icon-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9rem;
         }
 
-        .empty-state i {
-            font-size: 4rem;
-            margin-bottom: 1rem;
-            opacity: 0.3;
+        .btn-view { background: #f1f5f9; color: var(--text-gray); }
+        .btn-view:hover { background: #3b82f6; color: white; box-shadow: 0 4px 6px rgba(59,130,246,0.3); }
+
+        .btn-verify { background: #ecfdf5; color: #059669; }
+        .btn-verify:hover { background: #10b981; color: white;box-shadow: 0 4px 6px rgba(16,185,129,0.3); }
+
+        .btn-suspend { background: #fef2f2; color: #dc2626; }
+        .btn-suspend:hover { background: #ef4444; color: white; box-shadow: 0 4px 6px rgba(239,68,68,0.3); }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        #loading {
-            padding: 2rem;
-            text-align: center;
-        }
-
-        .spinner {
-            border: 4px solid #f3f4f6;
-            border-top: 4px solid var(--primary-green);
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 1rem;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
     </style>
 </head>
 
 <body>
     <!-- 3D Canvas Background -->
     <div id="canvas-container"></div>
-    <!-- Navigation -->
+
     <header>
         <a href="admin_dashboard.php" class="logo">
-            <i class="far fa-building"></i>
-            Constructa Admin
+            <i class="fas fa-shield-alt"></i> Constructa Admin
         </a>
         <nav>
-            <a href="admin_dashboard.php">Dashboard</a>
-            <a href="login.html">Logout</a>
+            <a href="admin_dashboard.php" class="top-nav-btn"><i class="fas fa-chart-line"></i> Dashboard</a>
+            <a href="login.html" class="top-nav-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
         </nav>
     </header>
 
-    <main>
-        <div class="page-header">
-            <h1 class="page-title">User Management</h1>
-            <p class="page-subtitle">Manage homeowners and professional engineers</p>
-        </div>
-
-        <div class="stats-grid" id="statsGrid">
-            <div class="stat-card">
-                <div class="stat-label">Total Users</div>
-                <div class="stat-value total" id="totalCount">-</div>
+    <div class="container">
+        <div class="page-header-section">
+             <div class="page-title">
+                <h1>User Management</h1>
+                <p class="page-subtitle">Manage platform engineers and homeowners.</p>
             </div>
-            <div class="stat-card">
-                <div class="stat-label">Homeowners</div>
-                <div class="stat-value homeowners" id="homeownerCount">-</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Engineers</div>
-                <div class="stat-value engineers" id="engineerCount">-</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Pending Apps</div>
-                <div class="stat-value pending" id="pendingCount">-</div>
-            </div>
-        </div>
-
-        <div class="requests-container">
-            <div class="requests-header">
-                <h2 class="requests-title">All Users</h2>
-                <div class="filter-tabs">
-                    <button class="filter-tab active" data-filter="all" onclick="filterUsers('all')">All</button>
-                    <button class="filter-tab" data-filter="homeowner" onclick="filterUsers('homeowner')">Homeowners</button>
-                    <button class="filter-tab" data-filter="engineer" onclick="filterUsers('engineer')">Engineers</button>
-                    <button class="filter-tab" data-filter="pending" onclick="filterUsers('pending')">Pending Engineers</button>
+             <div style="text-align: right;">
+                <div style="font-size: 2rem; font-weight: 700; color: var(--text-dark);">
+                    <?php echo $engineers_result->num_rows + $homeowners_result->num_rows; ?>
                 </div>
+                <div style="font-size: 0.8rem; color: var(--text-gray); text-transform: uppercase; letter-spacing: 1px;">Total Users</div>
             </div>
-
-            <div id="loading">
-                <div class="spinner"></div>
-                <p>Loading user data...</p>
-            </div>
-
-            <div id="usersList" style="display: none;"></div>
         </div>
-    </main>
 
-    <script>
-        let allUsers = [];
-        let currentFilter = 'all';
+        <div class="controls-bar">
+            <div class="search-wrapper">
+                <i class="fas fa-search"></i>
+                <input type="text" class="search-input" id="searchInput" placeholder="Search by name, email, or role...">
+            </div>
+            <div class="filter-chips">
+                <button class="filter-chip active" data-filter="all">All</button>
+                <button class="filter-chip" data-filter="engineer">Engineers</button>
+                <button class="filter-chip" data-filter="homeowner">Homeowners</button>
+            </div>
+        </div>
 
-        async function loadUsers() {
-            try {
-                const response = await fetch('backend/get_all_users.php');
-                const data = await response.json();
+        <!-- MENU CARDS GRID -->
+        <div class="features-grid" id="userGrid">
+            
+            <!-- Loop Engineers -->
+            <?php 
+            if ($engineers_result && $engineers_result->num_rows > 0) {
+                while ($row = $engineers_result->fetch_assoc()) {
+                    $statusClass = strtolower($row['status']);
+            ?>
+            <div class="feature-card tilt-card" data-role="engineer" data-name="<?php echo strtolower($row['name']); ?>" data-email="<?php echo strtolower($row['email']); ?>">
+                <div class="icon-wrapper grad-engineer">
+                    <i class="fas fa-drafting-compass"></i>
+                </div>
+                
+                <div class="card-content">
+                    <h3><?php echo htmlspecialchars($row['name']); ?></h3>
+                    <p style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; margin-bottom: 0;">
+                        <?php echo htmlspecialchars($row['email']); ?>
+                    </p>
+                    <p style="margin-top: 0.2rem;"><?php echo htmlspecialchars($row['specialization'] ?? 'General Engineer'); ?></p>
+                    
+                    <span class="status-badge <?php echo $statusClass; ?>">
+                        <?php echo ucfirst($row['status']); ?>
+                    </span>
+                </div>
 
-                if (data.success) {
-                    allUsers = data.users;
-                    updateStats(data.stats);
-                    displayUsers();
-                } else {
-                    document.getElementById('loading').innerHTML = '<p style="color: var(--error-red);">' + (data.message || 'Failed to load users') + '</p>';
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                document.getElementById('loading').innerHTML = '<p style="color: var(--error-red);">An error occurred while loading users.</p>';
-            }
-        }
-
-        function updateStats(stats) {
-            document.getElementById('totalCount').textContent = stats.total || 0;
-            document.getElementById('homeownerCount').textContent = stats.homeowners || 0;
-            document.getElementById('engineerCount').textContent = stats.engineers || 0;
-            document.getElementById('pendingCount').textContent = stats.pending_engineers || 0;
-        }
-
-        function displayUsers() {
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('usersList').style.display = 'block';
-
-            let filteredUsers = allUsers;
-            if (currentFilter === 'homeowner') {
-                filteredUsers = allUsers.filter(u => u.role === 'homeowner');
-            } else if (currentFilter === 'engineer') {
-                filteredUsers = allUsers.filter(u => u.role === 'engineer');
-            } else if (currentFilter === 'pending') {
-                filteredUsers = allUsers.filter(u => u.role === 'engineer' && u.status === 'pending');
-            }
-
-            const usersList = document.getElementById('usersList');
-
-            if (filteredUsers.length === 0) {
-                usersList.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-users-slash"></i>
-                        <p>No users found matching this filter</p>
+                <div class="card-meta">
+                    <div style="font-size: 0.8rem;">
+                        <i class="far fa-calendar-alt"></i> <?php echo date('M Y', strtotime($row['created_at'])); ?>
                     </div>
-                `;
-                return;
-            }
-
-            usersList.innerHTML = filteredUsers.map(user => `
-                <div class="user-card">
-                    <div class="user-header">
-                        <div class="user-info">
-                            <h3>${user.name}</h3>
-                            <div class="user-subinfo">
-                                <span>${user.email}</span>
-                                <span class="role-badge ${user.role}">${user.role}</span>
-                                ${user.role === 'engineer' ? `<span class="status-badge ${user.status}">${user.status}</span>` : ''}
-                            </div>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Joined</span>
-                            <span class="detail-value">${new Date(user.created_at).toLocaleDateString()}</span>
-                        </div>
-                    </div>
-
-                    <div class="user-details">
-                        <div class="detail-item">
-                            <span class="detail-label">Phone</span>
-                            <span class="detail-value">${user.phone || 'N/A'}</span>
-                        </div>
-                        ${user.role === 'engineer' ? `
-                            <div class="detail-item">
-                                <span class="detail-label">Specialization</span>
-                                <span class="detail-value">${user.specialization || 'N/A'}</span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="detail-label">Experience</span>
-                                <span class="detail-value">${user.experience || 0} years</span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="detail-label">License</span>
-                                <span class="detail-value">${user.license_number || 'N/A'}</span>
-                            </div>
-                        ` : `
-                            <div class="detail-item">
-                                <span class="detail-label">Account Type</span>
-                                <span class="detail-value">Homeowner</span>
-                            </div>
-                        `}
-                    </div>
-
-                    <div class="user-actions">
-                        ${user.role === 'engineer' && user.status === 'pending' ? `
-                            <button class="btn btn-approve" onclick="updateEngineerStatus(${user.id}, 'approved')">
-                                <i class="fas fa-check"></i> Approve
-                            </button>
-                            <button class="btn btn-reject" onclick="updateEngineerStatus(${user.id}, 'rejected')">
-                                <i class="fas fa-times"></i> Reject
-                            </button>
-                        ` : ''}
+                    <div class="action-btn-group">
+                        <a href="view_engineer_profile.php?engineer_id=<?php echo $row['id']; ?>" class="icon-btn btn-view" title="View Profile">
+                            <i class="fas fa-eye"></i>
+                        </a>
                         
-                        ${user.role === 'engineer' && user.status === 'approved' ? `
-                            <button class="btn btn-reject" onclick="updateEngineerStatus(${user.id}, 'rejected')">
-                                <i class="fas fa-user-slash"></i> Suspend
+                        <?php if ($row['status'] !== 'approved'): ?>
+                            <button class="icon-btn btn-verify" title="Verify User" onclick="updateEngineerStatus(<?php echo $row['id']; ?>, 'verify')">
+                                <i class="fas fa-check"></i>
                             </button>
-                        ` : ''}
-
-                        ${user.role === 'engineer' && user.status === 'rejected' ? `
-                            <button class="btn btn-approve" onclick="updateEngineerStatus(${user.id}, 'approved')">
-                                <i class="fas fa-user-check"></i> Re-approve
+                        <?php else: ?>
+                            <button class="icon-btn btn-suspend" title="Suspend User" onclick="updateEngineerStatus(<?php echo $row['id']; ?>, 'suspend')">
+                                <i class="fas fa-ban"></i>
                             </button>
-                        ` : ''}
+                        <?php endif; ?>
+                    </div>
+                </div>
+                
+                <div class="card-bg-3d"></div>
+            </div>
+            <?php 
+                }
+            } 
+            ?>
 
-                        <button class="btn btn-delete" onclick="deleteUser(${user.id})">
-                            <i class="fas fa-trash"></i> Delete User
+            <!-- Loop Homeowners -->
+            <?php 
+            if ($homeowners_result && $homeowners_result->num_rows > 0) {
+                while ($row = $homeowners_result->fetch_assoc()) {
+                    $statusClass = strtolower($row['status']);
+            ?>
+            <div class="feature-card tilt-card" data-role="homeowner" data-name="<?php echo strtolower($row['name']); ?>" data-email="<?php echo strtolower($row['email']); ?>">
+                <div class="icon-wrapper grad-homeowner">
+                    <i class="fas fa-home"></i>
+                </div>
+                
+                <div class="card-content">
+                    <h3><?php echo htmlspecialchars($row['name']); ?></h3>
+                    <p style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; margin-bottom: 0;">
+                        <?php echo htmlspecialchars($row['email']); ?>
+                    </p>
+                    <p style="margin-top: 0.2rem;">Homeowner</p>
+                    
+                    <span class="status-badge <?php echo $statusClass; ?>">
+                        <?php echo ucfirst($row['status']); ?>
+                    </span>
+                </div>
+
+                <div class="card-meta">
+                     <div style="font-size: 0.8rem;">
+                        <i class="far fa-calendar-alt"></i> <?php echo date('M Y', strtotime($row['created_at'])); ?>
+                    </div>
+                    <div class="action-btn-group">
+                         <!-- Homeowner actions -->
+                         <button class="icon-btn btn-view" title="View Details">
+                            <i class="fas fa-info-circle"></i>
                         </button>
                     </div>
                 </div>
-            `).join('');
-        }
-
-        async function updateEngineerStatus(userId, newStatus) {
-            if (!confirm(`Are you sure you want to ${newStatus} this application?`)) return;
-
-            try {
-                const response = await fetch('backend/update_engineer_status.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: userId, status: newStatus })
-                });
-
-                const data = await response.json();
-                if (data.success) {
-                    alert('Status updated successfully!');
-                    loadUsers();
-                } else {
-                    alert('Error: ' + data.message);
+                
+                <div class="card-bg-3d"></div>
+            </div>
+            <?php 
                 }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('An error occurred.');
-            }
-        }
+            } 
+            ?>
 
-        async function deleteUser(userId) {
-            if (!confirm('Are you sure you want to PERMANENTLY delete this user? This action cannot be undone.')) return;
+        </div>
+    </div>
 
-            try {
-                const response = await fetch('backend/delete_user.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: userId })
+    <script>
+        // === 3D TILT EFFECT ===
+        const initTilt = () => {
+            const cards = document.querySelectorAll('.tilt-card');
+            cards.forEach(card => {
+                card.addEventListener('mousemove', (e) => {
+                    const rect = card.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    const centerX = rect.width / 2;
+                    const centerY = rect.height / 2;
+                    const rotateX = ((y - centerY) / centerY) * -10;
+                    const rotateY = ((x - centerX) / centerX) * 10;
+                    
+                    // Apply to card
+                    card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.02)`;
                 });
-
-                const data = await response.json();
-                if (data.success) {
-                    alert('User deleted successfully!');
-                    loadUsers();
-                } else {
-                    alert('Error: ' + data.message);
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('An error occurred.');
-            }
-        }
-
-        function filterUsers(filter) {
-            currentFilter = filter;
-            document.querySelectorAll('.filter-tab').forEach(tab => {
-                tab.classList.remove('active');
-                if (tab.dataset.filter === filter) tab.classList.add('active');
+                card.addEventListener('mouseleave', () => {
+                    card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale(1)';
+                });
             });
-            displayUsers();
+        };
+        document.addEventListener('DOMContentLoaded', initTilt);
+
+        // Filters & Search
+        const searchInput = document.getElementById('searchInput');
+        const filters = document.querySelectorAll('.filter-chip');
+        const cards = document.querySelectorAll('.feature-card');
+
+        function filterUsers() {
+            const query = searchInput.value.toLowerCase();
+            const activeFilter = document.querySelector('.filter-chip.active').dataset.filter;
+
+            cards.forEach(card => {
+                const name = card.dataset.name;
+                const email = card.dataset.email;
+                const role = card.dataset.role;
+                
+                const matchesSearch = name.includes(query) || email.includes(query);
+                const matchesRole = activeFilter === 'all' || role === activeFilter;
+
+                if (matchesSearch && matchesRole) {
+                    card.style.display = 'flex';
+                    card.style.animation = 'fadeInUp 0.5s ease backwards';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
         }
 
-        loadUsers();
+        searchInput.addEventListener('input', filterUsers);
 
-        document.addEventListener('DOMContentLoaded', () => {
-            // === 3D BACKGROUND ANIMATION ===
-            const initBackground3D = () => {
-                const container = document.getElementById('canvas-container');
-                if (!container) return;
+        filters.forEach(btn => {
+            btn.addEventListener('click', () => {
+                filters.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                filterUsers();
+            });
+        });
 
-                const scene = new THREE.Scene();
-                scene.background = new THREE.Color('#f6f7f2');
+        // Engineer Actions
+        async function updateEngineerStatus(id, action) {
+            if (!confirm(`Are you sure you want to ${action} this engineer?`)) return;
 
-                const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-                camera.position.z = 8;
-                camera.position.y = 2;
+            try {
+                const formData = new FormData();
+                formData.append('engineer_id', id);
+                formData.append('action', action);
 
-                const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-                renderer.setSize(window.innerWidth, window.innerHeight);
-                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-                container.appendChild(renderer.domElement);
-
-                const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-                scene.add(ambientLight);
-
-                const mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
-                mainLight.position.set(10, 10, 10);
-                scene.add(mainLight);
-
-                const blueLight = new THREE.PointLight(0x3d5a49, 0.5);
-                blueLight.position.set(-5, 5, 5);
-                scene.add(blueLight);
-
-                const cityGroup = new THREE.Group();
-                scene.add(cityGroup);
-
-                const buildingGeometry = new THREE.BoxGeometry(1, 1, 1);
-                const buildingMaterial = new THREE.MeshPhongMaterial({
-                    color: 0x294033, transparent: true, opacity: 0.1, side: THREE.DoubleSide
+                const response = await fetch('backend/admin_engineer_actions.php', {
+                    method: 'POST',
+                    body: formData
                 });
-                const edgeMaterial = new THREE.LineBasicMaterial({ color: 0x294033, transparent: true, opacity: 0.3 });
 
-                const gridSize = 10;
-                const spacing = 3;
+                const result = await response.json();
 
-                for (let x = -gridSize; x < gridSize; x++) {
-                    for (let z = -gridSize; z < gridSize; z++) {
-                        const height = Math.random() * 2 + 0.5;
-                        const building = new THREE.Group();
-                        const geometry = new THREE.BoxGeometry(1, height, 1);
-                        const mesh = new THREE.Mesh(geometry, buildingMaterial);
-                        mesh.position.y = height / 2;
-                        const edges = new THREE.EdgesGeometry(geometry);
-                        const line = new THREE.LineSegments(edges, edgeMaterial);
-                        line.position.y = height / 2;
-                        building.add(mesh);
-                        building.add(line);
-                        building.position.set(x * spacing, -2, z * spacing);
-                        cityGroup.add(building);
-                    }
+                if (result.success) {
+                    alert(result.message);
+                    location.reload();
+                } else {
+                    alert('Error: ' + result.message);
                 }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+            }
+        }
 
-                const houseGroup = new THREE.Group();
-                const baseGeo = new THREE.BoxGeometry(2, 2, 2);
-                const baseLine = new THREE.LineSegments(new THREE.EdgesGeometry(baseGeo), new THREE.LineBasicMaterial({ color: 0x294033, linewidth: 2 }));
-                houseGroup.add(baseLine);
-                const roofGeo = new THREE.ConeGeometry(1.5, 1.2, 4);
-                const roofLine = new THREE.LineSegments(new THREE.EdgesGeometry(roofGeo), new THREE.LineBasicMaterial({ color: 0x3d5a49, linewidth: 2 }));
-                roofLine.position.y = 1.6;
-                roofLine.rotation.y = Math.PI / 4;
-                houseGroup.add(roofLine);
+        // 3D Background - Consistent with others
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('canvas-container');
+            if (!container || typeof THREE === 'undefined') return;
 
-                const floatGroup = new THREE.Group();
-                floatGroup.add(houseGroup);
-                floatGroup.position.set(0, 0, 2);
-                scene.add(floatGroup);
+            const scene = new THREE.Scene();
+            scene.background = new THREE.Color('#f0f2f5');
+            scene.fog = new THREE.Fog('#f0f2f5', 10, 50);
 
-                let mouseX = 0; let mouseY = 0;
-                let targetRotationX = 0; let targetRotationY = 0;
-                document.addEventListener('mousemove', (event) => {
-                    mouseX = (event.clientX - window.innerWidth / 2) * 0.001;
-                    mouseY = (event.clientY - window.innerHeight / 2) * 0.001;
-                });
-                let scrollY = 0;
-                window.addEventListener('scroll', () => { scrollY = window.scrollY * 0.001; });
+            const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 10, 20);
+            camera.lookAt(0, 0, 0);
 
-                const animate = () => {
-                    requestAnimationFrame(animate);
-                    cityGroup.rotation.y += 0.001;
-                    floatGroup.rotation.y += 0.005;
-                    floatGroup.position.y = Math.sin(Date.now() * 0.001) * 0.5 + 0.5;
-                    targetRotationX = mouseX; targetRotationY = mouseY;
-                    cityGroup.rotation.x += 0.05 * (targetRotationY - cityGroup.rotation.x);
-                    cityGroup.rotation.y += 0.05 * (targetRotationX - cityGroup.rotation.y);
-                    camera.position.y = 2 - scrollY * 2;
-                    camera.position.z = 8 + scrollY * 5;
-                    renderer.render(scene, camera);
-                };
-                animate();
-                window.addEventListener('resize', () => {
-                    camera.aspect = window.innerWidth / window.innerHeight;
-                    camera.updateProjectionMatrix();
-                    renderer.setSize(window.innerWidth, window.innerHeight);
-                });
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            container.appendChild(renderer.domElement);
+
+            // Objects
+            const geometry = new THREE.BoxGeometry(1, 1, 1);
+            const material = new THREE.MeshBasicMaterial({ color: 0x3b82f6, transparent: true, opacity: 0.1 });
+            const edgeMaterial = new THREE.LineBasicMaterial({ color: 0x3b82f6, transparent: true, opacity: 0.15 });
+
+            const group = new THREE.Group();
+            scene.add(group);
+
+            for (let i = 0; i < 40; i++) {
+                const mesh = new THREE.Mesh(geometry, material);
+                const x = (Math.random() - 0.5) * 60;
+                const z = (Math.random() - 0.5) * 60;
+                const y = Math.random() * 5;
+                mesh.position.set(x, y, z);
+                mesh.scale.set(Math.random() * 2 + 1, Math.random() * 5 + 1, Math.random() * 2 + 1);
+                
+                const edges = new THREE.EdgesGeometry(geometry);
+                const line = new THREE.LineSegments(edges, edgeMaterial);
+                line.position.copy(mesh.position);
+                line.scale.copy(mesh.scale);
+
+                group.add(mesh);
+                group.add(line);
+            }
+
+            // Animation
+            const animate = () => {
+                requestAnimationFrame(animate);
+                group.rotation.y += 0.001;
+                renderer.render(scene, camera);
             };
-            if (typeof THREE !== 'undefined') { initBackground3D(); }
+            animate();
+
+            // Resize
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
         });
     </script>
 </body>
-
 </html>

@@ -129,7 +129,7 @@ try {
                 pr.created_at,
                 u.name as homeowner_name
             FROM project_requests pr
-            LEFT JOIN users u ON pr.user_id = u.id
+            LEFT JOIN users u ON pr.homeowner_id = u.id
             WHERE pr.engineer_id = ?
             ORDER BY pr.created_at DESC
             LIMIT 10
