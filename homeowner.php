@@ -376,13 +376,13 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Homeowner'
             </div>
 
             <!-- Card 7: Resource Library -->
-            <div class="feature-card tilt-card" onclick="window.location.href='project_status.php'">
+            <div class="feature-card tilt-card" onclick="window.location.href='plans_designs.php'">
                 <div class="card-content">
                     <div class="icon-wrapper gradient-7">
                         <i class="fas fa-book-open"></i>
                     </div>
                     <h3>Templates Available</h3>
-                    <p>Examine guides, compliance documents, and construction best practices.</p>
+                    <p>View templates for your construction projects.</p>
                 </div>
                 <div class="card-bg-3d"></div>
             </div>

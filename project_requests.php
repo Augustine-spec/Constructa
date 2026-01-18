@@ -555,8 +555,8 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Engineer';
             $stmt = $conn->prepare("
                 SELECT pr.*, u.name as homeowner_name, u.email as homeowner_email 
                 FROM project_requests pr 
-                JOIN users u ON pr.homeowner_id = u.id 
-                WHERE pr.engineer_id = ? AND pr.status = 'pending'
+                LEFT JOIN users u ON pr.homeowner_id = u.id 
+                WHERE pr.engineer_id = ? 
                 ORDER BY pr.created_at DESC
             ");
             $stmt->bind_param("i", $engineer_id);

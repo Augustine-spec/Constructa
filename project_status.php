@@ -9,73 +9,61 @@ require_once 'backend/config.php';
 $conn = getDatabaseConnection();
 $homeowner_id = $_SESSION['user_id'];
 
-// Fetch the active project for this homeowner
-// Assuming 'project_requests' table holds the project workflow state
-$sql = "SELECT pr.*, u.name as engineer_name, u.email as engineer_email 
+// Fetch all project requests for this homeowner
+$sql = "SELECT pr.*, u.name as engineer_name 
         FROM project_requests pr 
         LEFT JOIN users u ON pr.engineer_id = u.id 
         WHERE pr.homeowner_id = ? 
-        ORDER BY pr.updated_at DESC LIMIT 1";
+        ORDER BY pr.updated_at DESC";
 
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $homeowner_id);
 $stmt->execute();
 $result = $stmt->get_result();
-$project = $result->fetch_assoc();
-
-// Define Stages
-$stages = [
-    1 => ['label' => 'Request Submitted', 'desc' => 'Your project request has been received and is under review.', 'duration' => '1-2 Days'],
-    2 => ['label' => 'Engineer Assigned', 'desc' => 'A verified structural engineer has been assigned to your project.', 'duration' => '2-3 Days'],
-    3 => ['label' => 'Site Survey', 'desc' => 'Engineer will visit the site for measurements and soil testing.', 'duration' => '1 Week'],
-    4 => ['label' => 'Cost Estimation', 'desc' => 'Detailed BOQ and material cost estimation is being prepared.', 'duration' => '3-5 Days'],
-    5 => ['label' => 'Approval & Permissions', 'desc' => 'Waiting for client approval and municipal permissions.', 'duration' => '2-4 Weeks'],
-    6 => ['label' => 'Construction Execution', 'desc' => 'Actual construction and structural work in progress.', 'duration' => '3-6 Months'],
-    7 => ['label' => 'Inspection & Handover', 'desc' => 'Final quality check and project handover.', 'duration' => '1-2 Weeks']
-];
-
-$current_stage_id = $project ? ($project['current_stage'] ?? 1) : 0;
-// Fallback if no project found
-if (!$project) {
-    $current_stage_id = 0;
-    $project = ['project_title' => 'No Active Project', 'engineer_name' => 'N/A', 'updated_at' => date('Y-m-d')];
+$projects = [];
+while ($row = $result->fetch_assoc()) {
+    $projects[] = $row;
 }
-$current_stage_info = $stages[$current_stage_id] ?? $stages[1];
 
+// Stats
+$total_projects = count($projects);
+$active_projects = 0;
+foreach ($projects as $p) {
+    if ($p['status'] !== 'completed' && $p['status'] !== 'rejected') {
+        $active_projects++;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project Status - Constructa</title>
+    <title>My Projects - Constructa</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <!-- Shared & Wizard CSS -->
     <style>
         :root {
             --primary: #294033;
             --primary-light: #3d5a49;
             --accent: #d4af37;
             --bg-color: #f6f7f2;
-            --card-bg: #ffffff;
+            --card-bg: rgba(255, 255, 255, 0.9);
             --text-main: #1e293b;
             --text-muted: #64748b;
-            --border-color: #e2e8f0;
-            --success: #10b981;
+            --glass-border: rgba(255, 255, 255, 0.6);
+            --shadow: 0 10px 30px rgba(0,0,0,0.05);
             --nav-height: 70px;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Outfit', sans-serif; }
 
         body {
-            background-color: transparent;
+            background-color: #f6f7f2;
             color: var(--text-main);
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
             overflow-x: hidden;
         }
 
@@ -86,174 +74,168 @@ $current_stage_info = $stages[$current_stage_id] ?? $stages[1];
 
         /* Navbar */
         nav {
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(20px);
-            padding: 1rem 3rem;
+            padding: 0 3rem;
             display: flex; justify-content: space-between; align-items: center;
             border-bottom: 1px solid rgba(0,0,0,0.05);
             position: sticky; top: 0; z-index: 100;
             height: var(--nav-height);
         }
         .nav-logo { font-weight: 800; font-size: 1.5rem; color: var(--primary); text-decoration: none; display: flex; align-items: center; gap: 0.5rem; }
+        .nav-links { display: flex; gap: 1rem; }
         .nav-btn {
             background: white; border: 1px solid rgba(0,0,0,0.1); padding: 0.6rem 1.2rem;
             border-radius: 8px; font-weight: 700; font-size: 0.85rem; color: var(--text-main);
             text-decoration: none; transition: all 0.3s;
+            font-family: 'Inter', sans-serif; text-transform: uppercase;
         }
         .nav-btn:hover { background: var(--primary); color: white; transform: translateY(-2px); }
 
-        /* === WIZARD STYLES (From budget_calculator) === */
-        .app-container {
-            display: flex;
-            flex: 1;
-            max-width: 1400px;
-            margin: 0 auto;
-            width: 100%;
-            height: calc(100vh - var(--nav-height));
+        /* Main Content */
+        .page-header {
+            max-width: 1200px;
+            margin: 3rem auto 2rem;
+            padding: 0 2rem;
+            text-align: center;
+        }
+        .page-title {
+            font-size: 2.5rem; color: var(--primary); margin-bottom: 0.5rem; font-weight: 800;
+        }
+        .page-subtitle {
+            color: var(--text-muted); font-size: 1.1rem;
+        }
+        
+        .btn-new-project {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--primary);
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 700;
+            margin-top: 1.5rem;
+            box-shadow: 0 4px 15px rgba(41, 64, 51, 0.3);
+            transition: all 0.3s ease;
+        }
+        .btn-new-project:hover {
+            background: var(--primary-light);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(41, 64, 51, 0.4);
         }
 
-        .wizard-section {
-            flex: 2;
-            padding: 3rem;
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto 4rem;
+            padding: 0 2rem;
+        }
+
+        .project-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2rem;
+            cursor: pointer;
+            transition: all 0.4s ease;
             position: relative;
-            overflow-y: auto;
+            overflow: hidden;
+            box-shadow: var(--shadow);
             display: flex;
             flex-direction: column;
+            gap: 1.5rem;
+        }
+        .project-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            border-color: var(--primary);
         }
 
-        .preview-section {
-            flex: 1;
-            background: #ffffff;
-            border-left: 1px solid var(--border-color);
-            padding: 2.5rem;
-            display: flex;
-            flex-direction: column;
-            box-shadow: -5px 0 20px rgba(0,0,0,0.02);
+        .card-header {
+            display: flex; justify-content: space-between; align-items: flex-start;
         }
-
-        .step {
-            display: none;
-            animation: fadeIn 0.5s ease-out;
-        }
-        .step.active { display: block; }
-
-        .step-title { font-size: 2rem; font-weight: 700; color: var(--primary); margin-bottom: 0.5rem; }
-        .step-desc { font-size: 1.1rem; color: var(--text-muted); margin-bottom: 2.5rem; }
-
-        .big-input {
-            width: 100%; font-size: 2.5rem; padding: 1rem; border: none;
-            border-bottom: 3px solid var(--border-color); background: transparent;
-            font-weight: 700; color: var(--primary); outline: none; transition: all 0.3s;
-        }
-        .big-input:focus { border-bottom-color: var(--primary); }
-
-        .options-grid {
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem;
-        }
-
-        .selection-card {
-            background: white; border: 2px solid var(--border-color); border-radius: 16px;
-            padding: 2rem; cursor: pointer; transition: all 0.3s; position: relative;
-            display: flex; flex-direction: column; gap: 0.5rem;
-        }
-        .selection-card:hover { transform: translateY(-4px); border-color: #cbd5e1; }
-        .selection-card.selected { border-color: var(--primary); background: #f0fdf4; }
-        
-        .selection-card .icon { font-size: 2rem; color: var(--text-muted); margin-bottom: 1rem; }
-        .selection-card.selected .icon { color: var(--primary); }
-        .check-mark {
-            position: absolute; top: 1rem; right: 1rem; width: 24px; height: 24px;
-            border-radius: 50%; background: var(--primary); color: white;
+        .project-icon {
+            width: 50px; height: 50px;
+            background: rgba(26, 46, 35, 0.05);
+            border-radius: 12px;
             display: flex; align-items: center; justify-content: center;
-            opacity: 0; transform: scale(0); transition: all 0.3s;
+            font-size: 1.5rem; color: var(--primary);
         }
-        .selection-card.selected .check-mark { opacity: 1; transform: scale(1); }
+        .status-badge {
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .status-active { background: #dcfce7; color: #166534; }
+        .status-pending { background: #e0f2fe; color: #075985; }
+        .status-completed { background: #f3f4f6; color: #374151; }
+        .status-rejected { background: #fee2e2; color: #991b1b; }
 
-        .wizard-nav {
-            margin-top: auto; padding-top: 3rem; display: flex; justify-content: space-between;
+        .card-title-group h3 {
+            font-size: 1.4rem; color: var(--text-main); font-weight: 700; margin-bottom: 0.2rem;
         }
-        .btn-primary {
-            background: var(--primary); color: white; padding: 1rem 2rem; border-radius: 12px;
-            border: none; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;
-        }
-        .btn-secondary {
-            background: var(--bg-color); color: var(--text-muted); padding: 1rem 2rem; border-radius: 12px;
-            border: none; font-weight: 600; cursor: pointer;
-        }
-
-        /* === PLAN FINDER SPECIFIC === */
-        .plan-results-grid {
-            display: grid; grid-template-columns: repeat(2, 1fr); gap: 2rem;
-            padding-bottom: 2rem;
-        }
-        .plan-card {
-            background: white; border-radius: 16px; overflow: hidden;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: 1px solid var(--border-color);
-            transition: transform 0.3s; display: flex; flex-direction: column;
-        }
-        .plan-card:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-        
-        .plan-visuals {
-            display: grid; grid-template-columns: 1fr 1fr; height: 200px;
-        }
-        .plan-img {
-            width: 100%; height: 100%; object-fit: cover;
-            border-bottom: 1px solid var(--border-color);
-        }
-        .blueprint-style {
-            background-color: #003366;
-            background-image: 
-                linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px);
-            background-size: 20px 20px;
-            position: relative;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .blueprint-text {
-            color: rgba(255,255,255,0.8); font-family: 'JetBrains Mono', monospace; 
-            font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;
-            border: 2px solid rgba(255,255,255,0.5); padding: 0.5rem;
+        .card-title-group p {
+            font-size: 0.9rem; color: var(--text-muted);
         }
 
-        .plan-details { padding: 1.5rem; flex: 1; display: flex; flex-direction: column; }
-        .plan-title { font-size: 1.25rem; font-weight: 700; color: var(--primary); margin-bottom: 0.5rem; }
-        .plan-meta { display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
-        .meta-tag { 
-            background: #f1f5f9; padding: 0.3rem 0.8rem; border-radius: 20px; 
-            font-size: 0.85rem; color: var(--text-muted); font-weight: 600;
+        .info-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0.8rem 0;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            font-size: 0.95rem;
         }
-        
-        .plan-actions { display: flex; gap: 1rem; margin-top: auto; }
-        .btn-small {
-            flex: 1; padding: 0.8rem; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; text-align: center;
-        }
-        .btn-outline { background: white; border: 1px solid var(--border-color); color: var(--text-main); }
-        .btn-action { background: var(--primary); color: white; }
+        .info-row:last-child { border-bottom: none; }
+        .info-label { color: var(--text-muted); display: flex; align-items: center; gap: 0.5rem; }
+        .info-value { font-weight: 600; color: var(--text-main); }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .progress-section {
+            margin-top: auto;
+        }
+        .progress-info {
+            display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.85rem; font-weight: 600; color: var(--primary);
+        }
+        .progress-bar-bg {
+            width: 100%; height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%; background: var(--primary); transition: width 1s ease;
+        }
 
-        /* === STATUS DASHBOARD CSS (Preserved & Adjusted) === */
-        .status-container {
-            max-width: 1200px; margin: 3rem auto; padding: 0 2rem;
+        .view-msg {
+            margin-top: 1rem;
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--primary);
+            font-weight: 600;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s;
         }
-        .focus-card {
-            background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(20px);
-            border: 1px solid white; border-radius: 24px;
-            padding: 2.5rem; display: grid; grid-template-columns: 1.5fr 1fr;
-            gap: 2rem; box-shadow: 0 10px 40px rgba(0,0,0,0.05);
-            margin-bottom: 3rem;
+        .project-card:hover .view-msg {
+            opacity: 1; transform: translateY(0);
         }
-        .timeline { position: relative; padding-left: 2rem; border-left: 3px solid rgba(0,0,0,0.05); }
-        .timeline-stage { position: relative; margin-bottom: 2rem; padding-left: 2.5rem; }
-        .timeline-marker {
-            position: absolute; left: -2.6rem; top: 0rem; width: 40px; height: 40px;
-            background: white; border: 3px solid rgba(0,0,0,0.1); border-radius: 50%;
-            display: flex; align-items: center; justify-content: center; z-index: 2;
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            grid-column: 1 / -1;
+            background: rgba(255,255,255,0.8);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
         }
-        .stage-card {
-            background: white; border-radius: 16px; padding: 1.5rem;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+        .empty-icon {
+            font-size: 3rem; color: var(--text-muted); margin-bottom: 1.5rem; opacity: 0.5;
         }
+
     </style>
 </head>
 <body>
@@ -261,1044 +243,192 @@ $current_stage_info = $stages[$current_stage_id] ?? $stages[1];
 
     <nav>
         <a href="homeowner.php" class="nav-logo"><i class="fas fa-home"></i> Constructa</a>
-        <?php if (!$project): ?>
-            <div><span style="color:var(--text-muted); font-size:0.9rem;">Start Your Journey</span></div>
-        <?php else: ?>
+        <div class="nav-links">
             <a href="homeowner.php" class="nav-btn"><i class="fas fa-arrow-left"></i> Dashboard</a>
-        <?php endif; ?>
+            <a href="login.html" class="nav-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </div>
     </nav>
 
-    <!-- RECOMMENDED PLANS WIZARD (Primary View) -->
-    <div id="view-plans" class="app-container">
-        <!-- Toast -->
-        <div id="toast" style="position:fixed; bottom:2rem; left:50%; transform:translateX(-50%); background:var(--primary); color:white; padding:1rem 2rem; border-radius:50px; box-shadow:0 10px 20px rgba(0,0,0,0.2); display:none; z-index:1000; animation:popIn 0.3s ease-out;">
-            <i class="fas fa-check-circle"></i> <span id="toast-msg">Action Completed</span>
+    <main>
+        <div class="page-header">
+            <h1 class="page-title">My Projects</h1>
+            <p class="page-subtitle">Track the progress and details of your construction projects.</p>
+            <a href="engineer_directory.php" class="btn-new-project">
+                <i class="fas fa-plus-circle"></i> Request New Project
+            </a>
         </div>
 
-        <!-- Wizard Steps -->
-        <div class="wizard-section">
-            <div class="step active" id="step1">
-                <h2 class="step-title">Find Your Perfect Plan</h2>
-                <p class="step-desc">Enter your plot details to see engineer-approved CAD plans.</p>
-                
-                <div style="margin-bottom:2rem;">
-                    <label style="display:block; font-weight:600; margin-bottom:0.5rem; color:var(--text-muted);">Plot Area (sq. ft)</label>
-                    <input type="number" id="plotArea" class="big-input" placeholder="e.g. 1200" oninput="updatePreview()">
-                </div>
-
-                <div style="margin-bottom:2rem;">
-                    <label style="display:block; font-weight:600; margin-bottom:1rem; color:var(--text-muted);">Number of Floors</label>
-                    <div class="options-grid">
-                        <div class="selection-card" onclick="selectOption('floors', 1, this)">
-                            <div class="check-mark"><i class="fas fa-check"></i></div>
-                            <div class="icon"><i class="fas fa-square"></i></div>
-                            <div class="card-title">Ground Only</div>
-                        </div>
-                        <div class="selection-card" onclick="selectOption('floors', 2, this)">
-                            <div class="check-mark"><i class="fas fa-check"></i></div>
-                            <div class="icon"><i class="fas fa-layer-group"></i></div>
-                            <div class="card-title">G + 1</div>
-                        </div>
-                        <div class="selection-card" onclick="selectOption('floors', 3, this)">
-                            <div class="check-mark"><i class="fas fa-check"></i></div>
-                            <div class="icon"><i class="fas fa-building"></i></div>
-                            <div class="card-title">G + 2</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Step 2: Preferences -->
-            <div class="step" id="step2">
-                <h2 class="step-title">Layout & Vision</h2>
-                <p class="step-desc">Choose a style and describe your dream home for our AI.</p>
-                
-                <label style="display:block; font-weight:600; margin-bottom:1rem; color:var(--text-muted);">Architectural Style</label>
-                <div class="options-grid">
-                    <div class="selection-card" onclick="selectOption('style', 'Modern', this)">
-                        <div class="check-mark"><i class="fas fa-check"></i></div>
-                        <div class="icon"><i class="fas fa-cube"></i></div>
-                        <div class="card-title">Modern Box</div>
-                    </div>
-                    <div class="selection-card" onclick="selectOption('style', 'Traditional', this)">
-                        <div class="check-mark"><i class="fas fa-check"></i></div>
-                        <div class="icon"><i class="fas fa-home"></i></div>
-                        <div class="card-title">Traditional</div>
-                    </div>
-                    <div class="selection-card" onclick="selectOption('style', 'Vastu', this)">
-                        <div class="check-mark"><i class="fas fa-check"></i></div>
-                        <div class="icon"><i class="fas fa-compass"></i></div>
-                        <div class="card-title">Vastu Compliant</div>
-                    </div>
-                </div>
-
-                <div style="margin-top:2.5rem;">
-                    <label style="display:block; font-weight:600; margin-bottom:0.8rem; color:var(--text-muted);">AI Design Prompt <span style="font-weight:400; font-size:0.85rem;">(Optional)</span></label>
-                    <textarea id="aiPrompt" style="width:100%; padding:1rem; border:2px solid var(--border-color); border-radius:12px; font-family:'Outfit',sans-serif; font-size:1rem; min-height:100px; resize:vertical; outline:none; transition:border-color 0.3s;" placeholder="e.g. I want a large balcony facing north, a double-height living room with a skylight, and an open kitchen..."></textarea>
-                    <p style="font-size:0.8rem; color:var(--text-muted); margin-top:0.5rem;"><i class="fas fa-magic"></i> Constructa AI will use this to refine suggestions.</p>
-                </div>
-            </div>
-
-            <!-- Step 3: Results -->
-            <div class="step" id="step3">
-                <div id="ai-loader" style="display:none; text-align:center; padding:4rem 2rem;">
-                     <div class="spinner" style="width:60px; height:60px; border:5px solid #e2e8f0; border-top-color:var(--primary); border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 2rem;"></div>
-                     <h2 style="color:var(--primary); font-size:1.5rem; margin-bottom:0.5rem;" id="ai-status-text">Analyzing Plot Dimensions...</h2>
-                     <p style="color:var(--text-muted);">Generating optimal layouts based on your vision.</p>
-                </div>
-
-                <div id="results-content" style="display:none;">
-                    <h2 class="step-title">Your Personalized Design</h2>
-                    <p class="step-desc">Based on your plot (approx <span id="res-area"></span> sqft) and AI analysis.</p>
+        <div class="projects-grid">
+            <?php if (count($projects) > 0): ?>
+                <?php foreach ($projects as $proj): 
+                    $status_class = 'status-pending';
+                    if ($proj['status'] === 'accepted') $status_class = 'status-active';
+                    if ($proj['status'] === 'completed') $status_class = 'status-completed';
+                    if ($proj['status'] === 'rejected') $status_class = 'status-rejected';
                     
-                    <div class="plan-results-grid" id="planResults">
-                        <!-- Plans Injected Here -->
+                    // Logic: If pending, show 0 progress and distinct label
+                    $stage = $proj['current_stage'] ?? 1;
+                    $progress = min(100, round(($stage / 7) * 100));
+                    
+                    $stage_label = "Stage " . $stage;
+                    
+                    if ($proj['status'] === 'pending') {
+                        $progress = 0;
+                        $stage_label = "Request Sent";
+                    }
+                    if ($proj['status'] === 'completed') {
+                        $progress = 100;
+                        $stage_label = "Completed";
+                        $stage = 8; // Max
+                    }
+                    if ($proj['status'] === 'rejected') {
+                        $progress = 0;
+                        $stage_label = "Rejected";
+                    }
+                ?>
+                <div class="project-card" onclick="window.location.href='project_tracking.php?project_id=<?php echo $proj['id']; ?>'">
+                    <div class="card-header">
+                        <div class="project-icon">
+                            <i class="fas fa-building"></i>
+                        </div>
+                        <span class="status-badge <?php echo $status_class; ?>"><?php echo ucfirst($proj['status']); ?></span>
                     </div>
+                    
+                    <div class="card-title-group">
+                        <h3><?php echo htmlspecialchars($proj['project_title'] ?: 'Untitled Project'); ?></h3>
+                        <p><?php echo htmlspecialchars($proj['project_type']); ?> • <?php echo htmlspecialchars($proj['location']); ?></p>
+                    </div>
+
+                    <div class="info-group">
+                        <div class="info-row">
+                            <span class="info-label"><i class="fas fa-user-hard-hat"></i> Engineer</span>
+                            <span class="info-value"><?php echo htmlspecialchars($proj['engineer_name'] ?: 'Pending Assignment'); ?></span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label"><i class="fas fa-ruler-combined"></i> Size</span>
+                            <span class="info-value"><?php echo htmlspecialchars($proj['project_size'] ?: 'N/A'); ?> sq.ft</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label"><i class="fas fa-calendar-alt"></i> Updated</span>
+                            <span class="info-value"><?php echo date('M d, Y', strtotime($proj['updated_at'])); ?></span>
+                        </div>
+                    </div>
+
+                    <div class="progress-section">
+                        <div class="progress-info">
+                            <span><?php echo $stage_label; ?></span>
+                            <span><?php echo $progress; ?>%</span>
+                        </div>
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill" style="width: <?php echo $progress; ?>%"></div>
+                        </div>
+                    </div>
+
+                    <div class="view-msg">Click to view full details <i class="fas fa-arrow-right"></i></div>
                 </div>
-            </div>
-
-            <!-- Navigation -->
-            <div class="wizard-nav">
-                <button class="btn-secondary" id="prevBtn" onclick="prevStep()" disabled>Back</button>
-                <button class="btn-primary" id="nextBtn" onclick="nextStep()">Next Step <i class="fas fa-arrow-right"></i></button>
-            </div>
-        </div>
-
-        <style>
-            @keyframes spin { 100% { transform:rotate(360deg); } }
-        </style>
-        
-        <!-- Live Preview Sidebar -->
-        <div class="preview-section">
-            <h3 style="font-size:1.1rem; font-weight:700; margin-bottom:1.5rem; color:var(--text-muted); text-transform:uppercase;">Selection Summary</h3>
-            <div style="display:flex; flex-direction:column; gap:1.5rem;">
-                <div>
-                    <div style="font-size:0.85rem; color:var(--text-muted);">Plot Area</div>
-                    <div style="font-size:1.5rem; font-weight:700; color:var(--primary);"><span id="prev-area">0</span> sq.ft</div>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <div class="empty-state">
+                    <div class="empty-icon"><i class="fas fa-folder-open"></i></div>
+                    <h2>No Projects Found</h2>
+                    <p style="margin-top: 0.5rem; color: var(--text-muted);">You haven't started any projects yet.</p>
+                    <a href="homeowner.php" class="nav-btn" style="margin-top: 1.5rem; display: inline-block;">Start Your Journey</a>
                 </div>
-                <div>
-                    <div style="font-size:0.85rem; color:var(--text-muted);">Configuration</div>
-                    <div style="font-size:1.1rem; font-weight:600;"><span id="prev-floors">Not Selected</span></div>
-                </div>
-                <div>
-                    <div style="font-size:0.85rem; color:var(--text-muted);">Style</div>
-                    <div style="font-size:1.1rem; font-weight:600;"><span id="prev-style">Any</span></div>
-                </div>
-            </div>
-
-            <!-- Live 3D Preview Container -->
-            <div style="margin-top:2rem; padding-top:2rem; border-top:1px solid var(--border-color);">
-                <h4 style="font-size:0.9rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:1rem;">Conceptual 3D Preview</h4>
-                <div id="live-3d-preview" style="width:100%; height:300px; background:#f1f5f9; border-radius:12px; overflow:hidden; position:relative;"></div>
-                <p style="font-size:0.75rem; color:var(--text-muted); margin-top:0.8rem; line-height:1.4;">
-                    <i class="fas fa-info-circle"></i> Disclaimer: This is a visualization only. Final structural design may vary based on engineering requirements and approvals.
-                </p>
-            </div>
+            <?php endif; ?>
         </div>
-    </div>
-
-    <!-- Plan Viewer Modal (2D Layout) -->
-    <div id="planModal" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.95); z-index:200; display:none; flex-direction:column;">
-        <div style="padding:1.5rem; display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.05); border-bottom:1px solid rgba(255,255,255,0.1);">
-            <div>
-                <h3 style="color:white; font-family:'Outfit', sans-serif; font-size:1.2rem; margin-bottom:0.2rem;" id="planModalTitle">Floor Plan Layout</h3>
-                <p style="color:rgba(255,255,255,0.6); font-size:0.85rem;">Engineer Approved 2D Design</p>
-            </div>
-            <button onclick="closeModal('planModal')" style="background:rgba(255,255,255,0.1); border:none; color:white; width:40px; height:40px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background 0.3s;"><i class="fas fa-times"></i></button>
-        </div>
-        <div style="flex:1; display:flex; justify-content:center; align-items:center; overflow:hidden; position:relative; padding:2rem;">
-            <!-- Plan Container -->
-            <div id="planViewerContainer" style="width:100%; max-width:900px; height:100%; max-height:80vh; display:flex; align-items:center; justify-content:center;">
-                <!-- Image will be injected here -->
-            </div>
-        </div>
-        <div style="padding:1.5rem; text-align:center; background:rgba(255,255,255,0.02);">
-             <p style="color:rgba(255,255,255,0.4); font-size:0.75rem; margin-bottom:0.5rem;">Disclaimer: This plan is for reference only. Final design requires engineer validation.</p>
-             <button class="btn-primary" style="display:inline-block; background:white; color:var(--primary);" onclick="alert('Download feature coming soon...')"><i class="fas fa-file-pdf"></i> Download Reference PDF</button>
-        </div>
-    </div>
-
-    <!-- Image Viewer Modal (Built Visual) -->
-    <div id="imageModal" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.95); z-index:200; display:none; flex-direction:column;">
-        <div style="padding:1.5rem; display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.05); border-bottom:1px solid rgba(255,255,255,0.1);">
-            <div>
-                <h3 style="color:white; font-family:'Outfit', sans-serif; font-size:1.2rem; margin-bottom:0.2rem;" id="imageModalTitle">Reference Visualization</h3>
-                <p style="color:rgba(255,255,255,0.6); font-size:0.85rem;">Front Elevation & Look Validation</p>
-            </div>
-            <button onclick="closeModal('imageModal')" style="background:rgba(255,255,255,0.1); border:none; color:white; width:40px; height:40px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background 0.3s;"><i class="fas fa-times"></i></button>
-        </div>
-        <div style="flex:1; display:flex; justify-content:center; align-items:center; padding:2rem;">
-            <div id="imageViewerContainer" style="width:100%; max-width:1000px; height:auto; aspect-ratio:16/9; background:#e2e8f0; border-radius:12px; overflow:hidden; position:relative; box-shadow:0 20px 50px rgba(0,0,0,0.5);">
-                <!-- Image will be injected here -->
-            </div>
-        </div>
-    </div>
+    </main>
 
     <script>
-        // 1. 3D Background Logic (Matches budget_calculator.php exact style)
-        const init3D = () => {
+        // 3D Background Logic (Premium Sync)
+        document.addEventListener('DOMContentLoaded', () => {
             const container = document.getElementById('canvas-container');
-            if (!container) return;
+            if (container && typeof THREE !== 'undefined') {
+                const scene = new THREE.Scene();
+                scene.background = new THREE.Color('#f6f7f2');
 
-            const scene = new THREE.Scene();
-            scene.background = new THREE.Color('#f8fafc');
+                const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+                camera.position.z = 10;
+                camera.position.y = 2;
 
-            const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.z = 8;
-            camera.position.y = 2;
-
-            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-            container.appendChild(renderer.domElement);
-
-            // Lighting
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-            scene.add(ambientLight);
-            const mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
-            mainLight.position.set(10, 10, 10);
-            scene.add(mainLight);
-            const blueLight = new THREE.PointLight(0x3d5a49, 0.5);
-            blueLight.position.set(-5, 5, 5);
-            scene.add(blueLight);
-
-            // Objects
-            const cityGroup = new THREE.Group();
-            scene.add(cityGroup);
-
-            const buildingGeometry = new THREE.BoxGeometry(1, 1, 1);
-            const buildingMaterial = new THREE.MeshPhongMaterial({ color: 0x294033, transparent: true, opacity: 0.1, side: THREE.DoubleSide });
-            const edgeMaterial = new THREE.LineBasicMaterial({ color: 0x294033, transparent: true, opacity: 0.3 });
-
-            const gridSize = 10;
-            const spacing = 3;
-
-            for (let x = -gridSize; x < gridSize; x++) {
-                for (let z = -gridSize; z < gridSize; z++) {
-                    const height = Math.random() * 2 + 0.5;
-                    const building = new THREE.Group();
-                    const geometry = new THREE.BoxGeometry(1, height, 1);
-                    const mesh = new THREE.Mesh(geometry, buildingMaterial);
-                    mesh.position.y = height / 2;
-                    const edges = new THREE.EdgesGeometry(geometry);
-                    const line = new THREE.LineSegments(edges, edgeMaterial);
-                    line.position.y = height / 2;
-                    building.add(mesh);
-                    building.add(line);
-                    building.position.set(x * spacing, -2, z * spacing);
-                    cityGroup.add(building);
-                }
-            }
-
-            // Hero House
-            const houseGroup = new THREE.Group();
-            const baseGeo = new THREE.BoxGeometry(2, 2, 2);
-            const baseEdges = new THREE.EdgesGeometry(baseGeo);
-            const baseLine = new THREE.LineSegments(baseEdges, new THREE.LineBasicMaterial({ color: 0x294033, linewidth: 2 }));
-            houseGroup.add(baseLine);
-            const roofGeo = new THREE.ConeGeometry(1.5, 1.2, 4);
-            const roofEdges = new THREE.EdgesGeometry(roofGeo);
-            const roofLine = new THREE.LineSegments(roofEdges, new THREE.LineBasicMaterial({ color: 0x3d5a49, linewidth: 2 }));
-            roofLine.position.y = 1.6;
-            roofLine.rotation.y = Math.PI / 4;
-            houseGroup.add(roofLine);
-
-            const floatGroup = new THREE.Group();
-            floatGroup.add(houseGroup);
-            floatGroup.position.set(0, 0, 2);
-            scene.add(floatGroup);
-
-            // Animation
-            let mouseX = 0, mouseY = 0;
-            let targetRotationX = 0, targetRotationY = 0;
-            document.addEventListener('mousemove', (event) => {
-                mouseX = (event.clientX - window.innerWidth / 2) * 0.001;
-                mouseY = (event.clientY - window.innerHeight / 2) * 0.001;
-            });
-
-            const animate = () => {
-                requestAnimationFrame(animate);
-                cityGroup.rotation.y += 0.001;
-                floatGroup.rotation.y += 0.005;
-                floatGroup.position.y = Math.sin(Date.now() * 0.001) * 0.5 + 0.5;
-                
-                cityGroup.rotation.x += 0.05 * (mouseY - cityGroup.rotation.x);
-                cityGroup.rotation.y += 0.05 * (mouseX - cityGroup.rotation.y);
-
-                renderer.render(scene, camera);
-            };
-            animate();
-            
-            window.addEventListener('resize', () => {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
+                const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
                 renderer.setSize(window.innerWidth, window.innerHeight);
-            });
-        };
-        document.addEventListener('DOMContentLoaded', init3D);
+                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                container.appendChild(renderer.domElement);
 
-        // 2. Wizard Logic
-        let currentStep = 1;
-        const selections = { area: '', floors: 0, style: '' };
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+                scene.add(ambientLight);
 
-        function updatePreview() {
-            const area = document.getElementById('plotArea').value;
-            selections.area = area;
-            document.getElementById('prev-area').textContent = area || '0';
-            if(typeof updateHouseModel === 'function') updateHouseModel();
-        }
+                const mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                mainLight.position.set(10, 20, 10);
+                scene.add(mainLight);
 
-        function selectOption(key, value, el) {
-            selections[key] = value;
-            const siblings = el.parentElement.children;
-            for(let sib of siblings) sib.classList.remove('selected');
-            el.classList.add('selected');
-            if(key === 'floors') document.getElementById('prev-floors').textContent = value === 1 ? 'Ground Only' : `G + ${value-1}`;
-            if(key === 'style') document.getElementById('prev-style').textContent = value;
-            
-            if(typeof updateHouseModel === 'function') updateHouseModel();
-        }
+                const floorGroup = new THREE.Group();
+                scene.add(floorGroup);
+                
+                const buildMat = new THREE.MeshPhongMaterial({ color: 0x1a2e23, transparent: true, opacity: 0.05, side: THREE.DoubleSide });
+                const edgeMat = new THREE.LineBasicMaterial({ color: 0x1a2e23, transparent: true, opacity: 0.15 });
 
-        function nextStep() {
-            if (currentStep === 1 && !selections.area) { alert("Please enter a plot area."); return; }
-            
-            document.getElementById(`step${currentStep}`).classList.remove('active');
-            currentStep++;
-            document.getElementById(`step${currentStep}`).classList.add('active');
-            document.getElementById('prevBtn').disabled = false;
-
-            // Trigger AI Generation on Step 3
-            if (currentStep === 3) {
-                document.getElementById('nextBtn').style.display = 'none'; // Hide 'Next'
-                document.getElementById('prevBtn').disabled = true; // Lock nav
-                startAIGeneration();
-            }
-        }
-        
-        function startAIGeneration() {
-            const loader = document.getElementById('ai-loader');
-            const content = document.getElementById('results-content');
-            const statusText = document.getElementById('ai-status-text');
-            
-            loader.style.display = 'block';
-            content.style.display = 'none';
-            
-            // Sequence of fake statuses
-            const statuses = [
-                "Analyzing Plot Dimensions...",
-                "Applying Vastu Guidelines...",
-                "Optimizing Floor Space...",
-                "Rendering Elevations..."
-            ];
-            
-            let i = 0;
-            const interval = setInterval(() => {
-                if(i < statuses.length) {
-                    statusText.innerText = statuses[i];
-                    i++;
-                } else {
-                    clearInterval(interval);
-                    loader.style.display = 'none';
-                    content.style.display = 'block';
-                    document.getElementById('prevBtn').disabled = false;
-                    renderPlans();
+                const gridSize = 8;
+                const spacing = 4;
+                for (let x = -gridSize; x <= gridSize; x++) {
+                    for (let z = -gridSize; z <= gridSize; z++) {
+                        if (Math.abs(x) < 2 && Math.abs(z) < 2) continue;
+                        const h = Math.random() * 4 + 1;
+                        const geo = new THREE.BoxGeometry(1.5, h, 1.5);
+                        const mesh = new THREE.Mesh(geo, buildMat);
+                        mesh.position.y = h / 2;
+                        const edges = new THREE.EdgesGeometry(geo);
+                        const line = new THREE.LineSegments(edges, edgeMat);
+                        line.position.y = h / 2;
+                        const building = new THREE.Group();
+                        building.add(mesh);
+                        building.add(line);
+                        building.position.set(x * spacing, -5, z * spacing);
+                        floorGroup.add(building);
+                    }
                 }
-            }, 800); // 800ms per status = ~3.2s total wait
-        }
 
-        function prevStep() {
-            if (currentStep === 1) return;
-            document.getElementById(`step${currentStep}`).classList.remove('active');
-            currentStep--;
-            document.getElementById(`step${currentStep}`).classList.add('active');
-            if (currentStep === 1) document.getElementById('prevBtn').disabled = true;
-            document.getElementById('nextBtn').style.display = 'flex';
-        }
+                const heroGroup = new THREE.Group();
+                const floorGeo = new THREE.BoxGeometry(4, 0.2, 4);
+                const floorLine = new THREE.LineSegments(new THREE.EdgesGeometry(floorGeo), new THREE.LineBasicMaterial({color: 0x1a2e23, opacity: 0.8}));
+                heroGroup.add(floorLine);
+                const wallGeo = new THREE.BoxGeometry(3.5, 2.5, 3.5);
+                const wallLines = new THREE.LineSegments(new THREE.EdgesGeometry(wallGeo), new THREE.LineBasicMaterial({color: 0x1a2e23}));
+                wallLines.position.y = 1.35;
+                heroGroup.add(wallLines);
+                const roofGeo = new THREE.ConeGeometry(3, 2, 4);
+                const roofLines = new THREE.LineSegments(new THREE.EdgesGeometry(roofGeo), new THREE.LineBasicMaterial({color: 0xd4af37}));
+                roofLines.position.y = 3.6;
+                roofLines.rotation.y = Math.PI / 4;
+                heroGroup.add(roofLines);
+                heroGroup.position.set(0, 0, 0);
+                scene.add(heroGroup);
 
-    </script>
-    <style>
-        /* --- AI Design Module Styles --- */
-        .ai-card {
-            background: white;
-            border: 1px solid rgba(0,0,0,0.08);
-            border-radius: 16px;
-            overflow: hidden;
-            margin-bottom: 2rem;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.05);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            display: grid;
-            grid-template-columns: 1.2fr 0.8fr;
-        }
-        
-        .ai-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 50px rgba(0,0,0,0.1);
-        }
+                let mouseX = 0, mouseY = 0;
+                document.addEventListener('mousemove', (e) => {
+                    mouseX = (e.clientX - window.innerWidth / 2) * 0.0005;
+                    mouseY = (e.clientY - window.innerHeight / 2) * 0.0005;
+                });
 
-        /* Split View Comparison */
-        .compare-view {
-            position: relative;
-            height: 100%;
-            min-height: 400px;
-            overflow: hidden;
-            background: #f1f5f9;
-        }
-        .compare-img {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            object-fit: cover;
-        }
-        .compare-overlay {
-            position: absolute;
-            top: 0; left: 0; width: 50%; height: 100%;
-            overflow: hidden;
-            border-right: 2px solid white;
-            box-shadow: 5px 0 20px rgba(0,0,0,0.2);
-            transition: width 0.1s ease-out;
-            z-index: 10;
-            background: white; /* Fallback */
-        }
-        .compare-valid-badge {
-            position: absolute;
-            top: 1rem; left: 1rem;
-            background: rgba(16, 185, 129, 0.9);
-            color: white;
-            padding: 0.4rem 0.8rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            backdrop-filter: blur(4px);
-            z-index: 20;
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-        }
-        .compare-slider {
-            position: absolute;
-            bottom: 1rem; left: 50%; transform: translateX(-50%);
-            width: 80%;
-            z-index: 30;
-            appearance: none;
-            background: rgba(255,255,255,0.3);
-            height: 4px;
-            border-radius: 2px;
-            outline: none;
-        }
-        .compare-slider::-webkit-slider-thumb {
-            appearance: none;
-            width: 50px; height: 30px;
-            background: white;
-            border-radius: 15px;
-            border: 1px solid #ccc;
-            cursor: ew-resize;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23555'%3E%3Cpath d='M8 17V7l-5 5 5 5zm8-10v10l5-5-5-5z'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: center;
-            background-size: 20px;
-        }
+                const animate = () => {
+                    requestAnimationFrame(animate);
+                    const time = Date.now() * 0.001;
+                    heroGroup.rotation.y += 0.005;
+                    heroGroup.position.y = Math.sin(time) * 0.5;
+                    floorGroup.rotation.y += 0.002;
+                    floorGroup.rotation.x += 0.05 * (mouseY - floorGroup.rotation.x);
+                    floorGroup.rotation.y += 0.05 * (mouseX - floorGroup.rotation.y);
+                    renderer.render(scene, camera);
+                };
+                animate();
 
-        /* Card Content */
-        .ai-content {
-            padding: 2rem;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .ai-header {
-            margin-bottom: 1.5rem;
-        }
-        .ai-title {
-            font-size: 1.4rem;
-            font-weight: 700;
-            color: var(--text-dark);
-            margin-bottom: 0.3rem;
-        }
-        .ai-match-score {
-            display: inline-block;
-            background: linear-gradient(135deg, #10b981, #059669);
-            color: white;
-            padding: 0.2rem 0.6rem;
-            border-radius: 4px;
-            font-size: 0.7rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-        }
-
-        /* Reasoning Grid */
-        .reasoning-grid {
-            display: flex;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-            margin-bottom: 1.5rem;
-        }
-        .reasoning-chip {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            padding: 0.4rem 0.8rem;
-            border-radius: 8px;
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-        }
-        .reasoning-chip i { color: var(--primary); }
-
-        /* Live Customization */
-        .custom-panel {
-            background: #f8fafc;
-            border-radius: 12px;
-            padding: 1.2rem;
-            margin-bottom: 1.5rem;
-        }
-        .control-group { margin-bottom: 1rem; }
-        .control-group:last-child { margin-bottom: 0; }
-        .control-label {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: var(--text-muted);
-            margin-bottom: 0.4rem;
-        }
-        .control-slider {
-            width: 100%;
-            accent-color: var(--primary);
-            height: 4px;
-        }
-
-        /* Metrics */
-        .metrics-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-            padding-bottom: 1.5rem;
-            border-bottom: 1px solid #e2e8f0;
-        }
-        .metric-item div:first-child { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; }
-        .metric-item div:last-child { font-size: 1.2rem; font-weight: 700; color: var(--text-dark); }
-        .cost-val { color: var(--success) !important; }
-
-        /* Timeline */
-        .timeline-box { margin-bottom: 1.5rem; }
-        .timeline-bar {
-            height: 6px;
-            background: #e2e8f0;
-            border-radius: 3px;
-            overflow: hidden;
-            margin-top: 0.5rem;
-            display: flex;
-        }
-        .t-seg { height: 100%; }
-        .t-seg.design { width: 15%; background: #94a3b8; }
-        .t-seg.approval { width: 25%; background: #f59e0b; }
-        .t-seg.build { width: 60%; background: #10b981; }
-
-        /* Actions */
-        .action-row {
-            margin-top: auto;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-        }
-
-
-        @media (max-width: 900px) {
-            .ai-card { grid-template-columns: 1fr; }
-            .compare-view { height: 300px; min-height: auto; }
-        }
-    </style>
-    <script>
-        // ... (Existing JS) ...
-
-        // 3. Render Plan Cards (Expanded Data with Gallery)
-        const plans = [
-            { id: 1, title: 'Modern Compact Villa', area: '1200', baseCost: 2500000, floors: 2, beds: 3, style: 'Modern', 
-              planImage: 'https://images.unsplash.com/photo-1581094285065-99882dc58896?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80', 
-              builtImage: 'https://images.unsplash.com/photo-1600596542815-2a4d9f12430e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80',
-              reasoning: ['Optimal for 30x40 Plot', 'High Rental Yield', 'Vastu Neutral'],
-              gallery: [
-                  'https://images.unsplash.com/photo-1600596542815-2a4d9f12430e?ixlib=rb-1.2.1',
-                  'https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?ixlib=rb-1.2.1', // Kitchen
-                  'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?ixlib=rb-1.2.1', // Living
-                  'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?ixlib=rb-1.2.1'  // Bedroom
-              ]
-            },
-            { id: 2, title: 'Traditional Courtyard Home', area: '1500', baseCost: 3200000, floors: 1, beds: 3, style: 'Traditional', 
-              planImage: 'https://images.unsplash.com/photo-1628157588553-5eeea00af15c?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80', 
-              builtImage: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80',
-              reasoning: ['Perfect for South Façade', 'Elderly Friendly', 'Eco-Materials'],
-              gallery: [
-                  'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?ixlib=rb-1.2.1',
-                  'https://images.unsplash.com/photo-1600566752355-35792bedcfe1?ixlib=rb-1.2.1', // Bath
-                  'https://images.unsplash.com/photo-1600607687644-c7171b42498f?ixlib=rb-1.2.1', // Patio
-                  'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?ixlib=rb-1.2.1'  // Hall
-              ]
-            },
-            { id: 3, title: 'Urban Duplex', area: '1000', baseCost: 2800000, floors: 2, beds: 2, style: 'Modern', 
-              planImage: 'https://images.unsplash.com/photo-1564501049412-61c2a3083791?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80', 
-              builtImage: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80',
-               reasoning: ['Compact City Design', 'Smart Storage', 'Low Maintenance'],
-               gallery: [
-                  'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-1.2.1',
-                  'https://images.unsplash.com/photo-1600573472592-401b489a3cdc?ixlib=rb-1.2.1',
-                  'https://images.unsplash.com/photo-1600585154526-990dced4db0d?ixlib=rb-1.2.1',
-                  'https://images.unsplash.com/photo-1560185127-6ed189bf02f4?ixlib=rb-1.2.1'
-               ]
-            },
-            { id: 4, title: 'Vastu Compliant 3BHK', area: '1800', baseCost: 4000000, floors: 2, beds: 3, style: 'Vastu', 
-              planImage: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80', 
-              builtImage: 'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80',
-              reasoning: ['100% Vastu Score', 'Max Natural Light', 'Resale Value High'],
-              gallery: [
-                   'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?ixlib=rb-1.2.1',
-                   'https://images.unsplash.com/photo-1600566752545-fe803d179c37?ixlib=rb-1.2.1',
-                   'https://images.unsplash.com/photo-1584622750111-993a426fbf0a?ixlib=rb-1.2.1',
-                   'https://images.unsplash.com/photo-1574362848149-11496d93e7c7?ixlib=rb-1.2.1'
-              ]
-            },
-            { id: 5, title: 'Modern Ground Villa', area: '1200', baseCost: 2000000, floors: 1, beds: 2, style: 'Modern', 
-              planImage: 'https://images.unsplash.com/photo-1558036117-15d82a90b9b1?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80', 
-              builtImage: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80',
-              reasoning: ['Single Floor Comfort', 'Open Plan Living', 'Budget Friendly'],
-              gallery: ['https://images.unsplash.com/photo-1512917774080-9991f1c4c750?ixlib=rb-1.2.1', 'https://images.unsplash.com/photo-1600566753151-384129cf4e3e?ixlib=rb-1.2.1', 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-1.2.1', 'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?ixlib=rb-1.2.1']
-            },
-            { id: 6, title: 'Grand Vastu Mansion', area: '2400', baseCost: 6000000, floors: 2, beds: 4, style: 'Vastu', 
-              planImage: 'https://images.unsplash.com/photo-1581094285065-99882dc58896?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80', 
-              builtImage: 'https://images.unsplash.com/photo-1572120360610-d971b9d7767c?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80',
-              reasoning: ['Luxury Living', 'Large Garden Space', 'Premium Assessment'],
-              gallery: ['https://images.unsplash.com/photo-1572120360610-d971b9d7767c?ixlib=rb-1.2.1', 'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?ixlib=rb-1.2.1', 'https://images.unsplash.com/photo-1600607687644-c7171b42498f?ixlib=rb-1.2.1', 'https://images.unsplash.com/photo-1600566752355-35792bedcfe1?ixlib=rb-1.2.1']
-            },
-            { id: 7, title: 'Traditional G+2 Joint Family', area: '1500', baseCost: 5500000, floors: 3, beds: 5, style: 'Traditional', 
-              planImage: 'https://images.unsplash.com/photo-1628157588553-5eeea00af15c?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80', 
-              builtImage: 'https://images.unsplash.com/photo-1572120360610-d971b9d7767c?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80',
-               reasoning: ['Multi-Gen Living', 'Separate Floor Units', 'Terrace Garden'],
-               gallery: ['https://images.unsplash.com/photo-1572120360610-d971b9d7767c?ixlib=rb-1.2.1', 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-1.2.1', 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?ixlib=rb-1.2.1', 'https://images.unsplash.com/photo-1560185127-6ed189bf02f4?ixlib=rb-1.2.1']
-            },
-            { id: 8, title: 'Traditional Starter Home', area: '1200', baseCost: 2200000, floors: 1, beds: 2, style: 'Traditional', 
-              planImage: 'https://images.unsplash.com/photo-1564501049412-61c2a3083791?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80', 
-              builtImage: 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80',
-               reasoning: ['Starter Choice', 'Porch Included', 'Low Cost'],
-               gallery: ['https://images.unsplash.com/photo-1568605114967-8130f3a36994?ixlib=rb-1.2.1', 'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?ixlib=rb-1.2.1', 'https://images.unsplash.com/photo-1584622750111-993a426fbf0a?ixlib=rb-1.2.1', 'https://images.unsplash.com/photo-1600566753376-12c8ab7fb8dc?ixlib=rb-1.2.1']
-            },
-            { id: 9, title: 'Vastu Duplex 1200', area: '1200', baseCost: 2800000, floors: 2, beds: 3, style: 'Vastu', 
-              planImage: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80', 
-              builtImage: 'https://images.unsplash.com/photo-1570129477492-45c003edd2be?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80',
-              reasoning: ['N-E Entrance', 'Double Height Hall', 'Pooja Room'],
-              gallery: ['https://images.unsplash.com/photo-1570129477492-45c003edd2be?ixlib=rb-1.2.1', 'https://images.unsplash.com/photo-1560448205-4d9b3e6bb6db?ixlib=rb-1.2.1', 'https://images.unsplash.com/photo-1560184897-ae75f418493e?ixlib=rb-1.2.1', 'https://images.unsplash.com/photo-1560185007-cde43669a499?ixlib=rb-1.2.1']
-            },
-            { id: 10, title: 'Compact Modern G', area: '1000', baseCost: 1800000, floors: 1, beds: 2, style: 'Modern', 
-              planImage: 'https://images.unsplash.com/photo-1558036117-15d82a90b9b1?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80', 
-              builtImage: 'https://images.unsplash.com/photo-1472224371017-08207f84aaae?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80',
-              reasoning: ['Cube Design', 'Minimalist', 'Efficient'],
-              gallery: ['https://images.unsplash.com/photo-1472224371017-08207f84aaae?ixlib=rb-1.2.1', 'https://images.unsplash.com/photo-1584622750111-993a426fbf0a?ixlib=rb-1.2.1', 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?ixlib=rb-1.2.1', 'https://images.unsplash.com/photo-1502005229762-cf1b2da7c5d6?ixlib=rb-1.2.1']
-            },
-            { id: 11, title: 'Spacious Vastu Ground', area: '1500', baseCost: 2500000, floors: 1, beds: 3, style: 'Vastu', 
-              planImage: 'https://images.unsplash.com/photo-1581094285065-99882dc58896?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80', 
-              builtImage: 'https://images.unsplash.com/photo-1599619351208-3e6c839d6828?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80',
-              reasoning: ['Brahmasthan Center', 'East Facet', 'Ventilated'],
-              gallery: ['https://images.unsplash.com/photo-1599619351208-3e6c839d6828?ixlib=rb-1.2.1', 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?ixlib=rb-1.2.1', 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?ixlib=rb-1.2.1', 'https://images.unsplash.com/photo-1560448204-603b3fc33ddc?ixlib=rb-1.2.1']
-            },
-            { id: 12, title: 'Traditional Villa G+1', area: '1800', baseCost: 4500000, floors: 2, beds: 4, style: 'Traditional', 
-              planImage: 'https://images.unsplash.com/photo-1628157588553-5eeea00af15c?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80', 
-              builtImage: 'https://images.unsplash.com/photo-1576941089067-dbde57bdad36?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80',
-              reasoning: ['Classic Aesthetic', 'Wood Finishes', 'Large Living'],
-              gallery: ['https://images.unsplash.com/photo-1576941089067-dbde57bdad36?ixlib=rb-1.2.1', 'https://images.unsplash.com/photo-1598928506311-c55ded91a20c?ixlib=rb-1.2.1', 'https://images.unsplash.com/photo-1560185127-6ed189bf02f4?ixlib=rb-1.2.1', 'https://images.unsplash.com/photo-1582268611958-ebfd161ef9cf?ixlib=rb-1.2.1']
-            },
-            { id: 13, title: 'Luxury Modern G+2', area: '2400', baseCost: 7500000, floors: 3, beds: 5, style: 'Modern', 
-              planImage: 'https://images.unsplash.com/photo-1564501049412-61c2a3083791?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80', 
-              builtImage: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80',
-              reasoning: ['Penthouse Suite', 'Infinity Pool', 'Glass Walls'],
-              gallery: ['https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-1.2.1', 'https://images.unsplash.com/photo-1600607686527-6fb886090705?ixlib=rb-1.2.1', 'https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?ixlib=rb-1.2.1', 'https://images.unsplash.com/photo-1600585154526-990dced4db0d?ixlib=rb-1.2.1']
-            }
-        ];
-
-
-        function renderPlans() {
-            const container = document.getElementById('planResults');
-            const userArea = parseInt(selections.area);
-            const userFloors = parseInt(selections.floors);
-            const userStyle = selections.style;
-
-            document.getElementById('res-area').textContent = selections.area;
-            container.innerHTML = '';
-
-            if (!userArea) {
-                container.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:2rem; color:var(--text-muted);">Please enter a plot area in Step 1 to see recommendations.</div>`;
-                return;
-            }
-
-            // Round 1: Strict Filter (Area ±20%, Exact Floors, Exact Style)
-            let filtered = plans.filter(p => {
-                const areaVariance = userArea * 0.20; 
-                const areaMatch = (parseInt(p.area) >= userArea - areaVariance) && (parseInt(p.area) <= userArea + areaVariance);
-                const floorsMatch = userFloors ? (p.floors === userFloors) : true;
-                const styleMatch = userStyle ? (p.style === userStyle) : true;
-                return areaMatch && floorsMatch && styleMatch;
-            });
-
-            let isRelaxed = false;
-
-            // Round 2: Relaxed Filter (If no exact matches)
-            // Strategy: Relax Area to ±30% AND Match (Floors OR Style)
-            if (filtered.length === 0) {
-                isRelaxed = true;
-                filtered = plans.filter(p => {
-                    const areaVariance = userArea * 0.30; 
-                    const areaMatch = (parseInt(p.area) >= userArea - areaVariance) && (parseInt(p.area) <= userArea + areaVariance);
-                    const floorsMatch = userFloors ? (p.floors === userFloors) : false;
-                    const styleMatch = userStyle ? (p.style === userStyle) : false;
-                    return areaMatch && (floorsMatch || styleMatch);
+                window.addEventListener('resize', () => {
+                    camera.aspect = window.innerWidth / window.innerHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(window.innerWidth, window.innerHeight);
                 });
             }
-
-            // Fallback: Show empty state if still 0
-            if (filtered.length === 0) {
-                container.innerHTML = `
-                    <div style="grid-column:1/-1; text-align:center; padding:3rem; background:white; border-radius:16px; border:1px dashed var(--border-color);">
-                        <i class="fas fa-search-minus" style="font-size:3rem; color:var(--text-muted); margin-bottom:1rem; opacity:0.5;"></i>
-                        <h3 style="color:var(--text-muted); font-size:1.1rem; margin-bottom:0.5rem;">No matches found</h3>
-                        <p style="color:#94a3b8; font-size:0.9rem;">We couldn't find any plans close to your requirements even with broader search criteria.</p>
-                    </div>
-                `;
-                return;
-            }
-
-            // Show "Closest Match" warning if relaxed
-            if (isRelaxed) {
-                container.innerHTML += `
-                    <div style="grid-column:1/-1; padding:1rem; background:#fff7ed; border:1px solid #fed7aa; border-radius:8px; color:#9a3412; font-size:0.9rem; margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem;">
-                        <i class="fas fa-exclamation-circle"></i> 
-                        <div><strong>Exact match not found.</strong> Showing available plans that are closest to your area and preferences.</div>
-                    </div>
-                `;
-            }
-
-            // NO SLICE! Show ALL matches.
-            filtered.forEach(plan => {
-                const efficiency = Math.floor(Math.random() * (98 - 85) + 85);
-                const timeline = Math.floor(plan.floors * 3 + 4); 
-
-                const card = `
-                    <div class="ai-card" id="ai-card-${plan.id}">
-                        <!-- Left: Split Visual -->
-                        <div class="compare-view" id="compare-${plan.id}">
-                            <div class="compare-valid-badge"><i class="fas fa-certificate"></i> Engineer Verified</div>
-                            
-                            <!-- Base Image (Blueprint) -->
-                            <img src="${plan.planImage}" class="compare-img" style="filter: invert(1) contrast(0.8);">
-                            
-                            <!-- Overlay Image (Render) -->
-                            <div class="compare-overlay" style="width: 50%;">
-                                <img src="${plan.builtImage}" class="compare-img">
-                            </div>
-
-                            <!-- Slider Input -->
-                            <input type="range" min="0" max="100" value="50" class="compare-slider" 
-                                oninput="updateCompare(this, '${plan.id}')" 
-                                title="Drag to compare Blueprint vs Reality">
-                                
-                            <div style="position:absolute; bottom:10px; left:10px; color:#555; background:rgba(255,255,255,0.8); padding:2px 6px; font-size:0.7rem; border-radius:4px;">RENDER</div>
-                            <div style="position:absolute; bottom:10px; right:10px; color:white; background:rgba(0,0,0,0.6); padding:2px 6px; font-size:0.7rem; border-radius:4px;">BLUEPRINT</div>
-                        </div>
-
-                        <!-- Right: Intelligent Controls -->
-                        <div class="ai-content">
-                            <div class="ai-header">
-                                <div class="ai-match-score"><i class="fas fa-magic"></i> AI Match: ${efficiency}%</div>
-                                <div class="ai-title">${plan.title}</div>
-                                <div class="reasoning-grid">
-                                    ${plan.reasoning ? plan.reasoning.map(r => `<div class="reasoning-chip"><i class="fas fa-check-circle"></i> ${r}</div>`).join('') : ''}
-                                </div>
-                            </div>
-
-                            <!-- Live Customization -->
-                            <div class="custom-panel">
-                                <div class="control-group">
-                                    <div class="control-label"><span>Built-up Area</span> <span id="val-area-${plan.id}">${plan.area} sqft</span></div>
-                                    <input type="range" class="control-slider" min="${parseInt(plan.area)-500}" max="${parseInt(plan.area)+500}" step="50" value="${plan.area}" 
-                                        oninput="updateMetrics('${plan.id}', ${plan.baseCost}, this.value, null)">
-                                </div>
-                                <div class="control-group">
-                                    <div class="control-label"><span>Finishing Grade</span> <span id="val-grade-${plan.id}">Premium</span></div>
-                                    <input type="range" class="control-slider" min="1" max="3" step="1" value="2" 
-                                        oninput="updateMetrics('${plan.id}', ${plan.baseCost}, null, this.value)">
-                                </div>
-                            </div>
-
-                            <!-- Dynamic Metrics -->
-                            <div class="metrics-row">
-                                <div class="metric-item">
-                                    <div>Est. Cost</div>
-                                    <div class="cost-val" id="cost-${plan.id}">₹${(plan.baseCost/100000).toFixed(2)} Lakhs</div>
-                                </div>
-                                <div class="metric-item">
-                                    <div>Timeline</div>
-                                    <div id="time-${plan.id}">${timeline} Months</div>
-                                </div>
-                                <div class="metric-item">
-                                    <div>Approval</div>
-                                    <div style="color:#f59e0b;">Pending</div>
-                                </div>
-                            </div>
-
-                            <!-- Readiness Timeline -->
-                            <div class="timeline-box">
-                                <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:var(--text-muted);">
-                                    <span>Design</span>
-                                    <span>Permits</span>
-                                    <span>Construction</span>
-                                </div>
-                                <div class="timeline-bar">
-                                    <div class="t-seg design"></div>
-                                    <div class="t-seg approval"></div>
-                                    <div class="t-seg build"></div>
-                                </div>
-                            </div>
-
-                            <!-- Actions -->
-                            <div class="action-row">
-                                <button class="btn-primary" style="background:#334155; border:none;" onclick="openGalleryViewer('${plan.id}')">
-                                    <i class="fas fa-images"></i> View Gallery
-                                </button>
-                                <button class="btn-outline" style="border:1px solid #e2e8f0; color:var(--text-muted); pointer-events:none; font-size:0.8rem;">
-                                    Only Matches Shown
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                container.innerHTML += card;
-            });
-        }
-
-        function openGalleryViewer(planId) {
-            const plan = plans.find(p => p.id == planId);
-            if(!plan) return;
-            
-            document.getElementById('imageModalTitle').innerText = plan.title + " - Gallery";
-            const container = document.getElementById('imageViewerContainer');
-            
-            // Build Gallery Grid
-            let html = `<div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:10px; height:100%; overflow-y:auto; padding-right:5px;">`;
-            if(plan.gallery && plan.gallery.length > 0) {
-                 plan.gallery.forEach(url => {
-                     html += `<div style="height:250px; border-radius:8px; overflow:hidden;"><img src="${url}&w=600&fit=crop" style="width:100%; height:100%; object-fit:cover; transition:transform 0.3s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'"></div>`;
-                 });
-            } else {
-                 html += `<div style="grid-column:1/-1;"><img src="${plan.builtImage}" style="width:100%; height:100%; object-fit:cover;"></div>`;
-            }
-            html += `</div>`;
-            
-            container.innerHTML = html;
-            
-            // Adjust container styles for gallery
-            container.style.aspectRatio = 'auto'; // Remove fixed aspect ratio
-            container.style.height = '80vh';
-            container.style.background = 'transparent';
-            container.style.boxShadow = 'none';
-            
-            document.getElementById('imageModal').style.display = 'flex';
-        }
-
-        // Helper: Split View Logic
-        function updateCompare(slider, id) {
-            const overlay = document.querySelector(`#compare-${id} .compare-overlay`);
-            overlay.style.width = slider.value + "%";
-        }
-
-        // Helper: Dynamic Metrics Calc
-        function updateMetrics(id, baseCost, newArea, newGrade) {
-            // Get current vals if not provided
-            const areaEl = document.getElementById(`val-area-${id}`);
-            const currentArea = newArea || parseInt(areaEl.innerText);
-            if(newArea) areaEl.innerText = newArea + ' sqft';
-
-            const gradeEl = document.getElementById(`val-grade-${id}`);
-            let gradeMult = 1;
-            if(newGrade) {
-                const grades = ['Standard', 'Premium', 'Luxury'];
-                gradeEl.innerText = grades[newGrade-1];
-                gradeMult = 1 + ((newGrade-1) * 0.25); // 1.0, 1.25, 1.5
-            } else {
-                 // simplify: assume grade 2 if just area changing, or read from DOM? 
-                 // For demo speed, just assume linear area scale
-            }
-
-            // Calc Cost
-            // Cost scales linearly with area diff from original plan.area? 
-            // Simplified: (Cost / OriginalArea) * NewArea * GradeMult
-            // We need original area. Let's assume passed baseCost is for original Area.
-            // We can hack it: just update display based on simple factor
-            
-            // Re-calc cost (Mock logic)
-            // let unitCost = baseCost / 1200; // rough
-            let unitCost = 2000; 
-            let total = currentArea * unitCost * gradeMult;
-            
-            document.getElementById(`cost-${id}`).innerText = '₹' + (total/100000).toFixed(2) + ' Lakhs';
-            
-            // Update timeline slightly
-            let months = Math.floor((currentArea / 500) + 4);
-            document.getElementById(`time-${id}`).innerText = months + ' Months';
-        }
-
-        // 4. View Handlers (Functional)
-        function openPlanViewer(title, imgSrc) {
-            document.getElementById('planModalTitle').innerText = title;
-            // Set image source
-            const container = document.getElementById('planViewerContainer');
-            container.innerHTML = `<img src="${imgSrc}" style="max-width:100%; max-height:100%; object-fit:contain; box-shadow:0 10px 30px rgba(0,0,0,0.5);">`;
-            document.getElementById('planModal').style.display = 'flex';
-        }
-
-        function openImageViewer(title, imgSrc) {
-            document.getElementById('imageModalTitle').innerText = title;
-            // Set image source
-            const container = document.getElementById('imageViewerContainer');
-            container.innerHTML = `<img src="${imgSrc}" style="width:100%; height:100%; object-fit:cover;">`;
-            document.getElementById('imageModal').style.display = 'flex';
-        }
-
-        function closeModal(modalId) {
-            document.getElementById(modalId).style.display = 'none';
-        }
-
-        // 5. Live 3D Preview Logic
-        let previewScene, previewCamera, previewRenderer, houseMeshGroup;
-        
-        function initLivePreview3D() {
-            const container = document.getElementById('live-3d-preview');
-            if (!container) return;
-
-            // Scene Setup
-            previewScene = new THREE.Scene();
-            previewScene.background = new THREE.Color('#f1f5f9'); // Light gray for sidebar
-
-            // Camera
-            previewCamera = new THREE.PerspectiveCamera(50, container.clientWidth / 300, 0.1, 100);
-            previewCamera.position.set(20, 15, 20);
-            previewCamera.lookAt(0, 0, 0);
-
-            // Renderer
-            previewRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-            previewRenderer.setSize(container.clientWidth, 300); // Fixed height
-            previewRenderer.shadowMap.enabled = true;
-            container.appendChild(previewRenderer.domElement);
-
-            // Lighting
-            const ambient = new THREE.AmbientLight(0xffffff, 0.6);
-            previewScene.add(ambient);
-            const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-            dirLight.position.set(10, 20, 10);
-            dirLight.castShadow = true;
-            previewScene.add(dirLight);
-
-            // Ground Plane
-            const planeGeo = new THREE.PlaneGeometry(50, 50);
-            const planeMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
-            const plane = new THREE.Mesh(planeGeo, planeMat);
-            plane.rotation.x = -Math.PI / 2;
-            plane.receiveShadow = true;
-            previewScene.add(plane);
-
-            // House Group
-            houseMeshGroup = new THREE.Group();
-            previewScene.add(houseMeshGroup);
-            
-            // Initial render
-            updateHouseModel();
-
-            // Animation Loop
-            function animatePreview() {
-                requestAnimationFrame(animatePreview);
-                if(houseMeshGroup) {
-                    houseMeshGroup.rotation.y += 0.005; // Gentle rotation
-                }
-                previewRenderer.render(previewScene, previewCamera);
-            }
-            animatePreview();
-
-            // Resize handle
-            window.addEventListener('resize', () => {
-                if(!container) return;
-                const width = container.clientWidth;
-                previewCamera.aspect = width / 300;
-                previewCamera.updateProjectionMatrix();
-                previewRenderer.setSize(width, 300);
-            });
-        }
-
-        // Dynamic Update Function
-        function updateHouseModel() {
-            if (!houseMeshGroup) return;
-
-            // Clear previous meshes
-            while(houseMeshGroup.children.length > 0){ 
-                houseMeshGroup.remove(houseMeshGroup.children[0]); 
-            }
-
-            const area = parseInt(selections.area) || 1200;
-            const floors = parseInt(selections.floors) || 1;
-            const style = selections.style || 'Modern';
-
-            // Scale factor based on area (roughly)
-            // 1000 sqft -> scale 1
-            const baseScale = Math.sqrt(area / 1000) * 4; 
-
-            // Materials
-            const wallColor = style === 'Traditional' ? 0xeddbb0 : 0xffffff;
-            const roofColor = style === 'Traditional' ? 0x8b4513 : 0x333333;
-            
-            const wallMat = new THREE.MeshLambertMaterial({ color: wallColor });
-            const roofMat = new THREE.MeshLambertMaterial({ color: roofColor });
-            const glassMat = new THREE.MeshPhongMaterial({ color: 0x88ccff, transparent: true, opacity: 0.6 });
-
-            // Build floors
-            for(let i=0; i<floors; i++) {
-                // Floor block
-                const floorHeight = 3;
-                const geo = new THREE.BoxGeometry(baseScale, floorHeight, baseScale * 0.8);
-                const mesh = new THREE.Mesh(geo, wallMat);
-                mesh.position.y = (i * floorHeight) + (floorHeight/2);
-                mesh.castShadow = true;
-                houseMeshGroup.add(mesh);
-
-                // Windows (Simple representations)
-                const winGeo = new THREE.BoxGeometry(0.2, 1.5, 1.5);
-                const win1 = new THREE.Mesh(winGeo, glassMat);
-                win1.position.set(baseScale/2, mesh.position.y, 1);
-                houseMeshGroup.add(win1);
-            }
-
-            // Roof
-            const topY = floors * 3;
-            let roofMesh;
-            
-            if (style === 'Traditional' || style === 'Vastu') {
-                // Sloped Roof
-                const roofGeo = new THREE.ConeGeometry(baseScale * 0.8, 2.5, 4);
-                roofMesh = new THREE.Mesh(roofGeo, roofMat);
-                roofMesh.position.y = topY + 1.25;
-                roofMesh.rotation.y = Math.PI/4;
-            } else {
-                // Flat/Modern Roof
-                const roofGeo = new THREE.BoxGeometry(baseScale + 0.5, 0.5, (baseScale * 0.8) + 0.5);
-                roofMesh = new THREE.Mesh(roofGeo, roofMat);
-                roofMesh.position.y = topY + 0.25;
-            }
-            roofMesh.castShadow = true;
-            houseMeshGroup.add(roofMesh);
-        }
-
-        // Initialize Preview when Loaded
-        document.addEventListener('DOMContentLoaded', () => {
-             // ... existing init3D call ...
-             setTimeout(initLivePreview3D, 500); // Small delay to ensure container exists
         });
-
     </script>
 </body>
 </html>
