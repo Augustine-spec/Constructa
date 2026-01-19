@@ -376,7 +376,7 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Homeowner'
             </div>
 
             <!-- Card 7: Resource Library -->
-            <div class="feature-card tilt-card" onclick="window.location.href='plans_designs.php'">
+            <div class="feature-card tilt-card" onclick="window.location.href='recommended_plans_wizard.php'">
                 <div class="card-content">
                     <div class="icon-wrapper gradient-7">
                         <i class="fas fa-book-open"></i>

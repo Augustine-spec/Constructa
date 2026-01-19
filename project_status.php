@@ -84,13 +84,35 @@ foreach ($projects as $p) {
         }
         .nav-logo { font-weight: 800; font-size: 1.5rem; color: var(--primary); text-decoration: none; display: flex; align-items: center; gap: 0.5rem; }
         .nav-links { display: flex; gap: 1rem; }
-        .nav-btn {
-            background: white; border: 1px solid rgba(0,0,0,0.1); padding: 0.6rem 1.2rem;
-            border-radius: 8px; font-weight: 700; font-size: 0.85rem; color: var(--text-main);
-            text-decoration: none; transition: all 0.3s;
-            font-family: 'Inter', sans-serif; text-transform: uppercase;
-        }
         .nav-btn:hover { background: var(--primary); color: white; transform: translateY(-2px); }
+
+        /* Premium Top Nav Style */
+        .top-nav-btn {
+            padding: 0.8rem 1.5rem;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+            text-decoration: none;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .top-nav-btn:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+        }
 
         /* Main Content */
         .page-header {
@@ -244,8 +266,8 @@ foreach ($projects as $p) {
     <nav>
         <a href="homeowner.php" class="nav-logo"><i class="fas fa-home"></i> Constructa</a>
         <div class="nav-links">
-            <a href="homeowner.php" class="nav-btn"><i class="fas fa-arrow-left"></i> Dashboard</a>
-            <a href="login.html" class="nav-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            <a href="homeowner.php" class="top-nav-btn">Dashboard</a>
+            <a href="login.html" class="top-nav-btn">Logout</a>
         </div>
     </nav>
 

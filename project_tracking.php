@@ -142,6 +142,34 @@ if ($project) {
         }
         .nav-btn:hover { color: var(--primary); transform: translateY(-1px); }
 
+        /* Premium Top Nav Style */
+        .top-nav-btn {
+            padding: 0.8rem 1.5rem;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+            text-decoration: none;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .top-nav-btn:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+        }
+
         /* Main Layout */
         .dashboard-layout {
             flex: 1; display: grid; grid-template-columns: 300px 1fr;
@@ -318,20 +346,19 @@ if ($project) {
 
     <div id="canvas-container"></div>
 
-    <nav>
-        <a href="landingpage.html" class="nav-logo">
-            <i class="fas fa-cube"></i> Constructa
-        </a>
-        <div class="nav-links">
-            <a href="homeowner.php" class="nav-btn"><i class="fas fa-th-large"></i> Home</a>
-            <a href="login.html" class="nav-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
-        </div>
-    </nav>
+        <nav>
+            <a href="landingpage.html" class="nav-logo">
+                <i class="fas fa-cube"></i> Constructa
+            </a>
+            <div class="nav-links">
+                <a href="homeowner.php" class="top-nav-btn">Dashboard</a>
+                <a href="login.html" class="top-nav-btn">Logout</a>
+            </div>
+        </nav>
 
     <?php if (!$project): ?>
         <div class="empty-state">
             <div class="empty-icon"><i class="fas fa-folder-open"></i></div>
-            <h2>No Active Projects Found</h2>
             <p>It looks like you don't have any ongoing construction projects tracked here.</p>
             <a href="start_project.php" class="doc-action" style="display:inline-block; margin-top:1rem;">Start a New Project</a>
         </div>

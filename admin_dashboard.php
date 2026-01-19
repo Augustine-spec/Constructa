@@ -402,14 +402,14 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Admin';
                 <div class="card-bg-3d"></div>
             </div>
 
-            <!-- Card 8: Marketing Tools -->
-            <div class="feature-card tilt-card" onclick="window.location.href='#'">
+            <!-- Card 8: Template Management -->
+            <div class="feature-card tilt-card" onclick="window.location.href='admin_manage_templates.php'">
                 <div class="card-content">
                     <div class="icon-wrapper gradient-admin-8">
-                        <i class="fas fa-bullhorn"></i>
+                        <i class="fas fa-layer-group"></i>
                     </div>
-                    <h3>Marketing Tools</h3>
-                    <p>Manage promotional banners, email campaigns, and ads.</p>
+                    <h3>Template Management</h3>
+                    <p>Add, update, enable, or remove house plan templates and specifications.</p>
                 </div>
                 <div class="card-bg-3d"></div>
             </div>
