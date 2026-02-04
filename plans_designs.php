@@ -977,12 +977,12 @@ if (!isset($_SESSION['user_id'])) {
                         <div class="input-grid">
                             <div>
                                 <label>Plot Length (ft)</label>
-                                <input type="number" class="c-input" id="inp-length" value="50" oninput="updateCalculations()">
+                                <input type="text" inputmode="decimal" class="c-input" id="inp-length" value="50" oninput="updateCalculations()" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.charCode == 46">
                                 <div class="helper-text">Front to back measurement</div>
                             </div>
                             <div>
                                 <label>Plot Width (ft)</label>
-                                <input type="number" class="c-input" id="inp-width" value="30" oninput="updateCalculations()">
+                                <input type="text" inputmode="decimal" class="c-input" id="inp-width" value="30" oninput="updateCalculations()" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.charCode == 46">
                                 <div class="helper-text">Side to side measurement</div>
                             </div>
                         </div>
@@ -2337,10 +2337,43 @@ if (!isset($_SESSION['user_id'])) {
             // Read plot dimensions from inputs
             const lengthInput = document.getElementById('inp-length');
             const widthInput = document.getElementById('inp-width');
+            const strictNumberRegex = /^\d*\.?\d+$/;
             
-            if (lengthInput) formData.length = parseFloat(lengthInput.value) || 50;
-            if (widthInput) formData.width = parseFloat(widthInput.value) || 30;
+            let isValid = true;
+            const MIN_DIM = 10;
+            const MAX_DIM = 1000;
+
+            if (lengthInput) {
+                const rawVal = lengthInput.value;
+                const val = parseFloat(rawVal);
+                // Check strict regex AND range
+                if (!strictNumberRegex.test(rawVal) || isNaN(val) || val < MIN_DIM || val > MAX_DIM) {
+                    lengthInput.style.borderColor = '#ef4444';
+                    lengthInput.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.2)';
+                    isValid = false;
+                } else {
+                    lengthInput.style.borderColor = '';
+                    lengthInput.style.boxShadow = '';
+                    formData.length = val;
+                }
+            }
+
+            if (widthInput) {
+                const rawVal = widthInput.value;
+                const val = parseFloat(rawVal);
+                if (!strictNumberRegex.test(rawVal) || isNaN(val) || val < MIN_DIM || val > MAX_DIM) {
+                    widthInput.style.borderColor = '#ef4444';
+                    widthInput.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.2)';
+                    isValid = false;
+                } else {
+                    widthInput.style.borderColor = '';
+                    widthInput.style.boxShadow = '';
+                    formData.width = val;
+                }
+            }
             
+            if (!isValid) return;
+
             // DYNAMIC Plot area calculation (NOT FIXED!)
             const plotArea = formData.length * formData.width;
             document.getElementById('plot-area').innerText = plotArea;

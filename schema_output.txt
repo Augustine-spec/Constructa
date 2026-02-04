@@ -1,0 +1,206 @@
+﻿### Table: cart
+| Field | Type | Null | Key | Default | Extra |
+|-------|------|------|-----|---------|-------|
+| id | int(11) | NO | PRI |  | auto_increment |
+| user_id | int(11) | NO | MUL |  |  |
+| material_id | int(11) | NO | MUL |  |  |
+| quantity | decimal(10,2) | NO |  |  |  |
+| unit | varchar(50) | NO |  |  |  |
+| added_at | timestamp | NO |  | current_timestamp() |  |
+| updated_at | timestamp | NO |  | current_timestamp() | on update current_timestamp() |
+
+### Table: feedback_records
+| Field | Type | Null | Key | Default | Extra |
+|-------|------|------|-----|---------|-------|
+| id | int(11) | NO | PRI |  | auto_increment |
+| session_id | int(11) | NO | MUL |  |  |
+| question_id | int(11) | NO |  |  |  |
+| score | int(11) | NO |  |  |  |
+| comment | text | YES |  |  |  |
+| created_at | timestamp | NO |  | current_timestamp() |  |
+
+### Table: feedback_sessions
+| Field | Type | Null | Key | Default | Extra |
+|-------|------|------|-----|---------|-------|
+| id | int(11) | NO | PRI |  | auto_increment |
+| user_id | int(11) | NO | MUL |  |  |
+| engineer_id | int(11) | YES |  |  |  |
+| status | enum('new','reviewed','archived') | YES |  | new |  |
+| total_score | decimal(5,2) | YES |  | 0.00 |  |
+| created_at | timestamp | NO |  | current_timestamp() |  |
+
+### Table: house_templates
+| Field | Type | Null | Key | Default | Extra |
+|-------|------|------|-----|---------|-------|
+| id | int(11) | NO | PRI |  | auto_increment |
+| title | varchar(255) | NO |  |  |  |
+| description | text | YES |  |  |  |
+| image_url | varchar(255) | YES |  |  |  |
+| area_sqft | int(11) | YES |  |  |  |
+| floors | int(11) | YES |  | 1 |  |
+| style | varchar(100) | YES |  |  |  |
+| budget_min | decimal(15,2) | YES |  |  |  |
+| budget_max | decimal(15,2) | YES |  |  |  |
+| specifications | text | YES |  |  |  |
+| is_active | tinyint(1) | YES |  | 1 |  |
+| created_at | timestamp | NO |  | current_timestamp() |  |
+| updated_at | timestamp | NO |  | current_timestamp() | on update current_timestamp() |
+
+### Table: material_orders
+| Field | Type | Null | Key | Default | Extra |
+|-------|------|------|-----|---------|-------|
+| id | int(11) | NO | PRI |  | auto_increment |
+| user_id | int(11) | YES | MUL |  |  |
+| items | text | NO |  |  |  |
+| total_amount | decimal(10,2) | NO |  |  |  |
+| payment_id | varchar(255) | NO | MUL |  |  |
+| razorpay_order_id | varchar(255) | NO | MUL |  |  |
+| status | enum('pending','paid','failed','refunded') | NO | MUL | pending |  |
+| created_at | timestamp | NO |  | current_timestamp() |  |
+| updated_at | timestamp | NO |  | current_timestamp() | on update current_timestamp() |
+| project_name | varchar(255) | YES |  | Dream Villa Project |  |
+| delivery_stage | enum('Requested','Engineer Approved','Vendor Packed','In Transit','At Site','Verified') | YES |  | Requested |  |
+| tracking_history | text | YES |  |  |  |
+
+### Table: materials
+| Field | Type | Null | Key | Default | Extra |
+|-------|------|------|-----|---------|-------|
+| id | int(11) | NO | PRI |  | auto_increment |
+| name | varchar(255) | NO |  |  |  |
+| category | varchar(100) | NO | MUL |  |  |
+| description | text | YES |  |  |  |
+| unit_price | decimal(10,2) | NO |  |  |  |
+| unit | varchar(50) | NO |  |  |  |
+| stock_quantity | int(11) | YES |  | 0 |  |
+| image_url | varchar(500) | YES |  |  |  |
+| specifications | longtext | YES |  |  |  |
+| is_active | tinyint(1) | YES | MUL | 1 |  |
+| created_at | timestamp | NO |  | current_timestamp() |  |
+| updated_at | timestamp | NO |  | current_timestamp() | on update current_timestamp() |
+
+### Table: order_items
+| Field | Type | Null | Key | Default | Extra |
+|-------|------|------|-----|---------|-------|
+| id | int(11) | NO | PRI |  | auto_increment |
+| order_id | varchar(50) | NO | MUL |  |  |
+| material_id | int(11) | NO | MUL |  |  |
+| material_name | varchar(255) | NO |  |  |  |
+| quantity | decimal(10,2) | NO |  |  |  |
+| unit | varchar(50) | NO |  |  |  |
+| unit_price | decimal(10,2) | NO |  |  |  |
+| subtotal | decimal(10,2) | NO |  |  |  |
+| created_at | timestamp | NO |  | current_timestamp() |  |
+
+### Table: orders
+| Field | Type | Null | Key | Default | Extra |
+|-------|------|------|-----|---------|-------|
+| id | int(11) | NO | PRI |  | auto_increment |
+| order_id | varchar(50) | NO | UNI |  |  |
+| user_id | int(11) | NO | MUL |  |  |
+| customer_name | varchar(255) | NO |  |  |  |
+| customer_phone | varchar(20) | NO |  |  |  |
+| customer_email | varchar(255) | NO |  |  |  |
+| delivery_address | text | NO |  |  |  |
+| subtotal | decimal(10,2) | NO |  |  |  |
+| gst_amount | decimal(10,2) | NO |  |  |  |
+| delivery_charges | decimal(10,2) | NO |  |  |  |
+| total_amount | decimal(10,2) | NO |  |  |  |
+| payment_status | enum('pending','completed','failed','refunded') | YES | MUL | pending |  |
+| payment_id | varchar(255) | YES |  |  |  |
+| payment_method | varchar(50) | YES |  |  |  |
+| order_status | enum('pending','confirmed','dispatched','delivered','cancelled') | YES | MUL | pending |  |
+| order_notes | text | YES |  |  |  |
+| created_at | timestamp | NO |  | current_timestamp() |  |
+| updated_at | timestamp | NO |  | current_timestamp() | on update current_timestamp() |
+
+### Table: password_reset_otp
+| Field | Type | Null | Key | Default | Extra |
+|-------|------|------|-----|---------|-------|
+| id | int(11) | NO | PRI |  | auto_increment |
+| user_id | int(11) | NO |  |  |  |
+| email | varchar(255) | NO | MUL |  |  |
+| role | enum('homeowner','engineer','admin') | NO |  |  |  |
+| otp | varchar(6) | NO | MUL |  |  |
+| expiry | datetime | NO |  |  |  |
+| verified | tinyint(1) | YES |  | 0 |  |
+| created_at | timestamp | NO |  | current_timestamp() |  |
+
+### Table: payment_transactions
+| Field | Type | Null | Key | Default | Extra |
+|-------|------|------|-----|---------|-------|
+| id | int(11) | NO | PRI |  | auto_increment |
+| order_id | varchar(50) | NO | MUL |  |  |
+| payment_id | varchar(255) | NO | UNI |  |  |
+| payment_gateway | varchar(50) | NO |  |  |  |
+| amount | decimal(10,2) | NO |  |  |  |
+| currency | varchar(10) | YES |  | INR |  |
+| status | enum('initiated','success','failed','pending') | YES |  | initiated |  |
+| transaction_data | longtext | YES |  |  |  |
+| created_at | timestamp | NO |  | current_timestamp() |  |
+| updated_at | timestamp | NO |  | current_timestamp() | on update current_timestamp() |
+
+### Table: project_documents
+| Field | Type | Null | Key | Default | Extra |
+|-------|------|------|-----|---------|-------|
+| id | int(11) | NO | PRI |  | auto_increment |
+| project_id | int(11) | NO | MUL |  |  |
+| stage_idx | int(11) | NO |  |  |  |
+| file_name | varchar(255) | NO |  |  |  |
+| file_path | varchar(255) | NO |  |  |  |
+| file_size | int(11) | NO |  |  |  |
+| uploaded_by | int(11) | NO |  |  |  |
+| uploaded_at | timestamp | NO |  | current_timestamp() |  |
+
+### Table: project_requests
+| Field | Type | Null | Key | Default | Extra |
+|-------|------|------|-----|---------|-------|
+| id | int(11) | NO | PRI |  | auto_increment |
+| engineer_id | int(11) | YES | MUL |  |  |
+| homeowner_id | int(11) | NO | MUL |  |  |
+| project_title | varchar(255) | NO |  |  |  |
+| project_type | varchar(100) | NO |  |  |  |
+| budget | varchar(100) | NO |  |  |  |
+| location | varchar(255) | NO |  |  |  |
+| timeline | varchar(100) | NO |  |  |  |
+| project_size | varchar(100) | YES |  |  |  |
+| description | text | NO |  |  |  |
+| project_details | text | YES |  |  |  |
+| contact_phone | varchar(20) | YES |  |  |  |
+| status | enum('pending','accepted','rejected','completed') | YES | MUL | pending |  |
+| current_stage | int(11) | YES |  | 0 |  |
+| created_at | timestamp | NO |  | current_timestamp() |  |
+| updated_at | timestamp | NO |  | current_timestamp() | on update current_timestamp() |
+
+### Table: saved_favorites
+| Field | Type | Null | Key | Default | Extra |
+|-------|------|------|-----|---------|-------|
+| id | int(11) | NO | PRI |  | auto_increment |
+| user_id | int(11) | NO | MUL |  |  |
+| item_id | varchar(50) | NO |  |  |  |
+| item_type | varchar(50) | NO |  |  |  |
+| title | varchar(255) | NO |  |  |  |
+| description | text | YES |  |  |  |
+| image_url | varchar(255) | YES |  |  |  |
+| meta_info | longtext | YES |  |  |  |
+| created_at | timestamp | NO |  | current_timestamp() |  |
+
+### Table: users
+| Field | Type | Null | Key | Default | Extra |
+|-------|------|------|-----|---------|-------|
+| id | int(11) | NO | PRI |  | auto_increment |
+| name | varchar(255) | NO |  |  |  |
+| email | varchar(255) | NO | UNI |  |  |
+| password | varchar(255) | YES |  |  |  |
+| phone | varchar(20) | YES |  |  |  |
+| google_id | varchar(255) | YES | UNI |  |  |
+| profile_picture | varchar(500) | YES |  |  |  |
+| role | enum('homeowner','engineer','admin') | YES |  | homeowner |  |
+| status | enum('pending','approved','rejected') | YES |  | approved |  |
+| specialization | varchar(255) | YES |  |  |  |
+| experience | int(11) | YES |  |  |  |
+| license_number | varchar(100) | YES |  |  |  |
+| portfolio_url | varchar(500) | YES |  |  |  |
+| bio | text | YES |  |  |  |
+| created_at | timestamp | NO |  | current_timestamp() |  |
+| updated_at | timestamp | NO |  | current_timestamp() | on update current_timestamp() |
+

@@ -48,7 +48,7 @@ $total_projects = $project_result['count'] ?? 0;
             --accent: #10b981;
             --text-main: #1e293b;
             --text-dim: #64748b;
-            --soft-shadow: 0 20px 50px rgba(0, 0, 0, 0.05);
+            --soft-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 0 1px rgba(0, 0, 0, 0.05);
             --card-radius: 32px;
         }
 
@@ -1471,7 +1471,7 @@ $total_projects = $project_result['count'] ?? 0;
                 newBadge.className = 'game-badge earned';
                 newBadge.title = name;
                 newBadge.innerHTML = `
-                    <div class="badge-icon" style="background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%); color: #3b82f6; box-shadow: 0 10px 20px rgba(59, 130, 246, 0.15);">
+                    <div class="badge-icon" style="background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%); color: #3b82f6; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 0 1px rgba(0, 0, 0, 0.05);">
                         <i class="fas fa-certificate"></i>
                     </div>
                     <span style="font-size: 0.7rem; font-weight: 700;">${name}</span>
@@ -1488,6 +1488,7 @@ $total_projects = $project_result['count'] ?? 0;
             if (!container) return;
             const scene = new THREE.Scene();
             scene.background = new THREE.Color('#f6f7f2');
+            scene.fog = new THREE.Fog('#f6f7f2', 10, 45);
             const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
             camera.position.z = 8;
             camera.position.y = 2;

@@ -734,7 +734,7 @@ function updateCartBadge() {
     }
 }
 
-// Proceed to Checkout with Enhanced UX
+// Proceed to Checkout with Razorpay Integration
 function proceedToCheckout() {
     if (cart.length === 0) {
         showNotification('Your cart is empty!', 'warning');
@@ -743,10 +743,11 @@ function proceedToCheckout() {
 
     const checkoutBtn = document.getElementById('checkoutBtn');
     const originalText = checkoutBtn.innerHTML;
-    checkoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+    checkoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Initializing Payment...';
     checkoutBtn.disabled = true;
 
     const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const totalInPaise = Math.round(total * 100); // Razorpay requires amount in paise
 
     const orderData = {
         items: cart,
@@ -754,18 +755,97 @@ function proceedToCheckout() {
         timestamp: new Date().toISOString()
     };
 
-    fetch('process_order.php', {
+    // Create Razorpay order on backend
+    fetch('backend/create_razorpay_order.php', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify(orderData)
+        body: JSON.stringify({ amount: totalInPaise, cart: cart })
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.order_id) {
+                // Initialize Razorpay checkout
+                const options = {
+                    key: 'rzp_test_S60Mda5xiv9lpa', // Your Razorpay test key
+                    amount: totalInPaise,
+                    currency: 'INR',
+                    name: 'Constructa',
+                    description: 'Construction Materials Purchase',
+                    image: 'https://via.placeholder.com/100x100?text=Constructa', // Your logo
+                    order_id: data.order_id,
+                    handler: function (response) {
+                        // Payment successful
+                        verifyPayment(response, orderData);
+                    },
+                    prefill: {
+                        name: '',
+                        email: '',
+                        contact: ''
+                    },
+                    notes: {
+                        order_type: 'material_purchase',
+                        item_count: cart.length
+                    },
+                    theme: {
+                        color: '#294033'
+                    },
+                    modal: {
+                        ondismiss: function () {
+                            // Payment cancelled
+                            checkoutBtn.innerHTML = originalText;
+                            checkoutBtn.disabled = false;
+                            showNotification('Payment cancelled', 'warning');
+                        }
+                    }
+                };
+
+                const rzp = new Razorpay(options);
+                rzp.open();
+
+                // Reset button after opening Razorpay
+                checkoutBtn.innerHTML = originalText;
+                checkoutBtn.disabled = false;
+
+            } else {
+                showNotification('Error initializing payment: ' + (data.message || 'Unknown error'), 'error');
+                checkoutBtn.innerHTML = originalText;
+                checkoutBtn.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('An error occurred while initializing payment. Please try again.', 'error');
+            checkoutBtn.innerHTML = originalText;
+            checkoutBtn.disabled = false;
+        });
+}
+
+// Verify Payment
+function verifyPayment(razorpayResponse, orderData) {
+    const checkoutBtn = document.getElementById('checkoutBtn');
+    checkoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying Payment...';
+    checkoutBtn.disabled = true;
+
+    fetch('backend/verify_razorpay_payment.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            razorpay_payment_id: razorpayResponse.razorpay_payment_id,
+            razorpay_order_id: razorpayResponse.razorpay_order_id,
+            razorpay_signature: razorpayResponse.razorpay_signature,
+            order_data: orderData
+        })
     })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                showSuccessModal(data.orderId, total);
+                showSuccessModal(data.order_id, orderData.total);
 
+                // Clear cart
                 cart = [];
                 saveCart();
                 updateCartUI();
@@ -775,15 +855,15 @@ function proceedToCheckout() {
                     toggleCart();
                 }, 2000);
             } else {
-                showNotification('Error placing order: ' + data.message, 'error');
-                checkoutBtn.innerHTML = originalText;
+                showNotification('Payment verification failed: ' + data.message, 'error');
+                checkoutBtn.innerHTML = '<i class="fas fa-check-circle"></i> Proceed to Checkout';
                 checkoutBtn.disabled = false;
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            showNotification('An error occurred while placing your order. Please try again.', 'error');
-            checkoutBtn.innerHTML = originalText;
+            showNotification('An error occurred while verifying payment. Please contact support.', 'error');
+            checkoutBtn.innerHTML = '<i class="fas fa-check-circle"></i> Proceed to Checkout';
             checkoutBtn.disabled = false;
         });
 }

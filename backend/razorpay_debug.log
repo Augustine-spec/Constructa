@@ -1,0 +1,47 @@
+2026-01-20 06:14:43 - Input: {"amount":13000,"cart":[{"id":"1","name":"TMT Steel Bars (Fe-550)","price":65,"unit":"per kg","quantity":2,"icon":"fa-bars"}]}
+2026-01-20 06:14:43 - HTTP Code: 200
+2026-01-20 06:14:43 - Response: {"amount":13000,"amount_due":13000,"amount_paid":0,"attempts":0,"created_at":1768886083,"currency":"INR","entity":"order","id":"order_S60ugpnjRI1fAB","notes":{"item_count":1,"order_type":"material_purchase"},"offer_id":null,"receipt":"order_1768886083","status":"created"}
+2026-01-20 06:15:40 - Input: {"amount":100,"items":[]}
+2026-01-20 06:15:41 - HTTP Code: 200
+2026-01-20 06:15:41 - Response: {"amount":100,"amount_due":100,"amount_paid":0,"attempts":0,"created_at":1768886141,"currency":"INR","entity":"order","id":"order_S60vhDt6LGN4SF","notes":{"item_count":0,"order_type":"material_purchase"},"offer_id":null,"receipt":"order_1768886140","status":"created"}
+2026-01-20 06:17:54 - Input: []
+2026-01-20 06:18:41 - Input: {"amount":13000,"cart":[{"id":"1","name":"TMT Steel Bars (Fe-550)","price":65,"unit":"per kg","quantity":2,"icon":"fa-bars"}]}
+2026-01-20 06:18:42 - HTTP Code: 200
+2026-01-20 06:18:42 - Response: {"amount":13000,"amount_due":13000,"amount_paid":0,"attempts":0,"created_at":1768886322,"currency":"INR","entity":"order","id":"order_S60yt3zoJTVFae","notes":{"item_count":1,"order_type":"material_purchase"},"offer_id":null,"receipt":"order_1768886321","status":"created"}
+2026-01-20 06:23:40 - Input: {"amount":19500,"cart":[{"id":"1","name":"TMT Steel Bars (Fe-550)","price":65,"unit":"per kg","quantity":3,"icon":"fa-bars"}]}
+2026-01-20 06:23:40 - HTTP Code: 200
+2026-01-20 06:23:40 - Response: {"amount":19500,"amount_due":19500,"amount_paid":0,"attempts":0,"created_at":1768886621,"currency":"INR","entity":"order","id":"order_S614960WnNehl8","notes":{"item_count":1,"order_type":"material_purchase"},"offer_id":null,"receipt":"order_1768886620","status":"created"}
+2026-01-20 06:31:20 - Input: {"amount":26000,"cart":[{"id":"1","name":"TMT Steel Bars (Fe-550)","price":65,"unit":"per kg","quantity":4,"icon":"fa-bars"}]}
+2026-01-20 06:31:20 - HTTP Code: 200
+2026-01-20 06:31:20 - Response: {"amount":26000,"amount_due":26000,"amount_paid":0,"attempts":0,"created_at":1768887081,"currency":"INR","entity":"order","id":"order_S61CF9p7xXLalo","notes":{"item_count":1,"order_type":"material_purchase"},"offer_id":null,"receipt":"order_1768887080","status":"created"}
+2026-01-20 06:48:10 - Input: {"amount":638400,"cart":[{"id":"1","name":"TMT Steel Bars (Fe-550)","price":65,"unit":"per kg","quantity":4},{"id":"2","name":"I-Beam Girder","price":82,"unit":"per kg","quantity":7},{"id":"13","name":"Copper Wire (2.5 sqmm)","price":1850,"unit":"per coil","quantity":3}]}
+2026-01-20 06:48:11 - HTTP Code: 200
+2026-01-20 06:48:11 - Response: {"amount":638400,"amount_due":638400,"amount_paid":0,"attempts":0,"created_at":1768888091,"currency":"INR","entity":"order","id":"order_S61U1zEBh5yl26","notes":{"item_count":3,"order_type":"material_purchase"},"offer_id":null,"receipt":"order_1768888090","status":"created"}
+2026-01-20 06:50:33 - Input: {"amount":638400,"cart":[{"id":"1","name":"TMT Steel Bars (Fe-550)","price":65,"unit":"per kg","quantity":4},{"id":"2","name":"I-Beam Girder","price":82,"unit":"per kg","quantity":7},{"id":"13","name":"Copper Wire (2.5 sqmm)","price":1850,"unit":"per coil","quantity":3}]}
+2026-01-20 06:50:33 - HTTP Code: 200
+2026-01-20 06:50:33 - Response: {"amount":638400,"amount_due":638400,"amount_paid":0,"attempts":0,"created_at":1768888234,"currency":"INR","entity":"order","id":"order_S61WXkqQq8UIjb","notes":{"item_count":3,"order_type":"material_purchase"},"offer_id":null,"receipt":"order_1768888233","status":"created"}
+2026-01-20 07:12:58 - Input: {"amount":8200,"cart":[{"id":"2","name":"I-Beam Girder","price":82,"unit":"per kg","quantity":1,"icon":"fa-cube"}]}
+2026-01-20 07:12:58 - HTTP Code: 200
+2026-01-20 07:12:58 - Response: {"amount":8200,"amount_due":8200,"amount_paid":0,"attempts":0,"created_at":1768889578,"currency":"INR","entity":"order","id":"order_S61uDN4bFqAGTD","notes":{"item_count":1,"order_type":"material_purchase"},"offer_id":null,"receipt":"order_1768889578","status":"created"}
+2026-01-28 16:25:28 - Input: {"amount":8200,"cart":[{"id":"2","name":"I-Beam Girder","price":82,"unit":"per kg","quantity":1,"icon":"fa-cube"}]}
+2026-01-28 16:25:29 - HTTP Code: 200
+2026-01-28 16:25:29 - Response: {"amount":8200,"amount_due":8200,"amount_paid":0,"attempts":0,"created_at":1769613928,"currency":"INR","entity":"order","id":"order_S9LanuI16dS0io","notes":{"item_count":1,"order_type":"material_purchase"},"offer_id":null,"receipt":"order_1769613928","status":"created"}
+2026-01-29 05:19:01 - Input: {"amount":8200,"cart":[{"id":"2","name":"I-Beam Girder","price":82,"unit":"per kg","quantity":1,"icon":"fa-cube"}]}
+2026-01-29 05:19:05 - HTTP Code: 200
+2026-01-29 05:19:05 - Response: {"amount":8200,"amount_due":8200,"amount_paid":0,"attempts":0,"created_at":1769660343,"currency":"INR","entity":"order","id":"order_S9YlyGxynxo8SV","notes":{"item_count":1,"order_type":"material_purchase"},"offer_id":null,"receipt":"order_1769660341","status":"created"}
+2026-01-29 09:46:34 - Input: {"amount":6500,"cart":[{"id":"1","name":"TMT Steel Bars (Fe-550)","price":65,"unit":"per kg","quantity":1,"icon":"fa-bars"}]}
+2026-01-29 09:46:35 - HTTP Code: 200
+2026-01-29 09:46:35 - Response: {"amount":6500,"amount_due":6500,"amount_paid":0,"attempts":0,"created_at":1769676394,"currency":"INR","entity":"order","id":"order_S9dKXeIdk4C8TZ","notes":{"item_count":1,"order_type":"material_purchase"},"offer_id":null,"receipt":"order_1769676394","status":"created"}
+2026-01-29 09:52:04 - Input: {"amount":6500,"cart":[{"id":"1","name":"TMT Steel Bars (Fe-550)","price":65,"unit":"per kg","quantity":1,"icon":"fa-bars"}]}
+2026-01-29 09:52:15 - HTTP Code: 0
+2026-01-29 09:52:15 - Response: 
+2026-01-29 09:52:15 - cURL Error: Could not resolve host: api.razorpay.com
+2026-01-30 04:37:38 - Input: {"amount":27700,"cart":[{"id":"1","name":"TMT Steel Bars (Fe-550)","price":65,"unit":"per kg","quantity":3,"icon":"fa-bars"},{"id":"2","name":"I-Beam Girder","price":82,"unit":"per kg","quantity":1,"icon":"fa-cube"}]}
+2026-01-30 04:37:40 - HTTP Code: 200
+2026-01-30 04:37:40 - Response: {"amount":27700,"amount_due":27700,"amount_paid":0,"attempts":0,"created_at":1769744261,"currency":"INR","entity":"order","id":"order_S9wbNqO0MkN5mk","notes":{"item_count":2,"order_type":"material_purchase"},"offer_id":null,"receipt":"order_1769744258","status":"created"}
+2026-02-01 09:54:06 - Input: {"amount":320000,"cart":[{"id":"15","name":"SS Kitchen Sink","price":3200,"unit":"per unit","quantity":1,"icon":"fa-sink"}]}
+2026-02-01 09:54:07 - HTTP Code: 200
+2026-02-01 09:54:07 - Response: {"amount":320000,"amount_due":320000,"amount_paid":0,"attempts":0,"created_at":1769936047,"currency":"INR","entity":"order","id":"order_SAp3tNNsN0VF28","notes":{"item_count":1,"order_type":"material_purchase"},"offer_id":null,"receipt":"order_1769936046","status":"created"}
+2026-02-02 03:45:50 - Input: {"amount":191500,"cart":[{"id":"1","name":"TMT Steel Bars (Fe-550)","price":65,"unit":"per kg","quantity":1,"icon":"fa-bars"},{"id":"13","name":"Copper Wire (2.5 sqmm)","price":1850,"unit":"per coil","quantity":1,"icon":"fa-plug"}]}
+2026-02-02 03:45:53 - HTTP Code: 200
+2026-02-02 03:45:53 - Response: {"amount":191500,"amount_due":191500,"amount_paid":0,"attempts":0,"created_at":1770000352,"currency":"INR","entity":"order","id":"order_SB7K19HLVA9LQZ","notes":{"item_count":2,"order_type":"material_purchase"},"offer_id":null,"receipt":"order_1770000350","status":"created"}

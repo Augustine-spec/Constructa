@@ -339,6 +339,14 @@ $questions = [
             border-color: var(--accent-green);
             box-shadow: 0 0 15px rgba(61, 90, 73, 0.1);
         }
+        .glass-input.invalid {
+            border-color: var(--danger);
+            background: rgba(217, 83, 79, 0.05);
+        }
+        .glass-input.valid {
+            border-color: var(--success);
+            background: rgba(61, 90, 73, 0.05);
+        }
 
         /* Loading Overlay */
         #loader {
@@ -377,6 +385,26 @@ $questions = [
             color: white;
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .validation-message {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            border-radius: 4px;
+            display: none;
+        }
+        .validation-message.show {
+            display: block;
+        }
+        .validation-message.invalid {
+            color: var(--danger);
+            background: rgba(217, 83, 79, 0.1);
+        }
+        .validation-message.valid {
+            color: var(--success);
+            background: rgba(61, 90, 73, 0.1);
         }
 
     </style>
@@ -434,6 +462,7 @@ $questions = [
                 </div>
                 <div class="rating-stage" style="display:block;">
                     <textarea class="glass-input" id="final-comment" placeholder="Input technical observations..."></textarea>
+                    <div class="validation-message" id="comment-validation"></div>
                 </div>
             </div>
 
@@ -611,6 +640,88 @@ $questions = [
             document.getElementById('loader').style.display = 'none';
         }});
         document.getElementById('step-0').classList.add('active');
+
+        // Live Validation for Final Comment
+        const finalCommentInput = document.getElementById('final-comment');
+        const commentValidation = document.getElementById('comment-validation');
+        const btnNext = document.getElementById('btn-next');
+
+        const validateComment = () => {
+            const text = finalCommentInput.value.trim();
+            
+            // Clear previous validation
+            finalCommentInput.classList.remove('valid', 'invalid');
+            commentValidation.classList.remove('show', 'valid', 'invalid');
+            
+            // If empty, no validation (optional field)
+            if (text.length === 0) {
+                commentValidation.innerHTML = '';
+                return true;
+            }
+            
+            // Check 1: Minimum length (at least 10 characters)
+            if (text.length < 10) {
+                finalCommentInput.classList.add('invalid');
+                commentValidation.classList.add('show', 'invalid');
+                commentValidation.innerHTML = `<i class="fas fa-exclamation-circle"></i> Too short. Please provide more detail (${text.length}/10 characters minimum)`;
+                return false;
+            }
+            
+            // Check 2: Must contain letters (not just numbers/symbols)
+            const letterCount = (text.match(/[a-zA-Z]/g) || []).length;
+            const letterPercentage = (letterCount / text.length) * 100;
+            
+            if (letterPercentage < 30) {
+                finalCommentInput.classList.add('invalid');
+                commentValidation.classList.add('show', 'invalid');
+                commentValidation.innerHTML = '<i class="fas fa-exclamation-circle"></i> Please provide meaningful text feedback (not just numbers or symbols)';
+                return false;
+            }
+            
+            // Check 3: Should contain at least 3 words
+            const words = text.split(/\s+/).filter(word => word.length > 0);
+            if (words.length < 3) {
+                finalCommentInput.classList.add('invalid');
+                commentValidation.classList.add('show', 'invalid');
+                commentValidation.innerHTML = `<i class="fas fa-exclamation-circle"></i> Please use at least 3 words (currently ${words.length})`;
+                return false;
+            }
+            
+            // Check 4: Detect gibberish (repeated characters)
+            const hasGibberish = /(.)\1{5,}/.test(text); // 6+ repeated chars
+            if (hasGibberish) {
+                finalCommentInput.classList.add('invalid');
+                commentValidation.classList.add('show', 'invalid');
+                commentValidation.innerHTML = '<i class="fas fa-exclamation-circle"></i> Please avoid repeated characters (e.g., "jjjjjj")';
+                return false;
+            }
+            
+            // Check 5: Should have reasonable word structure (not random letters)
+            const hasReasonableWords = words.some(word => {
+                // At least one word should have vowels and consonants mixed
+                return /[aeiou]/i.test(word) && /[bcdfghjklmnpqrstvwxyz]/i.test(word) && word.length >= 3;
+            });
+            
+            if (!hasReasonableWords) {
+                finalCommentInput.classList.add('invalid');
+                commentValidation.classList.add('show', 'invalid');
+                commentValidation.innerHTML = '<i class="fas fa-exclamation-circle"></i> Please provide meaningful words (not random characters)';
+                return false;
+            }
+            
+            // All checks passed
+            finalCommentInput.classList.add('valid');
+            commentValidation.classList.add('show', 'valid');
+            commentValidation.innerHTML = `<i class="fas fa-check-circle"></i> Feedback looks good! (${words.length} words, ${text.length} characters)`;
+            return true;
+        };
+
+        // Event listeners for live validation
+        if (finalCommentInput) {
+            finalCommentInput.addEventListener('input', validateComment);
+            finalCommentInput.addEventListener('blur', validateComment);
+        }
+
 
         // Rating Handler
         window.handleRating = (stepIndex, value, el) => {

@@ -111,7 +111,7 @@ $result = $conn->query($query);
             border: 1px solid rgba(0,0,0,0.08);
             border-radius: 16px;
             overflow: hidden;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 0 1px rgba(0, 0, 0, 0.05);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -400,143 +400,262 @@ $result = $conn->query($query);
         </div>
     </div>
 
-    <!-- ADVANCED TEMPLATE BUILDER WIZARD (Budget Calculator Style) -->
+    <!-- PROGRESSIVE TEMPLATE BUILDER (One Question at a Time) -->
     <div class="modal-overlay" id="templateBuilder">
         <!-- Close Button (Absolute) -->
         <button class="btn-close-fixed" onclick="closeBuilder()"><i class="fas fa-times"></i></button>
 
         <div class="app-container-modal">
-            <!-- Left: Wizard Form -->
+            <!-- Left: Single Focused Question -->
             <div class="wizard-section">
                 <!-- Progress Header -->
                 <div class="progress-header">
-                    <div class="step-indicator">Step <span id="currentStepNum">1</span> of 4</div>
+                    <div class="step-indicator">Step <span id="currentStepNum">1</span> of 6</div>
                     <div class="progress-track">
                         <div class="progress-fill" id="progressBar"></div>
                     </div>
                 </div>
 
                 <form id="wizardForm">
-                    <!-- Step 1: Design Identity -->
+                    <!-- STEP 1: Plot Area -->
                     <div class="step active" id="step1">
-                        <h2 class="step-title">Let's name your masterpiece.</h2>
-                        <p class="step-desc">Give your template a catchy title and define its architectural identity.</p>
+                        <h2 class="step-title-focused">Let's start with the plot.</h2>
+                        <p class="step-desc-focused">Enter the total area of your plot in square feet.</p>
                         
-                        <div class="form-group mb-4" style="margin-top:2rem;">
-                            <!-- MATCHING BUDGET CALC STYLE: Input first, barely visible label below or placeholder -->
-                            <input type="text" name="title" class="big-input" placeholder="e.g. Modern Sunset Villa" oninput="updatePreview('title', this.value)">
-                            <label style="display:block; margin-top:0.8rem; color:var(--text-muted); font-size:0.9rem;">Template Title</label>
+                        <div class="focused-input-container">
+                            <input type="number" 
+                                   name="area_sqft" 
+                                   id="plotAreaInput"
+                                   class="ultra-big-input" 
+                                   value="1200" 
+                                   min="500"
+                                   max="10000"
+                                   oninput="updatePreview('area', this.value); validateStep()">
+                            <div class="input-unit">sq.ft</div>
                         </div>
-
-                        <div class="form-group" style="margin-top:3rem;">
-                            <h3 style="font-size:1.5rem; color:#1e293b; font-weight:700; margin-bottom:1rem;">Architectural Style</h3>
-                            <div class="options-grid">
-                                <div class="selection-card style-opt selected" onclick="selectStyle('Modern', this)">
-                                    <div class="check-mark"><i class="fas fa-check"></i></div>
-                                    <div class="icon"><i class="fas fa-city"></i></div>
-                                    <div class="card-title">Modern</div>
-                                    <div class="card-subtitle">Clean lines, minimalism, and glass facades.</div>
-                                </div>
-                                <div class="selection-card style-opt" onclick="selectStyle('Traditional', this)">
-                                    <div class="check-mark"><i class="fas fa-check"></i></div>
-                                    <div class="icon"><i class="fas fa-gopuram"></i></div>
-                                    <div class="card-title">Traditional</div>
-                                    <div class="card-subtitle">Cultural heritage with intricate details.</div>
-                                </div>
-                                <div class="selection-card style-opt" onclick="selectStyle('Contemporary', this)">
-                                    <div class="check-mark"><i class="fas fa-check"></i></div>
-                                    <div class="icon"><i class="fas fa-layer-group"></i></div>
-                                    <div class="card-title">Contemporary</div>
-                                    <div class="card-subtitle">Current trends, fluid curves, and eco-friendly.</div>
-                                </div>
-                                <div class="selection-card style-opt" onclick="selectStyle('Vastu', this)">
-                                    <div class="check-mark"><i class="fas fa-check"></i></div>
-                                    <div class="icon"><i class="fas fa-compass"></i></div>
-                                    <div class="card-title">Vastu Compliant</div>
-                                    <div class="card-subtitle">Optimized for cosmic energy and harmony.</div>
-                                </div>
+                        
+                        <!-- Optional: Range Slider for visual feedback -->
+                        <div class="slider-container">
+                            <input type="range" 
+                                   class="area-slider" 
+                                   min="500" 
+                                   max="10000" 
+                                   value="1200" 
+                                   step="50"
+                                   oninput="syncSliderToInput(this.value)">
+                            <div class="slider-labels">
+                                <span>500 sq.ft</span>
+                                <span>10,000 sq.ft</span>
                             </div>
-                            <input type="hidden" name="style" id="styleInput" value="Modern">
                         </div>
                     </div>
 
-                    <!-- Step 2: Specifications -->
+                    <!-- STEP 2: Number of Floors -->
                     <div class="step" id="step2">
-                        <h2 class="step-title">Technical Specifications.</h2>
-                        <p class="step-desc">Define the area, floors, and dimensions for this template.</p>
+                        <h2 class="step-title-focused">How many floors are planned?</h2>
+                        <p class="step-desc-focused">Select the number of floors for this template.</p>
                         
-                        <div class="form-group mb-4" style="margin-top:2rem;">
-                            <input type="number" name="area_sqft" class="big-input" value="1200" oninput="updatePreview('area', this.value)">
-                            <label style="display:block; margin-top:0.8rem; color:var(--text-muted); font-size:0.9rem;">Built-up Area (sq. ft)</label>
-                        </div>
-
-                        <div class="form-group mb-4" style="margin-top:3rem;">
-                            <h3 style="font-size:1.5rem; color:#1e293b; font-weight:700; margin-bottom:1rem;">Number of Floors</h3>
-                            <div class="counter-wrapper">
-                                <button type="button" class="counter-btn" onclick="adjustFloors(-1)"><i class="fas fa-minus"></i></button>
-                                <div class="counter-display" id="floorDisplay">1</div>
-                                <button type="button" class="counter-btn" onclick="adjustFloors(1)"><i class="fas fa-plus"></i></button>
+                        <div class="floor-selector-container">
+                            <button type="button" class="floor-btn-large" onclick="adjustFloorsLarge(-1)">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <div class="floor-display-large" id="floorDisplayLarge">
+                                <div class="floor-number" id="floorNumber">1</div>
+                                <div class="floor-label">Floor</div>
                             </div>
-                            <input type="hidden" name="floors" id="floorInput" value="1">
+                            <button type="button" class="floor-btn-large" onclick="adjustFloorsLarge(1)">
+                                <i class="fas fa-plus"></i>
+                            </button>
                         </div>
-
-                        <div class="form-group" style="margin-top:3rem;">
-                             <h3 style="font-size:1.5rem; color:#1e293b; font-weight:700; margin-bottom:1rem;">Budget Estimate</h3>
-                             <div style="display:flex; gap:1rem; align-items:center;">
-                                <span style="font-size:2.5rem; font-weight:700; color:#cbd5e1;">₹</span>
-                                <input type="number" name="budget_min" class="big-input" placeholder="2500000" oninput="updatePreview('cost', this.value)">
-                             </div>
-                             <label style="display:block; margin-top:0.8rem; color:var(--text-muted); font-size:0.9rem;">Min Cost Estimate</label>
+                        
+                        <!-- Visual Stack Representation -->
+                        <div class="floor-stack-visual" id="floorStack">
+                            <div class="floor-layer active"></div>
                         </div>
+                        
+                        <input type="hidden" name="floors" id="floorInput" value="1">
                     </div>
 
-                    <!-- Step 3: Visuals & Tags -->
+                    <!-- STEP 3: Construction Quality -->
                     <div class="step" id="step3">
-                        <h2 class="step-title">Visual Assets.</h2>
-                        <p class="step-desc">Upload the render and tag key features.</p>
+                        <h2 class="step-title-focused">Choose the construction quality.</h2>
+                        <p class="step-desc-focused">This affects the cost per square foot and overall finish.</p>
                         
-                        <div class="upload-zone" id="dropZone" style="margin-top:2rem;">
-                            <input type="file" name="image" id="fileInput" hidden accept="image/*">
-                            <div class="upload-icon"><i class="fas fa-cloud-upload-alt"></i></div>
-                            <h3>Drag & Drop 3D Render</h3>
-                            <p>or <button type="button" id="browseBtn" style="background:none; border:none; color:var(--primary-blue); font-weight:700; cursor:pointer;">browse files</button></p>
-                            <p class="file-meta">High-res JPG/PNG recommended</p>
-                        </div>
-                        
-                         <div class="form-group mt-4" style="margin-top:3rem;">
-                            <h3 style="font-size:1.5rem; color:#1e293b; font-weight:700; margin-bottom:1rem;">Smart Tags</h3>
-                            <div class="tags-grid">
-                                <div class="tag-card" onclick="toggleTag('Eco-Friendly', this)">Eco-Friendly</div>
-                                <div class="tag-card" onclick="toggleTag('Luxury', this)">Luxury</div>
-                                <div class="tag-card" onclick="toggleTag('Budget', this)">Budget</div>
-                                <div class="tag-card" onclick="toggleTag('Garden', this)">Garden</div>
-                                <div class="tag-card" onclick="toggleTag('Open Plan', this)">Open Plan</div>
-                                <div class="tag-card" onclick="toggleTag('Duplex', this)">Duplex</div>
-                                <div class="tag-card" onclick="toggleTag('Compact', this)">Compact</div>
-                                <div class="tag-card" onclick="toggleTag('Smart Home', this)">Smart Home</div>
+                        <div class="quality-options">
+                            <div class="quality-card selected" onclick="selectQuality('Basic', 1200, this)" data-quality="Basic">
+                                <div class="quality-check"><i class="fas fa-check"></i></div>
+                                <div class="quality-icon"><i class="fas fa-home"></i></div>
+                                <div class="quality-name">Basic</div>
+                                <div class="quality-desc">Standard materials, functional design</div>
+                                <div class="quality-cost">₹1,200/sq.ft</div>
                             </div>
-                            <input type="hidden" name="description" value="">
+                            
+                            <div class="quality-card" onclick="selectQuality('Standard', 1800, this)" data-quality="Standard">
+                                <div class="quality-check"><i class="fas fa-check"></i></div>
+                                <div class="quality-icon"><i class="fas fa-building"></i></div>
+                                <div class="quality-name">Standard</div>
+                                <div class="quality-desc">Quality materials, modern amenities</div>
+                                <div class="quality-cost">₹1,800/sq.ft</div>
+                            </div>
+                            
+                            <div class="quality-card" onclick="selectQuality('Premium', 2500, this)" data-quality="Premium">
+                                <div class="quality-check"><i class="fas fa-check"></i></div>
+                                <div class="quality-icon"><i class="fas fa-crown"></i></div>
+                                <div class="quality-name">Premium</div>
+                                <div class="quality-desc">Luxury finishes, high-end materials</div>
+                                <div class="quality-cost">₹2,500/sq.ft</div>
+                            </div>
                         </div>
+                        
+                        <input type="hidden" name="quality" id="qualityInput" value="Basic">
+                        <input type="hidden" name="cost_per_sqft" id="costPerSqftInput" value="1200">
                     </div>
 
-                    <!-- Step 4: Publish -->
+                    <!-- STEP 4: Location Type -->
                     <div class="step" id="step4">
-                        <h2 class="step-title">Ready to Publish?</h2>
-                        <p class="step-desc">Review the preview card on the right perfectly matches your intent.</p>
+                        <h2 class="step-title-focused">Where will this house be constructed?</h2>
+                        <p class="step-desc-focused">Location affects permits, labor costs, and timelines.</p>
                         
-                        <div class="publish-status-card" style="margin-top:2rem;">
-                            <div style="display:flex; align-items:center; gap:1.5rem;">
-                                <div style="width:60px; height:60px; background:#dcfce7; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#16a34a; font-size:1.8rem;">
-                                    <i class="fas fa-check"></i>
+                        <div class="location-options">
+                            <div class="location-card selected" onclick="selectLocation('Urban', 1.2, this)" data-location="Urban">
+                                <div class="location-check"><i class="fas fa-check"></i></div>
+                                <div class="location-icon"><i class="fas fa-city"></i></div>
+                                <div class="location-name">Urban</div>
+                                <div class="location-desc">City center, high accessibility</div>
+                                <div class="location-modifier">+20% cost</div>
+                            </div>
+                            
+                            <div class="location-card" onclick="selectLocation('Semi-Urban', 1.0, this)" data-location="Semi-Urban">
+                                <div class="location-check"><i class="fas fa-check"></i></div>
+                                <div class="location-icon"><i class="fas fa-home"></i></div>
+                                <div class="location-name">Semi-Urban</div>
+                                <div class="location-desc">Suburban areas, balanced costs</div>
+                                <div class="location-modifier">Standard cost</div>
+                            </div>
+                            
+                            <div class="location-card" onclick="selectLocation('Rural', 0.85, this)" data-location="Rural">
+                                <div class="location-check"><i class="fas fa-check"></i></div>
+                                <div class="location-icon"><i class="fas fa-tree"></i></div>
+                                <div class="location-name">Rural</div>
+                                <div class="location-desc">Countryside, lower material costs</div>
+                                <div class="location-modifier">-15% cost</div>
+                            </div>
+                        </div>
+                        
+                        <input type="hidden" name="location" id="locationInput" value="Urban">
+                        <input type="hidden" name="location_modifier" id="locationModifierInput" value="1.2">
+                    </div>
+
+                    <!-- STEP 5: Special Features -->
+                    <div class="step" id="step5">
+                        <h2 class="step-title-focused">Any special requirements?</h2>
+                        <p class="step-desc-focused">Select features that make this template unique.</p>
+                        
+                        <div class="features-toggle-grid">
+                            <div class="feature-toggle" onclick="toggleFeature('Vastu Compliant', this)">
+                                <div class="toggle-icon"><i class="fas fa-compass"></i></div>
+                                <div class="toggle-content">
+                                    <div class="toggle-name">Vastu Compliant</div>
+                                    <div class="toggle-desc">Aligned with Vastu principles</div>
+                                </div>
+                                <div class="toggle-switch">
+                                    <div class="toggle-knob"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="feature-toggle" onclick="toggleFeature('Solar Ready', this)">
+                                <div class="toggle-icon"><i class="fas fa-solar-panel"></i></div>
+                                <div class="toggle-content">
+                                    <div class="toggle-name">Solar Ready</div>
+                                    <div class="toggle-desc">Pre-wired for solar panels</div>
+                                </div>
+                                <div class="toggle-switch">
+                                    <div class="toggle-knob"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="feature-toggle" onclick="toggleFeature('Smart Home', this)">
+                                <div class="toggle-icon"><i class="fas fa-brain"></i></div>
+                                <div class="toggle-content">
+                                    <div class="toggle-name">Smart Home</div>
+                                    <div class="toggle-desc">IoT-enabled automation</div>
+                                </div>
+                                <div class="toggle-switch">
+                                    <div class="toggle-knob"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="feature-toggle" onclick="toggleFeature('Rainwater Harvesting', this)">
+                                <div class="toggle-icon"><i class="fas fa-tint"></i></div>
+                                <div class="toggle-content">
+                                    <div class="toggle-name">Rainwater Harvesting</div>
+                                    <div class="toggle-desc">Eco-friendly water management</div>
+                                </div>
+                                <div class="toggle-switch">
+                                    <div class="toggle-knob"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <input type="hidden" name="features" id="featuresInput" value="">
+                        <input type="hidden" name="style" id="styleInput" value="Modern">
+                        <input type="hidden" name="title" id="titleInput" value="">
+                        <input type="hidden" name="description" id="descriptionInput" value="">
+                    </div>
+
+                    <!-- STEP 6: Review & Finalize -->
+                    <div class="step" id="step6">
+                        <h2 class="step-title-focused">Review your template configuration.</h2>
+                        <p class="step-desc-focused">Confirm all details before publishing.</p>
+                        
+                        <div class="review-summary-card">
+                            <div class="summary-header">
+                                <div class="summary-icon">
+                                    <i class="fas fa-check-circle"></i>
                                 </div>
                                 <div>
-                                    <h4 style="font-weight:800; font-size:1.2rem; margin-bottom:0.2rem; color:#1e293b;">Ready to Launch</h4>
-                                    <p style="font-size:1rem; color:#64748b;">This template will be visible to all users.</p>
+                                    <h4>Template Ready</h4>
+                                    <p>All configurations have been set</p>
                                 </div>
                             </div>
-                            <div class="toggle-switch">
-                                <input type="checkbox" checked>
-                                <span class="slider"></span>
+                            
+                            <div class="summary-grid">
+                                <div class="summary-item">
+                                    <div class="summary-label">Plot Area</div>
+                                    <div class="summary-value" id="summaryArea">1200 sq.ft</div>
+                                </div>
+                                <div class="summary-item">
+                                    <div class="summary-label">Floors</div>
+                                    <div class="summary-value" id="summaryFloors">1</div>
+                                </div>
+                                <div class="summary-item">
+                                    <div class="summary-label">Quality</div>
+                                    <div class="summary-value" id="summaryQuality">Basic</div>
+                                </div>
+                                <div class="summary-item">
+                                    <div class="summary-label">Location</div>
+                                    <div class="summary-value" id="summaryLocation">Urban</div>
+                                </div>
+                                <div class="summary-item summary-item-full">
+                                    <div class="summary-label">Special Features</div>
+                                    <div class="summary-value" id="summaryFeatures">None selected</div>
+                                </div>
+                            </div>
+                            
+                            <div class="final-actions">
+                                <div class="form-group">
+                                    <label class="final-label">Template Name</label>
+                                    <input type="text" 
+                                           class="final-input" 
+                                           placeholder="e.g., Modern Urban Villa"
+                                           oninput="updatePreview('title', this.value); document.getElementById('titleInput').value = this.value">
+                                </div>
+                                
+                                <div class="upload-zone-compact" id="dropZone" onclick="document.getElementById('fileInput').click()">
+                                    <input type="file" name="image" id="fileInput" hidden accept="image/*">
+                                    <i class="fas fa-image"></i>
+                                    <span>Upload Template Image</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -553,7 +672,7 @@ $result = $conn->query($query);
                 </div>
             </div>
 
-            <!-- Right: Live Preview -->
+            <!-- Right: Live Preview (Sticky) -->
             <div class="preview-section-sidebar">
                 <h3 class="preview-title"><i class="fas fa-bolt"></i> Live Card Preview</h3>
                 <div class="preview-container-3d">
@@ -566,9 +685,9 @@ $result = $conn->query($query);
                         <div class="ai-content">
                             <div>
                                 <div class="ai-header">
-                                    <div class="ai-title" id="previewTitle">Untitled Template</div>
+                                    <div class="ai-title" id="previewTitle">New Template</div>
                                     <div class="reasoning-grid" id="previewTags">
-                                        <div class="reasoning-chip"><i class="fas fa-check-circle"></i> New Design</div>
+                                        <div class="reasoning-chip"><i class="fas fa-check-circle"></i> Modern Design</div>
                                     </div>
                                 </div>
                                 <div class="static-info-grid">
@@ -584,11 +703,11 @@ $result = $conn->query($query);
                                 <div class="metrics-row">
                                     <div class="metric-group">
                                         <div>Est. Cost</div>
-                                        <div class="metric-val green" id="previewCost">₹0.0 Lakhs</div>
+                                        <div class="metric-val green" id="previewCost">₹17.28 Lakhs</div>
                                     </div>
                                     <div class="metric-group">
                                         <div>Timeline</div>
-                                        <div class="metric-val" id="previewTime">6 Months</div>
+                                        <div class="metric-val" id="previewTime">7 Months</div>
                                     </div>
                                 </div>
                                 <div class="timeline-box">
@@ -616,33 +735,23 @@ $result = $conn->query($query);
         </div>
     </div>
 
-    <!-- Strict Budget Calculator Styling & Logic -->
+    <!-- Progressive Wizard Styles -->
     <style>
-        /* Shared Roots matching Budget Calculator */
-        :root {
-            --primary: #1e293b; /* Adapted for Admin (Dark Blue/Slate) */
-            --primary-light: #334155;
-            --accent: #3b82f6;
-            --bg-color: #f8fafc;
-            --text-main: #1e293b;
-            --text-muted: #64748b;
-            --border-color: #e2e8f0;
-            --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
+        /* === PROGRESSIVE WIZARD STYLES === */
+        
         /* Modal Overlay */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(12px);
             z-index: 1000;
             display: none; justify-content: center; align-items: center;
-            opacity: 0; transition: opacity 0.3s;
+            opacity: 0; transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .modal-overlay.active { display: flex; opacity: 1; }
 
-        /* Main Modal Container (Mimics .app-container) */
+        /* Main Container */
         .app-container-modal {
-            display: flex; width: 95%; max-width: 1400px; height: 90vh;
+            display: flex; width: 95%; max-width: 1600px; height: 92vh;
             background: white; border-radius: 24px;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
             overflow: hidden; border: 1px solid #e2e8f0; 
@@ -651,403 +760,856 @@ $result = $conn->query($query);
 
         .btn-close-fixed {
             position: absolute; top: 1.5rem; right: 1.5rem; z-index: 1001;
-            background: #f1f5f9; border: none; width: 40px; height: 40px;
+            background: #f1f5f9; border: none; width: 45px; height: 45px;
             cursor: pointer; color: #64748b; transition: 0.2s; border-radius: 50%;
             display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
         }
-        .btn-close-fixed:hover { background: #fee2e2; color: #ef4444; }
+        .btn-close-fixed:hover { background: #e2e8f0; color: #dc2626; transform: rotate(90deg); }
 
-        /* Left: Wizard Section */
+        /* Left Section - Question Area */
         .wizard-section {
-            flex: 2; padding: 4rem; position: relative;
-            display: flex; flex-direction: column;
-            background: #ffffff;
+            flex: 1.5; padding: 5rem 6rem; display: flex; flex-direction: column; 
+            overflow-y: auto; background: #ffffff; justify-content: space-between;
+        }
+        
+        /* Right Section - Live Preview */
+        .preview-section-sidebar {
+            flex: 1; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); 
+            border-left: 1px solid #e2e8f0; padding: 3rem 2.5rem;
+            display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh;
         }
 
-        /* Right: Preview Section */
-        .preview-section-sidebar {
-            flex: 1; background: #f8fafc; border-left: 1px solid #e2e8f0; padding: 3rem;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            position: relative;
+        /* Step Transitions */
+        .step { 
+            display: none; opacity: 0; transform: translateY(30px); 
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .step.active { display: block; opacity: 1; transform: translateY(0); }
+
+        /* Focused Typography */
+        .step-title-focused { 
+            font-size: 2.8rem; font-weight: 800; color: #1e293b; 
+            margin-bottom: 1rem; letter-spacing: -1.5px; line-height: 1.1;
+        }
+        .step-desc-focused { 
+            font-size: 1.3rem; color: #64748b; margin-bottom: 4rem; 
+            font-weight: 400; line-height: 1.6;
         }
 
         /* Progress Bar */
-        .progress-header { margin-bottom: 3rem; }
-        .step-indicator { font-weight: 700; color: var(--text-muted); margin-bottom: 0.8rem; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.1em; }
-        .progress-track { width: 100%; height: 6px; background: #f1f5f9; border-radius: 3px; overflow: hidden; }
-        .progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
-
-        /* Steps with Absolute Positioning for Transitions */
-        .wizard-content-wrapper { position: relative; flex: 1; }
-        .step { 
-            position: absolute; top: 0; left: 0; width: 100%;
-            opacity: 0; transform: translateY(20px); pointer-events: none;
-            transition: var(--transition);
+        .progress-header { margin-bottom: 3.5rem; }
+        .step-indicator { 
+            font-weight: 700; color: #94a3b8; margin-bottom: 1rem; 
+            font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.15em; 
         }
-        .step.active { opacity: 1; transform: translateY(0); pointer-events: all; }
-
-        /* Typography - Strict Match */
-        .step-title { font-size: 2.5rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.5rem; letter-spacing: -0.02em; }
-        .step-desc { font-size: 1.1rem; color: var(--text-muted); margin-bottom: 2.5rem; }
-
-        /* Big Input (Budget Calc Style) */
-        .big-input {
-            width: 100%; font-size: 2.5rem; padding: 1rem 0;
-            border: none; border-bottom: 3px solid #e2e8f0;
-            background: transparent; font-weight: 700; color: var(--text-main);
-            outline: none; transition: 0.3s; font-family: 'Inter', sans-serif;
+        .progress-track { 
+            width: 100%; height: 6px; background: #e2e8f0; 
+            border-radius: 3px; overflow: hidden; 
         }
-        .big-input:focus { border-bottom-color: var(--accent); }
-        .big-input::placeholder { color: #cbd5e1; }
-        
-        /* Helper labels below input */
-        .input-helper { display: block; margin-top: 0.8rem; color: var(--text-muted); font-size: 0.9rem; font-weight: 500; }
-
-        /* Cards Grid */
-        .options-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
-        .selection-card {
-            background: white; border: 2px solid #e2e8f0; border-radius: 16px; padding: 2rem;
-            cursor: pointer; transition: 0.3s; position: relative;
-            display: flex; flex-direction: column; gap: 0.8rem;
+        .progress-fill { 
+            height: 100%; background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%); 
+            width: 16.66%; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); 
         }
-        .selection-card:hover { transform: translateY(-4px); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05); border-color: #cbd5e1; }
-        .selection-card.selected { border-color: var(--accent); background: #eff6ff; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); }
-        .selection-card .icon { font-size: 2rem; color: #94a3b8; margin-bottom: 0.5rem; transition: 0.3s; }
-        .selection-card.selected .icon { color: var(--accent); }
-        .card-title { font-weight: 700; font-size: 1.2rem; color: var(--text-main); }
-        .card-subtitle { font-size: 0.95rem; color: #64748b; line-height: 1.5; }
-        
-        .check-mark {
-            position: absolute; top: 1.5rem; right: 1.5rem; width: 24px; height: 24px;
-            background: var(--accent); border-radius: 50%; color: white;
+
+        /* === STEP 1: ULTRA BIG INPUT === */
+        .focused-input-container {
+            display: flex; align-items: baseline; gap: 1.5rem; margin-bottom: 3rem;
+        }
+        .ultra-big-input {
+            width: 100%; font-size: 5rem; font-weight: 800; padding: 0.5rem 0;
+            border: none; border-bottom: 4px solid #e2e8f0; outline: none; color: #1e293b;
+            transition: all 0.3s ease; background: transparent; font-family: 'Inter', sans-serif;
+        }
+        .ultra-big-input:focus { border-bottom-color: #3b82f6; }
+        .ultra-big-input::placeholder { color: #cbd5e1; }
+        .input-unit {
+            font-size: 2rem; color: #94a3b8; font-weight: 600; white-space: nowrap;
+        }
+
+        /* Slider */
+        .slider-container { margin-top: 2rem; }
+        .area-slider {
+            width: 100%; height: 8px; border-radius: 4px; outline: none;
+            background: linear-gradient(to right, #e2e8f0 0%, #e2e8f0 100%);
+            -webkit-appearance: none; cursor: pointer;
+        }
+        .area-slider::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%;
+            background: #3b82f6; cursor: pointer; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+            transition: 0.2s;
+        }
+        .area-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2); box-shadow: 0 4px 12px rgba(59, 130, 246, 0.6);
+        }
+        .slider-labels {
+            display: flex; justify-content: space-between; margin-top: 0.8rem;
+            font-size: 0.9rem; color: #94a3b8; font-weight: 500;
+        }
+
+        /* === STEP 2: FLOOR SELECTOR === */
+        .floor-selector-container {
+            display: flex; align-items: center; justify-content: center; gap: 4rem; margin-bottom: 3rem;
+        }
+        .floor-btn-large {
+            width: 80px; height: 80px; border-radius: 50%; 
+            border: 3px solid #e2e8f0; background: white; 
+            font-size: 2rem; cursor: pointer; transition: 0.3s;
+            display: flex; align-items: center; justify-content: center; color: #64748b;
+        }
+        .floor-btn-large:hover { 
+            border-color: #3b82f6; background: #3b82f6; color: white; 
+            transform: scale(1.05); box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+        }
+        .floor-display-large {
+            text-align: center;
+        }
+        .floor-number {
+            font-size: 6rem; font-weight: 900; color: #1e293b; line-height: 1;
+        }
+        .floor-label {
+            font-size: 1.2rem; color: #94a3b8; font-weight: 600; margin-top: 0.5rem;
+            text-transform: uppercase; letter-spacing: 0.1em;
+        }
+
+        /* Floor Stack Visual */
+        .floor-stack-visual {
+            display: flex; flex-direction: column-reverse; gap: 8px; 
+            align-items: center; margin-top: 2rem;
+        }
+        .floor-layer {
+            width: 200px; height: 40px; background: #e2e8f0; border-radius: 8px;
+            border: 2px solid #cbd5e1; transition: all 0.3s ease;
+            position: relative; overflow: hidden;
+        }
+        .floor-layer.active {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            border-color: #3b82f6; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        /* === STEP 3: QUALITY CARDS === */
+        .quality-options {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem;
+        }
+        .quality-card {
+            background: white; border: 3px solid #e2e8f0; border-radius: 20px; 
+            padding: 2.5rem 1.5rem; cursor: pointer; transition: all 0.3s ease;
+            position: relative; text-align: center; display: flex; flex-direction: column; gap: 1rem;
+        }
+        .quality-card:hover { 
+            transform: translateY(-8px); box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1); 
+            border-color: #cbd5e1; 
+        }
+        .quality-card.selected { 
+            border-color: #3b82f6; background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); 
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); 
+        }
+        .quality-check {
+            position: absolute; top: 1rem; right: 1rem; width: 28px; height: 28px;
+            background: #3b82f6; border-radius: 50%; color: white;
             display: flex; align-items: center; justify-content: center;
             opacity: 0; transform: scale(0); transition: 0.3s;
         }
-        .selection-card.selected .check-mark { opacity: 1; transform: scale(1); }
-
-        /* Counter */
-        .counter-wrapper { display: flex; align-items: center; gap: 2rem; margin-top: 1rem; }
-        .counter-btn { width: 64px; height: 64px; border-radius: 50%; border: 2px solid #e2e8f0; background: white; font-size: 1.5rem; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; color: #64748b; }
-        .counter-btn:hover { border-color: var(--accent); background: var(--accent); color: white; }
-        .counter-display { font-size: 3.5rem; font-weight: 800; min-width: 80px; text-align: center; color: var(--text-main); }
-
-        /* Upload Zone */
-        .upload-zone {
-            border: 3px dashed #cbd5e1; border-radius: 20px;
-            padding: 4rem 2rem; text-align: center; cursor: pointer; transition: 0.3s;
-            background: #f8fafc;
+        .quality-card.selected .quality-check { opacity: 1; transform: scale(1); }
+        .quality-icon { font-size: 3rem; color: #94a3b8; margin-bottom: 0.5rem; }
+        .quality-card.selected .quality-icon { color: #3b82f6; }
+        .quality-name { font-size: 1.4rem; font-weight: 700; color: #1e293b; }
+        .quality-desc { font-size: 0.95rem; color: #64748b; line-height: 1.5; }
+        .quality-cost { 
+            font-size: 1.1rem; font-weight: 700; color: #10b981; 
+            margin-top: 0.5rem; padding-top: 1rem; border-top: 1px solid #e2e8f0;
         }
-        .upload-zone:hover { border-color: #94a3b8; transform: translateY(-2px); }
-        .upload-zone.dragover { border-color: var(--accent); background: #eff6ff; }
-        .upload-icon { font-size: 4rem; color: #94a3b8; margin-bottom: 1.5rem; }
 
-        /* Tag Chips */
-        .tags-grid { display: flex; flex-wrap: wrap; gap: 0.8rem; margin-top: 1rem; }
-        .tag-card {
-            background: #f1f5f9; padding: 0.8rem 1.5rem; border-radius: 50px;
-            font-weight: 600; color: #64748b; cursor: pointer; transition: 0.2s; border: 1px solid transparent;
+        /* === STEP 4: LOCATION CARDS === */
+        .location-options {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem;
         }
-        .tag-card:hover { background: #e2e8f0; color: #1e293b; }
-        .tag-card.selected { background: #dcfce7; color: #166534; border-color: #22c55e; }
-
-        /* Nav Buttons */
-        .wizard-nav { margin-top: auto; padding-top: 2rem; display: flex; justify-content: space-between; align-items: center; }
-        .btn-wiz { padding: 1rem 2rem; border-radius: 12px; font-weight: 600; cursor: pointer; border: none; font-size: 1.1rem; transition: 0.2s; display: flex; align-items: center; gap: 0.8rem; }
-        .btn-prev { background: transparent; color: #94a3b8; }
-        .btn-prev:hover { color: #1e293b; background: #f1f5f9; }
-        .btn-next { background: var(--accent); color: white; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); }
-        .btn-next:hover { transform: translateY(-2px); box-shadow: 0 8px 16px rgba(59, 130, 246, 0.4); }
-        .btn-next:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
-
-        /* Toast */
-        .toast {
-            position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%);
-            background: #ef4444; color: white; padding: 1rem 2rem; border-radius: 50px;
-            box-shadow: 0 10px 20px rgba(239, 68, 68, 0.3); display: none; z-index: 2000;
-            font-weight: 600; animation: popUp 0.3s ease-out;
+        .location-card {
+            background: white; border: 3px solid #e2e8f0; border-radius: 20px; 
+            padding: 2.5rem 1.5rem; cursor: pointer; transition: all 0.3s ease;
+            position: relative; text-align: center; display: flex; flex-direction: column; gap: 1rem;
         }
-        @keyframes popUp { from { transform: translate(-50%, 20px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
+        .location-card:hover { 
+            transform: translateY(-8px); box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1); 
+            border-color: #cbd5e1; 
+        }
+        .location-card.selected { 
+            border-color: #3b82f6; background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); 
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); 
+        }
+        .location-check {
+            position: absolute; top: 1rem; right: 1rem; width: 28px; height: 28px;
+            background: #3b82f6; border-radius: 50%; color: white;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; transform: scale(0); transition: 0.3s;
+        }
+        .location-card.selected .location-check { opacity: 1; transform: scale(1); }
+        .location-icon { font-size: 3rem; color: #94a3b8; margin-bottom: 0.5rem; }
+        .location-card.selected .location-icon { color: #3b82f6; }
+        .location-name { font-size: 1.4rem; font-weight: 700; color: #1e293b; }
+        .location-desc { font-size: 0.95rem; color: #64748b; line-height: 1.5; }
+        .location-modifier { 
+            font-size: 1rem; font-weight: 600; color: #f59e0b; 
+            margin-top: 0.5rem; padding-top: 1rem; border-top: 1px solid #e2e8f0;
+        }
 
-        /* Live Preview Card */
-        .preview-title { font-size: 0.9rem; text-transform: uppercase; font-weight: 800; color: #94a3b8; letter-spacing: 0.1em; margin-bottom: 2rem; display: flex; align-items: center; gap: 0.5rem; }
-        .preview-container-3d { width: 100%; max-width: 450px; }
+        /* === STEP 5: FEATURE TOGGLES === */
+        .features-toggle-grid {
+            display: flex; flex-direction: column; gap: 1.5rem;
+        }
+        .feature-toggle {
+            background: white; border: 2px solid #e2e8f0; border-radius: 16px;
+            padding: 1.8rem 2rem; cursor: pointer; transition: all 0.3s ease;
+            display: flex; align-items: center; gap: 1.5rem;
+        }
+        .feature-toggle:hover {
+            border-color: #cbd5e1; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+        .feature-toggle.active {
+            border-color: #10b981; background: #f0fdf4;
+        }
+        .toggle-icon {
+            width: 50px; height: 50px; border-radius: 12px; background: #f1f5f9;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem; color: #64748b; transition: 0.3s;
+        }
+        .feature-toggle.active .toggle-icon {
+            background: #10b981; color: white;
+        }
+        .toggle-content { flex: 1; }
+        .toggle-name { font-size: 1.2rem; font-weight: 700; color: #1e293b; margin-bottom: 0.3rem; }
+        .toggle-desc { font-size: 0.9rem; color: #64748b; }
+        .toggle-switch {
+            width: 60px; height: 32px; background: #e2e8f0; border-radius: 16px;
+            position: relative; transition: 0.3s;
+        }
+        .feature-toggle.active .toggle-switch {
+            background: #10b981;
+        }
+        .toggle-knob {
+            width: 26px; height: 26px; background: white; border-radius: 50%;
+            position: absolute; top: 3px; left: 3px; transition: 0.3s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        .feature-toggle.active .toggle-knob {
+            left: 31px;
+        }
+
+        /* === STEP 6: REVIEW SUMMARY === */
+        .review-summary-card {
+            background: white; border: 2px solid #e2e8f0; border-radius: 20px;
+            padding: 2.5rem; display: flex; flex-direction: column; gap: 2rem;
+        }
+        .summary-header {
+            display: flex; align-items: center; gap: 1.5rem;
+            padding-bottom: 1.5rem; border-bottom: 2px solid #e2e8f0;
+        }
+        .summary-icon {
+            width: 60px; height: 60px; background: #dcfce7; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: #16a34a; font-size: 2rem;
+        }
+        .summary-header h4 {
+            font-size: 1.5rem; font-weight: 800; color: #1e293b; margin-bottom: 0.3rem;
+        }
+        .summary-header p {
+            font-size: 1rem; color: #64748b;
+        }
+        .summary-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;
+        }
+        .summary-item {
+            background: #f8fafc; padding: 1.2rem; border-radius: 12px;
+        }
+        .summary-item-full {
+            grid-column: 1 / -1;
+        }
+        .summary-label {
+            font-size: 0.8rem; color: #94a3b8; text-transform: uppercase;
+            letter-spacing: 0.05em; margin-bottom: 0.5rem; font-weight: 600;
+        }
+        .summary-value {
+            font-size: 1.2rem; font-weight: 700; color: #1e293b;
+        }
+        .final-actions {
+            display: flex; flex-direction: column; gap: 1.5rem;
+        }
+        .final-label {
+            font-size: 0.9rem; color: #64748b; font-weight: 600;
+            margin-bottom: 0.5rem; display: block;
+        }
+        .final-input {
+            width: 100%; padding: 1rem 1.2rem; border: 2px solid #e2e8f0;
+            border-radius: 12px; font-size: 1.1rem; outline: none; transition: 0.2s;
+        }
+        .final-input:focus {
+            border-color: #3b82f6; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+        .upload-zone-compact {
+            background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 12px;
+            padding: 1.5rem; text-align: center; cursor: pointer; transition: 0.3s;
+            display: flex; align-items: center; justify-content: center; gap: 1rem;
+        }
+        .upload-zone-compact:hover {
+            border-color: #3b82f6; background: #eff6ff;
+        }
+        .upload-zone-compact i {
+            font-size: 1.5rem; color: #64748b;
+        }
+        .upload-zone-compact span {
+            font-size: 1rem; font-weight: 600; color: #64748b;
+        }
+
+        /* Navigation Buttons */
+        .wizard-nav { 
+            margin-top: 3rem; padding-top: 2rem; 
+            display: flex; justify-content: space-between; 
+            border-top: 2px solid #f1f5f9;
+        }
+        .btn { 
+            padding: 1.2rem 2.5rem; border-radius: 14px; font-weight: 700; 
+            cursor: pointer; border: none; font-size: 1.1rem; transition: all 0.3s ease; 
+            display: flex; align-items: center; gap: 0.8rem; 
+        }
+        .btn-secondary { 
+            background: #f1f5f9; color: #64748b; 
+        }
+        .btn-secondary:hover:not(:disabled) { 
+            background: #e2e8f0; color: #1e293b; transform: translateX(-4px);
+        }
+        .btn-primary { 
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); 
+            color: white; box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3); 
+        }
+        .btn-primary:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 20px 25px -5px rgba(59, 130, 246, 0.4); 
+        }
+        .btn:disabled { 
+            opacity: 0.4; cursor: not-allowed; transform: none !important; 
+            box-shadow: none !important; 
+        }
+
+        /* === LIVE PREVIEW PANEL === */
+        .preview-title { 
+            font-size: 1.1rem; text-transform: uppercase; font-weight: 800; 
+            color: #1e293b; letter-spacing: 0.05em; margin-bottom: 2.5rem; 
+            display: flex; gap: 0.5rem; align-items: center; 
+        }
+        .preview-container-3d { 
+            transform: scale(0.85); transform-origin: top center; 
+            width: 100%; max-width: 500px; padding: 1rem; 
+        }
+        .preview-card {
+            margin: 0 auto;
+        }
     </style>
 
-    <div class="toast" id="errorToast"><i class="fas fa-exclamation-circle"></i> <span id="toastMsg">Error</span></div>
-
     <script>
-        // State
+        // === PROGRESSIVE WIZARD LOGIC ===
         let currentStep = 1;
-        const totalSteps = 4;
+        const totalSteps = 6;
         let uploadedFile = null;
-        const selectedTags = new Set();
+        let selectedFeatures = new Set();
+        
+        // State object to track all selections
+        let wizardState = {
+            area: 1200,
+            floors: 1,
+            quality: 'Basic',
+            costPerSqft: 1200,
+            location: 'Urban',
+            locationModifier: 1.2,
+            features: [],
+            title: '',
+            style: 'Modern'
+        };
 
-        // Initialization
+        function openModal() {
+            document.getElementById('templateBuilder').classList.add('active');
+            currentStep = 1;
+            updateUI();
+            recalculateCost();
+        }
+
+        function closeBuilder() {
+            document.getElementById('templateBuilder').classList.remove('active');
+            // Reset wizard
+            currentStep = 1;
+            selectedFeatures.clear();
+            wizardState = {
+                area: 1200,
+                floors: 1,
+                quality: 'Basic',
+                costPerSqft: 1200,
+                location: 'Urban',
+                locationModifier: 1.2,
+                features: [],
+                title: '',
+                style: 'Modern'
+            };
+        }
+
+        function changeStep(dir) {
+            // Validation before moving forward
+            if (dir === 1) {
+                if(currentStep === 1 && !validateStep1()) return;
+                if(currentStep === 6 && dir === 1) {
+                    submitWizard();
+                    return;
+                }
+            }
+
+            if (dir === 1 && currentStep < totalSteps) {
+                currentStep++;
+            } else if (dir === -1 && currentStep > 1) {
+                currentStep--;
+            }
+            
+            updateUI();
+            updateSummary(); // Update summary when navigating
+        }
+
+        function validateStep1() {
+            const area = document.getElementById('plotAreaInput').value;
+            if (!area || area < 500) {
+                alert('Please enter a valid plot area (minimum 500 sq.ft)');
+                return false;
+            }
+            return true;
+        }
+
+        function validateStep() {
+            // Real-time validation for enabling next button
+            const nextBtn = document.getElementById('nextBtn');
+            if (currentStep === 1) {
+                const area = document.getElementById('plotAreaInput').value;
+                nextBtn.disabled = !area || area < 500;
+            }
+        }
+
+        function updateUI() {
+            // Steps Toggle
+            document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
+            const activeStep = document.getElementById(`step${currentStep}`);
+            if (activeStep) activeStep.classList.add('active');
+            
+            // Progress Bar (16.66% per step for 6 steps)
+            const progress = (currentStep / totalSteps) * 100;
+            document.getElementById('progressBar').style.width = `${progress}%`;
+            document.getElementById('currentStepNum').textContent = currentStep;
+
+            // Buttons State
+            document.getElementById('prevBtn').disabled = (currentStep === 1);
+            const nextBtn = document.getElementById('nextBtn');
+            if (currentStep === totalSteps) {
+                nextBtn.innerHTML = 'Publish Template <i class="fas fa-rocket"></i>';
+                nextBtn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+            } else {
+                nextBtn.innerHTML = 'Next Step <i class="fas fa-arrow-right"></i>';
+                nextBtn.style.background = 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)';
+            }
+        }
+
+        // === STEP 1: SLIDER SYNC ===
+        function syncSliderToInput(value) {
+            document.getElementById('plotAreaInput').value = value;
+            wizardState.area = parseInt(value);
+            updatePreview('area', value);
+            recalculateCost();
+        }
+
+        // Sync input to slider
+        document.addEventListener('DOMContentLoaded', () => {
+            const plotInput = document.getElementById('plotAreaInput');
+            const slider = document.querySelector('.area-slider');
+            
+            if (plotInput && slider) {
+                plotInput.addEventListener('input', (e) => {
+                    slider.value = e.target.value;
+                    wizardState.area = parseInt(e.target.value);
+                    recalculateCost();
+                });
+            }
+        });
+
+        // === STEP 2: FLOOR SELECTOR ===
+        function adjustFloorsLarge(delta) {
+            const input = document.getElementById('floorInput');
+            let val = parseInt(input.value) + delta;
+            if(val < 1) val = 1;
+            if(val > 5) val = 5;
+            input.value = val;
+            document.getElementById('floorNumber').textContent = val;
+            
+            // Update floor label (singular/plural)
+            document.querySelector('.floor-label').textContent = val === 1 ? 'Floor' : 'Floors';
+            
+            // Update visual stack
+            updateFloorStack(val);
+            
+            wizardState.floors = val;
+            updatePreview('floors', val);
+            recalculateCost();
+        }
+
+        function updateFloorStack(numFloors) {
+            const stackContainer = document.getElementById('floorStack');
+            stackContainer.innerHTML = '';
+            
+            for (let i = 0; i < numFloors; i++) {
+                const layer = document.createElement('div');
+                layer.className = 'floor-layer active';
+                stackContainer.appendChild(layer);
+            }
+        }
+
+        // === STEP 3: QUALITY SELECTION ===
+        function selectQuality(quality, costPerSqft, cardElement) {
+            document.querySelectorAll('.quality-card').forEach(c => c.classList.remove('selected'));
+            cardElement.classList.add('selected');
+            
+            document.getElementById('qualityInput').value = quality;
+            document.getElementById('costPerSqftInput').value = costPerSqft;
+            
+            wizardState.quality = quality;
+            wizardState.costPerSqft = costPerSqft;
+            
+            updatePreview('quality', quality);
+            recalculateCost();
+        }
+
+        // === STEP 4: LOCATION SELECTION ===
+        function selectLocation(location, modifier, cardElement) {
+            document.querySelectorAll('.location-card').forEach(c => c.classList.remove('selected'));
+            cardElement.classList.add('selected');
+            
+            document.getElementById('locationInput').value = location;
+            document.getElementById('locationModifierInput').value = modifier;
+            
+            wizardState.location = location;
+            wizardState.locationModifier = modifier;
+            
+            updatePreview('location', location);
+            recalculateCost();
+        }
+
+        // === STEP 5: FEATURE TOGGLES ===
+        function toggleFeature(feature, element) {
+            if (element.classList.contains('active')) {
+                element.classList.remove('active');
+                selectedFeatures.delete(feature);
+            } else {
+                element.classList.add('active');
+                selectedFeatures.add(feature);
+            }
+            
+            wizardState.features = Array.from(selectedFeatures);
+            document.getElementById('featuresInput').value = wizardState.features.join(',');
+            
+            updatePreview('features', wizardState.features);
+        }
+
+        // === LIVE PREVIEW UPDATES ===
+        function updatePreview(field, val) {
+            if(field === 'title') {
+                wizardState.title = val;
+                document.getElementById('previewTitle').textContent = val || 'New Template';
+            }
+            
+            if(field === 'area') {
+                document.getElementById('previewArea').textContent = `${parseInt(val).toLocaleString()} sqft`;
+                if (document.getElementById('summaryArea')) {
+                    document.getElementById('summaryArea').textContent = `${parseInt(val).toLocaleString()} sq.ft`;
+                }
+            }
+            
+            if(field === 'floors' || field === 'style') {
+                const style = wizardState.style;
+                const floors = wizardState.floors;
+                document.getElementById('previewStyleFloor').textContent = `${style} / ${floors} Flr`;
+                
+                // Update timeline
+                const time = (parseInt(floors) * 3) + 4;
+                document.getElementById('previewTime').textContent = time + ' Months';
+                
+                if (document.getElementById('summaryFloors')) {
+                    document.getElementById('summaryFloors').textContent = floors + (floors == 1 ? ' Floor' : ' Floors');
+                }
+            }
+            
+            if(field === 'quality') {
+                if (document.getElementById('summaryQuality')) {
+                    document.getElementById('summaryQuality').textContent = val;
+                }
+            }
+            
+            if(field === 'location') {
+                if (document.getElementById('summaryLocation')) {
+                    document.getElementById('summaryLocation').textContent = val;
+                }
+            }
+            
+            if(field === 'features') {
+                const featuresText = val.length > 0 ? val.join(', ') : 'None';
+                // Update tags in preview
+                const container = document.getElementById('previewTags');
+                if (container) {
+                    container.innerHTML = '';
+                    if (val.length > 0) {
+                        val.slice(0, 3).forEach(tag => {
+                            container.innerHTML += `<div class="reasoning-chip"><i class="fas fa-check-circle"></i> ${tag}</div>`;
+                        });
+                    } else {
+                        container.innerHTML = '<div class="reasoning-chip"><i class="fas fa-check-circle"></i> Modern Design</div>';
+                    }
+                }
+                
+                if (document.getElementById('summaryFeatures')) {
+                    document.getElementById('summaryFeatures').textContent = val.length > 0 ? featuresText : 'None selected';
+                }
+            }
+        }
+
+        // === COST CALCULATION ===
+        function recalculateCost() {
+            const area = wizardState.area;
+            const floors = wizardState.floors;
+            const costPerSqft = wizardState.costPerSqft;
+            const locationModifier = wizardState.locationModifier;
+            
+            // Base cost calculation
+            const baseCost = area * floors * costPerSqft;
+            
+            // Apply location modifier
+            const finalCost = baseCost * locationModifier;
+            
+            // Convert to lakhs
+            const costInLakhs = finalCost / 100000;
+            
+            // Update display with animation
+            const costElement = document.getElementById('previewCost');
+            if (costElement) {
+                costElement.style.transform = 'scale(1.1)';
+                setTimeout(() => {
+                    costElement.textContent = `₹${costInLakhs.toFixed(2)} Lakhs`;
+                    costElement.style.transform = 'scale(1)';
+                }, 100);
+            }
+        }
+
+        // === SUMMARY UPDATE ===
+        function updateSummary() {
+            if (currentStep === 6) {
+                document.getElementById('summaryArea').textContent = `${wizardState.area.toLocaleString()} sq.ft`;
+                document.getElementById('summaryFloors').textContent = wizardState.floors + (wizardState.floors == 1 ? ' Floor' : ' Floors');
+                document.getElementById('summaryQuality').textContent = wizardState.quality;
+                document.getElementById('summaryLocation').textContent = wizardState.location;
+                const featuresText = wizardState.features.length > 0 ? wizardState.features.join(', ') : 'None selected';
+                document.getElementById('summaryFeatures').textContent = featuresText;
+            }
+        }
+
+        // === FILE UPLOAD ===
+        document.addEventListener('DOMContentLoaded', () => {
+            const fileInput = document.getElementById('fileInput');
+            
+            if(fileInput) {
+                fileInput.addEventListener('change', function() {
+                    if (this.files && this.files[0]) {
+                        handleFile(this.files[0]);
+                    }
+                });
+            }
+        });
+
+        function handleFile(file) {
+            uploadedFile = file;
+            
+            if(!file.type.startsWith('image/')) {
+                alert('Please upload a valid image file');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                // Update preview image
+                const previewImg = document.getElementById('previewImg');
+                if (previewImg) {
+                    previewImg.src = e.target.result;
+                }
+                
+                // Update upload zone text
+                const dropZone = document.getElementById('dropZone');
+                if(dropZone) {
+                    const span = dropZone.querySelector('span');
+                    if (span) {
+                        span.textContent = file.name;
+                        dropZone.style.borderColor = '#10b981';
+                        dropZone.style.background = '#f0fdf4';
+                    }
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // === SUBMIT WIZARD ===
+        async function submitWizard() {
+            const form = document.getElementById('wizardForm');
+            const formData = new FormData(form);
+            formData.append('action', 'create');
+            
+            // Ensure all hidden fields are populated
+            formData.set('title', wizardState.title || 'Untitled Template');
+            formData.set('area_sqft', wizardState.area);
+            formData.set('floors', wizardState.floors);
+            formData.set('style', wizardState.style);
+            formData.set('location', wizardState.location);
+            formData.set('description', wizardState.features.join(','));
+            
+            if(uploadedFile) {
+                formData.append('image', uploadedFile);
+            }
+
+            const btn = document.getElementById('nextBtn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Publishing...';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch('backend/manage_templates_api.php', { method: 'POST', body: formData });
+                const result = await response.json();
+                if(result.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + result.message);
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            } catch(e) {
+                console.error(e);
+                alert('Server connection error. Check console.');
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        // --- Delete Template ---
+        async function deleteTemplate(id) {
+            if(!confirm('Delete this template permanently?')) return;
+            const formData = new FormData();
+            formData.append('action', 'delete');
+            formData.append('id', id);
+
+            try {
+                const res = await fetch('backend/manage_templates_api.php', { method: 'POST', body: formData });
+                const json = await res.json();
+                if(json.success) location.reload();
+                else alert('Error: ' + json.message);
+            } catch(e) { console.error(e); }
+        }
+
+        // --- 3D Background Logic (Synced with saved_favorites.php) ---
         const initBackground3D = () => {
             const container = document.getElementById('canvas-container');
             if (!container) return;
-            // Clear existing
-            /* simple simplistic protection against multiple inits not needed if we replace whole file content properly or strictly rely on DOMContentLoaded */
-            if(container.children.length > 0) return;
 
             const scene = new THREE.Scene();
-            scene.background = new THREE.Color('#f8fafc'); // Match CSS variable
+            scene.background = new THREE.Color('#f8fafc');
+            scene.fog = new THREE.Fog('#f8fafc', 10, 45);
+
             const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 2, 8);
+            camera.position.z = 8;
+            camera.position.y = 2;
 
             const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             container.appendChild(renderer.domElement);
 
-            // Light
-            const amb = new THREE.AmbientLight(0xffffff, 0.6);
-            scene.add(amb);
-            const dir = new THREE.DirectionalLight(0xffffff, 0.8);
-            dir.position.set(10, 10, 10);
-            scene.add(dir);
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+            const mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            mainLight.position.set(10, 10, 10);
+            scene.add(mainLight);
+            const blueLight = new THREE.PointLight(0x3d5a49, 0.5);
+            blueLight.position.set(-5, 5, 5);
+            scene.add(blueLight);
 
-            // City Grid
+            // Objects
             const cityGroup = new THREE.Group();
-            const geo = new THREE.BoxGeometry(1, 1, 1);
-            const mat = new THREE.MeshPhongMaterial({ color: 0x1e293b, transparent: true, opacity: 0.05 });
-            const edges = new THREE.EdgesGeometry(geo);
-            const lineMat = new THREE.LineBasicMaterial({ color: 0x94a3b8, transparent: true, opacity: 0.2 });
-
-            for(let x=-8; x<=8; x+=2) {
-                for(let z=-8; z<=8; z+=2) {
-                     if(x===0 && z===0) continue; // Hole for hero
-                     const h = Math.random() * 2 + 0.5;
-                     const mesh = new THREE.Mesh(new THREE.BoxGeometry(1, h, 1), mat);
-                     mesh.position.set(x, h/2 - 2, z);
-                     
-                     const l = new THREE.LineSegments(new THREE.EdgesGeometry(mesh.geometry), lineMat);
-                     l.position.copy(mesh.position);
-                     
-                     cityGroup.add(mesh);
-                     cityGroup.add(l);
-                }
-            }
             scene.add(cityGroup);
 
-            // Hero House
-            const house = new THREE.Group();
-            const base = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(2,2,2)), new THREE.LineBasicMaterial({ color: 0x3b82f6, linewidth: 2 }));
-            house.add(base);
-            const roof = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.ConeGeometry(1.5,1.5,4)), new THREE.LineBasicMaterial({ color: 0x3b82f6, linewidth: 2 }));
-            roof.position.y = 1.75;
-            roof.rotation.y = Math.PI/4;
-            house.add(roof);
-            
-            house.position.y = 0;
-            scene.add(house);
+            const buildingGeometry = new THREE.BoxGeometry(1, 1, 1);
+            const buildingMaterial = new THREE.MeshPhongMaterial({ color: 0x294033, transparent: true, opacity: 0.1, side: THREE.DoubleSide });
+            const edgeMaterial = new THREE.LineBasicMaterial({ color: 0x294033, transparent: true, opacity: 0.3 });
 
-            // Anim Loop
+            const gridSize = 10;
+            const spacing = 3;
+
+            for (let x = -gridSize; x < gridSize; x++) {
+                for (let z = -gridSize; z < gridSize; z++) {
+                    const height = Math.random() * 2 + 0.5;
+                    const building = new THREE.Group();
+                    const geometry = new THREE.BoxGeometry(1, height, 1);
+                    const mesh = new THREE.Mesh(geometry, buildingMaterial);
+                    mesh.position.y = height / 2;
+                    const edges = new THREE.EdgesGeometry(geometry);
+                    const line = new THREE.LineSegments(edges, edgeMaterial);
+                    line.position.y = height / 2;
+                    building.add(mesh);
+                    building.add(line);
+                    building.position.set(x * spacing, -2, z * spacing);
+                    cityGroup.add(building);
+                }
+            }
+
+            // Hero House
+            const houseGroup = new THREE.Group();
+            const baseGeo = new THREE.BoxGeometry(2, 2, 2);
+            const baseEdges = new THREE.EdgesGeometry(baseGeo);
+            const baseLine = new THREE.LineSegments(baseEdges, new THREE.LineBasicMaterial({ color: 0x294033, linewidth: 2 }));
+            houseGroup.add(baseLine);
+            const roofGeo = new THREE.ConeGeometry(1.5, 1.2, 4);
+            const roofEdges = new THREE.EdgesGeometry(roofGeo);
+            const roofLine = new THREE.LineSegments(roofEdges, new THREE.LineBasicMaterial({ color: 0x3d5a49, linewidth: 2 }));
+            roofLine.position.y = 1.6;
+            roofLine.rotation.y = Math.PI / 4;
+            houseGroup.add(roofLine);
+
+            const floatGroup = new THREE.Group();
+            floatGroup.add(houseGroup);
+            floatGroup.position.set(0, 0, 2);
+            scene.add(floatGroup);
+
+            // Animation
             let mouseX = 0, mouseY = 0;
-            document.addEventListener('mousemove', e => {
-                 mouseX = (e.clientX - window.innerWidth/2) * 0.001;
-                 mouseY = (e.clientY - window.innerHeight/2) * 0.001;
+            document.addEventListener('mousemove', (event) => {
+                mouseX = (event.clientX - window.innerWidth / 2) * 0.001;
+                mouseY = (event.clientY - window.innerHeight / 2) * 0.001;
             });
 
             const animate = () => {
                 requestAnimationFrame(animate);
                 cityGroup.rotation.y += 0.001;
+                floatGroup.rotation.y += 0.005;
+                floatGroup.position.y = Math.sin(Date.now() * 0.001) * 0.5 + 0.5;
                 
-                // Interactive tilt
-                cityGroup.rotation.x += (mouseY - cityGroup.rotation.x) * 0.05;
-                cityGroup.rotation.y += (mouseX - cityGroup.rotation.y) * 0.05;
-
-                // House float
-                house.position.y = Math.sin(Date.now() * 0.002) * 0.2;
-                house.rotation.y -= 0.005;
-
+                // Interactive tilt from saved_favorites.php
+                cityGroup.rotation.x += 0.05 * (mouseY - cityGroup.rotation.x);
+                cityGroup.rotation.y += 0.05 * (mouseX - cityGroup.rotation.y);
+                
                 renderer.render(scene, camera);
             };
             animate();
-            
+
             window.addEventListener('resize', () => {
                 camera.aspect = window.innerWidth / window.innerHeight;
                 camera.updateProjectionMatrix();
                 renderer.setSize(window.innerWidth, window.innerHeight);
             });
         };
-
-        // Modal Logic
-        function openModal() {
-            document.getElementById('templateBuilder').classList.add('active');
-            // Init 3D BG if not already
-            initBackground3D();
-            currentStep = 1;
-            updateUI();
-        }
-
-        function closeBuilder() {
-            document.getElementById('templateBuilder').classList.remove('active');
-        }
-
-        function showToast(msg) {
-            const t = document.getElementById('errorToast');
-            document.getElementById('toastMsg').innerText = msg;
-            t.style.display = 'block';
-            setTimeout(() => t.style.display = 'none', 3000);
-        }
-
-        // Navigation
-        function changeStep(dir) {
-            if (dir === 1) {
-                // Validate Step 1
-                if (currentStep === 1) {
-                    const title = document.querySelector('input[name="title"]').value;
-                    if(!title.trim()) { showToast("Please categorize your masterpiece with a title."); return; }
-                }
-                // Validate Step 2
-                if (currentStep === 2) {
-                     // Check basics?
-                }
-            }
-
-            const newStep = currentStep + dir;
-            if (newStep >= 1 && newStep <= totalSteps) {
-                currentStep = newStep;
-                updateUI();
-            } else if (newStep > totalSteps) {
-                submitWizard();
-            }
-        }
-
-        function updateUI() {
-            // Update Active Step
-            document.querySelectorAll('.step').forEach((el, idx) => {
-                if (idx + 1 === currentStep) {
-                    el.classList.add('active');
-                } else {
-                    el.classList.remove('active');
-                }
-            });
-
-            // Update Progress
-            const pct = (currentStep / totalSteps) * 100;
-            document.getElementById('progressBar').style.width = pct + '%';
-            document.getElementById('currentStepNum').innerText = currentStep;
-
-            // Update Buttons
-            document.getElementById('prevBtn').disabled = (currentStep === 1);
-            const nextBtn = document.getElementById('nextBtn');
-            if (currentStep === totalSteps) {
-                nextBtn.innerHTML = 'Publish Template <i class="fas fa-magic"></i>';
-                nextBtn.style.background = '#10b981';
-            } else {
-                nextBtn.innerHTML = 'Next Step <i class="fas fa-arrow-right"></i>';
-                nextBtn.style.background = '#3b82f6';
-            }
-        }
-
-        // Inputs
-        function updatePreview(field, val) {
-            if (field === 'title') document.getElementById('previewTitle').innerText = val || 'Untitled Template';
-            if (field === 'area') document.getElementById('previewArea').innerText = val + ' sqft';
-            if (field === 'cost') document.getElementById('previewCost').innerText = '₹' + (parseFloat(val)||0).toLocaleString() + ' Est.';
-            if (field === 'tags') {
-                const con = document.getElementById('previewTags');
-                con.innerHTML = val.map(t => `<div class="reasoning-chip"><i class="fas fa-check"></i> ${t}</div>`).join('');
-            }
-            if (field === 'floors') {
-                document.getElementById('previewStyleFloor').innerText = document.getElementById('styleInput').value + ' / ' + val + ' Flr';
-            }
-        }
-
-        function selectStyle(style, el) {
-            document.getElementById('styleInput').value = style;
-            document.querySelectorAll('.selection-card.style-opt').forEach(c => c.classList.remove('selected'));
-            el.classList.add('selected');
-            
-            // Update Text
-            const floors = document.getElementById('floorInput').value;
-             document.getElementById('previewStyleFloor').innerText = style + ' / ' + floors + ' Flr';
-        }
-
-        function adjustFloors(d) {
-            const field = document.getElementById('floorInput');
-            let v = parseInt(field.value) + d;
-            if (v < 1) v = 1;
-            field.value = v;
-            document.getElementById('floorDisplay').innerText = v;
-            updatePreview('floors', v);
-        }
-
-        function toggleTag(tag, el) {
-            if(selectedTags.has(tag)) {
-                selectedTags.delete(tag);
-                el.classList.remove('selected');
-            } else {
-                if(selectedTags.size >= 3) {
-                     const first = selectedTags.values().next().value;
-                     selectedTags.delete(first);
-                     [...document.querySelectorAll('.tag-card')].find(c => c.innerText === first).classList.remove('selected');
-                }
-                selectedTags.add(tag);
-                el.classList.add('selected');
-            }
-            // Update Input
-            document.querySelector('input[name="description"]').value = Array.from(selectedTags).join(',');
-            updatePreview('tags', Array.from(selectedTags));
-        }
-
-        // File Handler
-        document.addEventListener('DOMContentLoaded', () => {
-             const drop = document.getElementById('dropZone');
-             const inp = document.getElementById('fileInput');
-             
-             document.getElementById('browseBtn').onclick = () => inp.click();
-             inp.onchange = e => handleFile(e.target.files[0]);
-             
-             drop.ondragover = e => { e.preventDefault(); drop.classList.add('dragover'); };
-             drop.ondragleave = e => { drop.classList.remove('dragover'); };
-             drop.ondrop = e => { e.preventDefault(); drop.classList.remove('dragover'); handleFile(e.dataTransfer.files[0]); };
-        });
-
-        function handleFile(f) {
-            if(!f || !f.type.startsWith('image/')) { showToast('Please upload an image.'); return; }
-            uploadedFile = f;
-            const reader = new FileReader();
-            reader.onload = e => {
-                 document.getElementById('previewImg').src = e.target.result;
-                 document.querySelector('.upload-zone h3').innerText = "Image Selected";
-                 document.querySelector('.upload-zone .file-meta').innerText = f.name;
-            };
-            reader.readAsDataURL(f);
-        }
-
-        async function submitWizard() {
-            const form = document.getElementById('wizardForm');
-            const data = new FormData(form);
-            data.append('action', 'create');
-            if(uploadedFile) data.append('image', uploadedFile);
-
-            const btn = document.getElementById('nextBtn');
-            const old = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-            btn.disabled = true;
-
-            try {
-                const res = await fetch('backend/manage_templates_api.php', { method: 'POST', body: data });
-                const json = await res.json();
-                if(json.success) location.reload();
-                else { showToast('Error: ' + json.message); btn.innerHTML = old; btn.disabled = false; }
-            } catch(e) {
-                showToast('Server Error');
-                btn.innerHTML = old; btn.disabled = false;
-            }
-        }
         
-        async function deleteTemplate(id) {
-            if(!confirm("Are you sure?")) return;
-             const data = new FormData(); data.append('action', 'delete'); data.append('id', id);
-             await fetch('backend/manage_templates_api.php', { method:'POST', body:data });
-             location.reload();
-        }
-        
-        // Auto-init on load if needed
         document.addEventListener('DOMContentLoaded', initBackground3D);
     </script>
 </body>

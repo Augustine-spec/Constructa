@@ -187,7 +187,7 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Engineer';
             border: 1px solid rgba(255, 255, 255, 0.5);
             position: relative;
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 0 1px rgba(0, 0, 0, 0.05);
             transform-style: preserve-3d;
             animation: fadeInUp 0.8s ease-out backwards;
         }
@@ -497,6 +497,8 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Engineer';
                 if (!container) return;
                 const scene = new THREE.Scene();
                 scene.background = new THREE.Color('#f6f7f2');
+                // Add soft fog for atmospheric perspective (fades distant objects)
+                scene.fog = new THREE.Fog('#f6f7f2', 10, 45);
                 const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
                 camera.position.z = 8;
                 camera.position.y = 2;

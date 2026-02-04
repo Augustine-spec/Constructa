@@ -26,7 +26,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'engineer') {
             --text-main: #1e293b;
             --text-muted: #64748b;
             --border-color: #e2e8f0;
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 0 1px rgba(0, 0, 0, 0.05);
             --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
@@ -54,7 +54,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'engineer') {
             width: 100vw;
             height: 100vh;
             z-index: -1;
-            background: #f8fafc;
+            background: #f6f7f2;
             pointer-events: none;
         }
 
@@ -510,10 +510,13 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'engineer') {
                 <!-- STEP 2: Built-up Area -->
                 <div class="step" id="step2">
                     <h2 class="step-title">Enter the total built-up area.</h2>
-                    <p class="step-desc">This is the total floor area including all floors.</p>
+                    <p class="step-desc">This is the total floor area including all floors. <span style="font-weight:600; color:#64748b;">(Max: 10,000 m²)</span></p>
                     <div class="form-group">
-                        <input type="number" id="builtupArea" class="big-input" placeholder="e.g. 1000" step="0.1" min="1" />
+                        <input type="number" id="builtupArea" class="big-input" placeholder="e.g. 1000" step="0.1" min="1" max="10000" />
                         <label style="display:block; margin-top:1rem; color:var(--text-muted);">Square Meters (m²)</label>
+                        <div id="area-error" style="display:none; color:#ef4444; font-size:0.9rem; font-weight:600; margin-top:0.5rem;">
+                            <i class="fas fa-exclamation-circle"></i> <span></span>
+                        </div>
                     </div>
                 </div>
 
@@ -532,10 +535,13 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'engineer') {
                 <!-- STEP 4: Plinth Height -->
                 <div class="step" id="step4">
                     <h2 class="step-title">Enter the plinth height.</h2>
-                    <p class="step-desc">Standard floor-to-floor height.</p>
+                    <p class="step-desc">Standard floor-to-floor height. <span style="font-weight:600; color:#64748b;">(Max: 10m)</span></p>
                     <div class="form-group">
-                        <input type="number" id="plinthHeight" class="big-input" placeholder="e.g. 3.0" step="0.1" min="2" value="3.0" />
+                        <input type="number" id="plinthHeight" class="big-input" placeholder="e.g. 3.0" step="0.1" min="2" max="10" value="3.0" />
                         <label style="display:block; margin-top:1rem; color:var(--text-muted);">Meters (m)</label>
+                        <div id="height-error" style="display:none; color:#ef4444; font-size:0.9rem; font-weight:600; margin-top:0.5rem;">
+                            <i class="fas fa-exclamation-circle"></i> <span></span>
+                        </div>
                     </div>
                 </div>
 
@@ -713,9 +719,102 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'engineer') {
             updatePreview();
         }
 
-        // Add input listeners
-        document.getElementById('builtupArea').addEventListener('input', updatePreview);
-        document.getElementById('plinthHeight').addEventListener('input', updatePreview);
+        // Add input listeners with validation
+        document.getElementById('builtupArea').addEventListener('input', function() {
+            let value = parseFloat(this.value) || 0;
+            const errorDiv = document.getElementById('area-error');
+            
+            // Remove previous validation classes
+            this.classList.remove('valid', 'invalid');
+            
+            if (value > 0) {
+                // Check maximum
+                if (value > 10000) {
+                    this.value = 10000;
+                    value = 10000;
+                    this.classList.add('invalid');
+                    this.style.borderColor = '#ef4444';
+                    if (errorDiv) {
+                        errorDiv.style.display = 'block';
+                        errorDiv.querySelector('span').textContent = 'Maximum area is 10,000 m² (auto-capped)';
+                    }
+                    setTimeout(() => {
+                        this.classList.remove('invalid');
+                        this.classList.add('valid');
+                        this.style.borderColor = '#10b981';
+                        if (errorDiv) errorDiv.style.display = 'none';
+                    }, 1500);
+                }
+                // Check minimum
+                else if (value < 1) {
+                    this.classList.add('invalid');
+                    this.style.borderColor = '#ef4444';
+                    if (errorDiv) {
+                        errorDiv.style.display = 'block';
+                        errorDiv.querySelector('span').textContent = 'Minimum area is 1 m²';
+                    }
+                }
+                // Valid range
+                else {
+                    this.classList.add('valid');
+                    this.style.borderColor = '#10b981';
+                    if (errorDiv) errorDiv.style.display = 'none';
+                }
+            } else {
+                this.style.borderColor = '';
+                if (errorDiv) errorDiv.style.display = 'none';
+            }
+            
+            updatePreview();
+        });
+        
+        document.getElementById('plinthHeight').addEventListener('input', function() {
+            let value = parseFloat(this.value) || 0;
+            const errorDiv = document.getElementById('height-error');
+            
+            // Remove previous validation classes
+            this.classList.remove('valid', 'invalid');
+            
+            if (value > 0) {
+                // Check maximum
+                if (value > 10) {
+                    this.value = 10;
+                    value = 10;
+                    this.classList.add('invalid');
+                    this.style.borderColor = '#ef4444';
+                    if (errorDiv) {
+                        errorDiv.style.display = 'block';
+                        errorDiv.querySelector('span').textContent = 'Maximum height is 10m (auto-capped)';
+                    }
+                    setTimeout(() => {
+                        this.classList.remove('invalid');
+                        this.classList.add('valid');
+                        this.style.borderColor = '#10b981';
+                        if (errorDiv) errorDiv.style.display = 'none';
+                    }, 1500);
+                }
+                // Check minimum
+                else if (value < 2) {
+                    this.classList.add('invalid');
+                    this.style.borderColor = '#ef4444';
+                    if (errorDiv) {
+                        errorDiv.style.display = 'block';
+                        errorDiv.querySelector('span').textContent = 'Minimum height is 2m';
+                    }
+                }
+                // Valid range
+                else {
+                    this.classList.add('valid');
+                    this.style.borderColor = '#10b981';
+                    if (errorDiv) errorDiv.style.display = 'none';
+                }
+            } else {
+                this.style.borderColor = '';
+                if (errorDiv) errorDiv.style.display = 'none';
+            }
+            
+            updatePreview();
+        });
 
         function draw3DBuilding() {
             const canvas = document.getElementById('buildingCanvas');
@@ -891,127 +990,14 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'engineer') {
         }
 
         // 3D Background (same as budget calculator)
-        const initBackground3D = () => {
-            const container = document.getElementById('canvas-container');
-            if (!container) return;
-
-            const scene = new THREE.Scene();
-            scene.background = new THREE.Color('#f8fafc');
-
-            const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.z = 8;
-            camera.position.y = 2;
-
-            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-            container.appendChild(renderer.domElement);
-
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-            scene.add(ambientLight);
-
-            const mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
-            mainLight.position.set(10, 10, 10);
-            scene.add(mainLight);
-
-            const cityGroup = new THREE.Group();
-            scene.add(cityGroup);
-
-            const buildingMaterial = new THREE.MeshPhongMaterial({
-                color: 0x294033,
-                transparent: true,
-                opacity: 0.1,
-                side: THREE.DoubleSide
-            });
-            const edgeMaterial = new THREE.LineBasicMaterial({ color: 0x294033, transparent: true, opacity: 0.3 });
-
-            const gridSize = 10;
-            const spacing = 3;
-
-            for (let x = -gridSize; x < gridSize; x++) {
-                for (let z = -gridSize; z < gridSize; z++) {
-                    const height = Math.random() * 2 + 0.5;
-                    const building = new THREE.Group();
-
-                    const geometry = new THREE.BoxGeometry(1, height, 1);
-                    const mesh = new THREE.Mesh(geometry, buildingMaterial);
-                    mesh.position.y = height / 2;
-
-                    const edges = new THREE.EdgesGeometry(geometry);
-                    const line = new THREE.LineSegments(edges, edgeMaterial);
-                    line.position.y = height / 2;
-
-                    building.add(mesh);
-                    building.add(line);
-
-                    building.position.set(x * spacing, -2, z * spacing);
-                    cityGroup.add(building);
-                }
-            }
-
-            const houseGroup = new THREE.Group();
-
-            const baseGeo = new THREE.BoxGeometry(2, 2, 2);
-            const baseEdges = new THREE.EdgesGeometry(baseGeo);
-            const baseLine = new THREE.LineSegments(baseEdges, new THREE.LineBasicMaterial({ color: 0x294033, linewidth: 2 }));
-            houseGroup.add(baseLine);
-
-            const roofGeo = new THREE.ConeGeometry(1.5, 1.2, 4);
-            const roofEdges = new THREE.EdgesGeometry(roofGeo);
-            const roofLine = new THREE.LineSegments(roofEdges, new THREE.LineBasicMaterial({ color: 0x3d5a49, linewidth: 2 }));
-            roofLine.position.y = 1.6;
-            roofLine.rotation.y = Math.PI / 4;
-            houseGroup.add(roofLine);
-
-            const floatGroup = new THREE.Group();
-            floatGroup.add(houseGroup);
-            floatGroup.position.set(0, 0, 2);
-            scene.add(floatGroup);
-
-            let mouseX = 0;
-            let mouseY = 0;
-
-            document.addEventListener('mousemove', (event) => {
-                mouseX = (event.clientX - window.innerWidth / 2) * 0.001;
-                mouseY = (event.clientY - window.innerHeight / 2) * 0.001;
-            });
-
-            let scrollY = 0;
-            const wizardSection = document.querySelector('.wizard-section');
-            if (wizardSection) {
-                wizardSection.addEventListener('scroll', () => {
-                     scrollY = wizardSection.scrollTop * 0.001;
-                });
-            }
-
-            const animate = () => {
-                requestAnimationFrame(animate);
-
-                cityGroup.rotation.y += 0.001;
-                floatGroup.rotation.y += 0.005;
-                floatGroup.position.y = Math.sin(Date.now() * 0.001) * 0.5 + 0.5;
-
-                cityGroup.rotation.x += 0.05 * (mouseY - cityGroup.rotation.x);
-                cityGroup.rotation.y += 0.05 * (mouseX - cityGroup.rotation.y);
-
-                camera.position.y = 2 - scrollY * 2;
-                camera.position.z = 8 + scrollY * 5;
-
-                renderer.render(scene, camera);
-            };
-
-            animate();
-
-            window.addEventListener('resize', () => {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
-            });
-        };
-
-        if (typeof THREE !== 'undefined') {
-            initBackground3D();
-        }
+    </script>
+    <script src="js/architectural_bg.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+             if(typeof initArchitecturalBackground === 'function') {
+                 initArchitecturalBackground('canvas-container');
+             }
+        });
     </script>
 </body>
 </html>

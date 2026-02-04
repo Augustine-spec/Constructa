@@ -166,7 +166,7 @@
             padding: 3rem;
             width: 100%;
             max-width: 450px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 0 1px rgba(0, 0, 0, 0.05);
             text-align: center;
             position: relative;
             z-index: 2;
@@ -316,6 +316,15 @@
             display: none;
         }
 
+        .form-input.invalid {
+            border-color: var(--error-color);
+            background-color: #fffafb;
+        }
+
+        .form-input.valid {
+            border-color: var(--success-color);
+        }
+
         /* 3D Tilt Effect */
         .tilt-container {
             perspective: 1000px;
@@ -385,6 +394,60 @@
     </main>
 
     <script>
+        // Live Validation Logic
+        document.addEventListener('DOMContentLoaded', () => {
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            const emailError = document.getElementById('loginError');
+
+            // Email validation function
+            const validateEmail = () => {
+                const email = emailInput.value.trim();
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+                if (email.length === 0) {
+                    emailInput.classList.remove('valid', 'invalid');
+                    return true; // Don't show error for empty field
+                }
+
+                if (!emailRegex.test(email)) {
+                    emailInput.classList.add('invalid');
+                    emailInput.classList.remove('valid');
+                    return false;
+                } else {
+                    emailInput.classList.remove('invalid');
+                    emailInput.classList.add('valid');
+                    return true;
+                }
+            };
+
+            // Password validation function
+            const validatePassword = () => {
+                const password = passwordInput.value;
+
+                if (password.length === 0) {
+                    passwordInput.classList.remove('valid', 'invalid');
+                    return true; // Don't show error for empty field
+                }
+
+                if (password.length < 6) {
+                    passwordInput.classList.add('invalid');
+                    passwordInput.classList.remove('valid');
+                    return false;
+                } else {
+                    passwordInput.classList.remove('invalid');
+                    passwordInput.classList.add('valid');
+                    return true;
+                }
+            };
+
+            // Event Listeners for Live Validation
+            emailInput.addEventListener('input', validateEmail);
+            emailInput.addEventListener('blur', validateEmail);
+            passwordInput.addEventListener('input', validatePassword);
+            passwordInput.addEventListener('blur', validatePassword);
+        });
+
         async function handleLogin(event) {
             event.preventDefault();
 
@@ -523,6 +586,8 @@
 
                 const scene = new THREE.Scene();
                 scene.background = new THREE.Color('#f6f7f2');
+                // Add soft fog for atmospheric perspective (fades distant objects)
+                scene.fog = new THREE.Fog('#f6f7f2', 10, 45);
 
                 const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
                 camera.position.z = 8;

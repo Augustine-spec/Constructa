@@ -30,7 +30,7 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Engineer';
             --slate: #334155;
             --concrete: #f2f2f2;
             --transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
-            --card-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.1), 0 4px 10px -5px rgba(0, 0, 0, 0.05);
+            --card-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 0 1px rgba(0, 0, 0, 0.05);
             --hover-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.25), 0 18px 36px -18px rgba(0, 0, 0, 0.3);
         }
 
@@ -836,7 +836,7 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Engineer';
             scene.add(floatGroup);
 
             // Add fog to blend edges seamlessly into background
-            scene.fog = new THREE.Fog(0xf6f7f2, 15, 60);
+            scene.fog = new THREE.Fog('#f6f7f2', 10, 45);
 
             let mouseX = 0;
             let mouseY = 0;

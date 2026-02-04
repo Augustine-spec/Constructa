@@ -19,7 +19,7 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Engineer';
         :root {
             --primary: #294033;
             --primary-light: #3d5a49;
-            --bg-color: #f8fafc;
+            --bg-color: #f6f7f2;
             --card-bg: #ffffff;
             --text-main: #1e293b;
             --text-muted: #64748b;
@@ -50,7 +50,7 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Engineer';
             width: 100vw;
             height: 100vh;
             z-index: -1;
-            background: #f8fafc;
+            background: #f6f7f2;
             pointer-events: none;
         }
 
@@ -172,7 +172,7 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Engineer';
             background: #f8fafc;
             border-radius: 16px;
             padding: 1.5rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 0 1px rgba(0, 0, 0, 0.05);
             cursor: pointer;
             transition: var(--transition);
             border: 1px solid #e2e8f0;
@@ -821,7 +821,8 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Engineer';
             if (!container) return;
 
             const scene = new THREE.Scene();
-            scene.background = new THREE.Color('#f8fafc');
+            scene.background = new THREE.Color('#f6f7f2');
+            scene.fog = new THREE.Fog('#f6f7f2', 10, 45);
             const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
             camera.position.set(0, 5, 10);
 

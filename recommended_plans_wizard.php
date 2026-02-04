@@ -159,6 +159,8 @@ $current_stage_info = $stages[$current_stage_id] ?? $stages[1];
             font-weight: 700; color: var(--primary); outline: none; transition: all 0.3s;
         }
         .big-input:focus { border-bottom-color: var(--primary); }
+        .big-input.valid { border-bottom-color: #10b981 !important; }
+        .big-input.invalid { border-bottom-color: #ef4444 !important; }
 
         .options-grid {
             display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem;
@@ -295,8 +297,11 @@ $current_stage_info = $stages[$current_stage_id] ?? $stages[1];
                 <p class="step-desc">Enter your plot details to see engineer-approved CAD plans.</p>
                 
                 <div style="margin-bottom:2rem;">
-                    <label style="display:block; font-weight:600; margin-bottom:0.5rem; color:var(--text-muted);">Plot Area (sq. ft)</label>
-                    <input type="number" id="plotArea" class="big-input" placeholder="e.g. 1200" oninput="updatePreview()">
+                    <label style="display:block; font-weight:600; margin-bottom:0.5rem; color:var(--text-muted);">Plot Area (sq. ft) <span style="font-weight:400; font-size:0.85rem; color:#64748b;">(Max: 10,000)</span></label>
+                    <input type="number" id="plotArea" class="big-input" placeholder="e.g. 1200" min="1" max="10000" oninput="validatePlotArea(this)">
+                    <div id="plotAreaError" style="display:none; color:#ef4444; font-size:0.9rem; margin-top:0.5rem; font-weight:600;">
+                        <i class="fas fa-exclamation-circle"></i> <span id="errorMessage"></span>
+                    </div>
                 </div>
 
                 <div style="margin-bottom:2rem;">
@@ -554,6 +559,57 @@ $current_stage_info = $stages[$current_stage_id] ?? $stages[1];
         let currentStep = 1;
         const selections = { area: '', floors: 0, style: '' };
 
+        function validatePlotArea(input) {
+            const value = parseFloat(input.value);
+            const errorDiv = document.getElementById('plotAreaError');
+            const errorMessage = document.getElementById('errorMessage');
+            
+            // Remove previous validation classes
+            input.classList.remove('valid', 'invalid');
+            
+            // Check if empty
+            if (input.value === '') {
+                errorDiv.style.display = 'none';
+                selections.area = '';
+                document.getElementById('prev-area').textContent = '0';
+                return;
+            }
+            
+            // Validate range
+            if (isNaN(value) || value < 1) {
+                input.classList.add('invalid');
+                errorMessage.textContent = 'Plot area must be at least 1 sq.ft';
+                errorDiv.style.display = 'block';
+                selections.area = '';
+                return;
+            }
+            
+            if (value > 10000) {
+                input.classList.add('invalid');
+                errorMessage.textContent = 'Plot area cannot exceed 10,000 sq.ft';
+                errorDiv.style.display = 'block';
+                // Automatically cap the value
+                input.value = 10000;
+                selections.area = '10000';
+                document.getElementById('prev-area').textContent = '10000';
+                // Show valid state after capping
+                setTimeout(() => {
+                    input.classList.remove('invalid');
+                    input.classList.add('valid');
+                    errorDiv.style.display = 'none';
+                }, 500);
+                if(typeof updateHouseModel === 'function') updateHouseModel();
+                return;
+            }
+            
+            // Valid input
+            input.classList.add('valid');
+            errorDiv.style.display = 'none';
+            selections.area = value.toString();
+            document.getElementById('prev-area').textContent = value;
+            if(typeof updateHouseModel === 'function') updateHouseModel();
+        }
+
         function updatePreview() {
             const area = document.getElementById('plotArea').value;
             selections.area = area;
@@ -573,7 +629,17 @@ $current_stage_info = $stages[$current_stage_id] ?? $stages[1];
         }
 
         function nextStep() {
-            if (currentStep === 1 && !selections.area) { alert("Please enter a plot area."); return; }
+            if (currentStep === 1) {
+                const plotArea = parseFloat(document.getElementById('plotArea').value);
+                if (!selections.area || isNaN(plotArea)) { 
+                    alert("Please enter a valid plot area."); 
+                    return; 
+                }
+                if (plotArea < 1 || plotArea > 10000) {
+                    alert("Plot area must be between 1 and 10,000 sq.ft");
+                    return;
+                }
+            }
             
             document.getElementById(`step${currentStep}`).classList.remove('active');
             currentStep++;

@@ -25,7 +25,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'engineer') {
             --text-main: #1e293b;
             --text-muted: #64748b;
             --border-color: #e2e8f0;
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 0 1px rgba(0, 0, 0, 0.05);
             --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
@@ -53,7 +53,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'engineer') {
             width: 100vw;
             height: 100vh;
             z-index: -1;
-            background: #f8fafc;
+            background: #f6f7f2;
             pointer-events: none;
         }
 
@@ -460,10 +460,13 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'engineer') {
                 <!-- STEP 1: Beam Span -->
                 <div class="step active" id="step1">
                     <h2 class="step-title">Enter the beam span length.</h2>
-                    <p class="step-desc">This is the distance between supports.</p>
+                    <p class="step-desc">This is the distance between supports. <span style="font-weight:600; color:#64748b;">(Max: 50m)</span></p>
                     <div class="form-group">
-                        <input type="number" id="spanLength" class="big-input" placeholder="e.g. 6.0" step="0.1" min="0.1" />
+                        <input type="number" id="spanLength" class="big-input" placeholder="e.g. 6.0" step="0.1" min="0.1" max="50" />
                         <label style="display:block; margin-top:1rem; color:var(--text-muted);">Meters (m)</label>
+                        <div id="span-error" style="display:none; color:#ef4444; font-size:0.9rem; font-weight:600; margin-top:0.5rem;">
+                            <i class="fas fa-exclamation-circle"></i> <span></span>
+                        </div>
                     </div>
                 </div>
 
@@ -512,10 +515,13 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'engineer') {
                 <!-- STEP 4: Load Magnitude -->
                 <div class="step" id="step4">
                     <h2 class="step-title">Enter the load magnitude.</h2>
-                    <p class="step-desc" id="loadDesc">Enter the uniformly distributed load per meter.</p>
+                    <p class="step-desc" id="loadDesc">Enter the uniformly distributed load per meter. <span style="font-weight:600; color:#64748b;">(Max: 1000 kN/m)</span></p>
                     <div class="form-group">
-                        <input type="number" id="loadMagnitude" class="big-input" placeholder="e.g. 10" step="0.1" min="0.1" />
+                        <input type="number" id="loadMagnitude" class="big-input" placeholder="e.g. 10" step="0.1" min="0.1" max="1000" />
                         <label style="display:block; margin-top:1rem; color:var(--text-muted);" id="loadUnit">kN/m (for UDL)</label>
+                        <div id="load-error" style="display:none; color:#ef4444; font-size:0.9rem; font-weight:600; margin-top:0.5rem;">
+                            <i class="fas fa-exclamation-circle"></i> <span></span>
+                        </div>
                     </div>
                 </div>
 
@@ -527,11 +533,17 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'engineer') {
                         <label style="display:block; margin-bottom:0.5rem; font-weight:600; color:var(--text-main);">Young's Modulus (E)</label>
                         <input type="number" id="youngsModulus" class="big-input" value="25000000" step="1000" style="font-size: 1.5rem;" />
                         <label style="display:block; margin-top:0.5rem; color:var(--text-muted); font-size: 0.9rem;">kN/m² (default: 25×10⁶ for M25 concrete)</label>
+                        <div id="youngs-error" style="display:none; color:#ef4444; font-size:0.9rem; font-weight:600; margin-top:0.5rem;">
+                            <i class="fas fa-exclamation-circle"></i> <span></span>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label style="display:block; margin-bottom:0.5rem; font-weight:600; color:var(--text-main);">Moment of Inertia (I)</label>
                         <input type="number" id="inertia" class="big-input" placeholder="e.g. 0.003375" step="0.0001" style="font-size: 1.5rem;" />
                         <label style="display:block; margin-top:0.5rem; color:var(--text-muted); font-size: 0.9rem;">m⁴ (e.g., for 300×450mm beam: I = 0.003375 m⁴)</label>
+                        <div id="inertia-error" style="display:none; color:#ef4444; font-size:0.9rem; font-weight:600; margin-top:0.5rem;">
+                            <i class="fas fa-exclamation-circle"></i> <span></span>
+                        </div>
                     </div>
                 </div>
 
@@ -613,6 +625,91 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'engineer') {
 
         // Initialize
         updateProgress();
+        setupValidation();
+
+        function setupValidation() {
+            // Helper to block invalid keys
+            const blockInvalidKeys = (e) => {
+                // Allow: backspace, delete, tab, escape, enter
+                if ([46, 8, 9, 27, 13].indexOf(e.keyCode) !== -1 ||
+                    // Allow: Ctrl+A
+                    (e.keyCode === 65 && e.ctrlKey === true) ||
+                    // Allow: home, end, left, right
+                    (e.keyCode >= 35 && e.keyCode <= 39)) {
+                    return;
+                }
+                
+                // Allow decimal point (190 or 110) ONLY if not already present
+                if (e.keyCode === 190 || e.keyCode === 110) {
+                    if (e.target.value.includes('.')) {
+                        e.preventDefault();
+                    }
+                    return;
+                }
+
+                // Ensure that it is a number and stop the keypress
+                if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+                    e.preventDefault();
+                }
+            };
+
+            // Helper to setup validation for a specific field
+            const setupLiveValidation = (id, errorId, min, max, label) => {
+                const input = document.getElementById(id);
+                const errorDiv = document.getElementById(errorId);
+                if(!input) return;
+
+                input.addEventListener('keydown', blockInvalidKeys);
+                
+                input.addEventListener('input', (e) => {
+                    let valStr = e.target.value.replace(/[^0-9.]/g, ''); // Allow dots for decimals
+                    // Prevent multiple dots
+                    if ((valStr.match(/\./g) || []).length > 1) {
+                         valStr = valStr.substring(0, valStr.lastIndexOf('.'));
+                    }
+                    
+                    if(valStr !== e.target.value) e.target.value = valStr;
+                    
+                    let value = parseFloat(valStr);
+                    input.classList.remove('valid', 'invalid');
+                    input.style.borderColor = '#e2e8f0'; // Reset border
+
+                    if (valStr.length > 0 && !isNaN(value)) {
+                        if (value > max) {
+                            // Don't auto-cap, just show error
+                            input.classList.add('invalid');
+                            input.style.borderColor = '#ef4444';
+                            if (errorDiv) {
+                                errorDiv.style.display = 'block';
+                                errorDiv.querySelector('span').textContent = `Maximum ${label} is ${max}`;
+                            }
+                        } else if (value < min) {
+                            // Don't auto-correct min immediately while typing
+                            // But show visual warning
+                            input.classList.add('invalid');
+                            input.style.borderColor = '#ef4444';
+                            if (errorDiv) {
+                                errorDiv.style.display = 'block';
+                                errorDiv.querySelector('span').textContent = `Minimum ${label} is ${min}`;
+                            }
+                        } else {
+                            input.classList.add('valid');
+                            input.style.borderColor = '#10b981';
+                            if (errorDiv) errorDiv.style.display = 'none';
+                        }
+                    } else {
+                        if (errorDiv) errorDiv.style.display = 'none';
+                    }
+                    
+                    updatePreview();
+                });
+            };
+
+            setupLiveValidation('spanLength', 'span-error', 0.1, 50, 'span');
+            setupLiveValidation('loadMagnitude', 'load-error', 0.1, 1000, 'load');
+            setupLiveValidation('youngsModulus', 'youngs-error', 1000, 200000000, 'Young\'s Modulus');
+            setupLiveValidation('inertia', 'inertia-error', 0.000001, 1, 'Inertia');
+        }
 
         // Navigation
         function changeStep(direction) {
@@ -885,9 +982,102 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'engineer') {
             ctx.fill();
         }
 
-        // Add real-time input listeners
-        document.getElementById('spanLength').addEventListener('input', updatePreview);
-        document.getElementById('loadMagnitude').addEventListener('input', updatePreview);
+        // Add real-time input listeners with validation
+        document.getElementById('spanLength').addEventListener('input', function() {
+            let value = parseFloat(this.value) || 0;
+            const errorDiv = document.getElementById('span-error');
+            
+            // Remove previous validation classes
+            this.classList.remove('valid', 'invalid');
+            
+            if (value > 0) {
+                // Check maximum
+                if (value > 50) {
+                    this.value = 50;
+                    value = 50;
+                    this.classList.add('invalid');
+                    this.style.borderColor = '#ef4444';
+                    if (errorDiv) {
+                        errorDiv.style.display = 'block';
+                        errorDiv.querySelector('span').textContent = 'Maximum span is 50m (auto-capped)';
+                    }
+                    setTimeout(() => {
+                        this.classList.remove('invalid');
+                        this.classList.add('valid');
+                        this.style.borderColor = '#10b981';
+                        if (errorDiv) errorDiv.style.display = 'none';
+                    }, 1500);
+                }
+                // Check minimum
+                else if (value < 0.1) {
+                    this.classList.add('invalid');
+                    this.style.borderColor = '#ef4444';
+                    if (errorDiv) {
+                        errorDiv.style.display = 'block';
+                        errorDiv.querySelector('span').textContent = 'Minimum span is 0.1m';
+                    }
+                }
+                // Valid range
+                else {
+                    this.classList.add('valid');
+                    this.style.borderColor = '#10b981';
+                    if (errorDiv) errorDiv.style.display = 'none';
+                }
+            } else {
+                this.style.borderColor = '';
+                if (errorDiv) errorDiv.style.display = 'none';
+            }
+            
+            updatePreview();
+        });
+        
+        document.getElementById('loadMagnitude').addEventListener('input', function() {
+            let value = parseFloat(this.value) || 0;
+            const errorDiv = document.getElementById('load-error');
+            
+            // Remove previous validation classes
+            this.classList.remove('valid', 'invalid');
+            
+            if (value > 0) {
+                // Check maximum
+                if (value > 1000) {
+                    this.value = 1000;
+                    value = 1000;
+                    this.classList.add('invalid');
+                    this.style.borderColor = '#ef4444';
+                    if (errorDiv) {
+                        errorDiv.style.display = 'block';
+                        errorDiv.querySelector('span').textContent = 'Maximum load is 1000 kN/m (auto-capped)';
+                    }
+                    setTimeout(() => {
+                        this.classList.remove('invalid');
+                        this.classList.add('valid');
+                        this.style.borderColor = '#10b981';
+                        if (errorDiv) errorDiv.style.display = 'none';
+                    }, 1500);
+                }
+                // Check minimum
+                else if (value < 0.1) {
+                    this.classList.add('invalid');
+                    this.style.borderColor = '#ef4444';
+                    if (errorDiv) {
+                        errorDiv.style.display = 'block';
+                        errorDiv.querySelector('span').textContent = 'Minimum load is 0.1 kN/m';
+                    }
+                }
+                // Valid range
+                else {
+                    this.classList.add('valid');
+                    this.style.borderColor = '#10b981';
+                    if (errorDiv) errorDiv.style.display = 'none';
+                }
+            } else {
+                this.style.borderColor = '';
+                if (errorDiv) errorDiv.style.display = 'none';
+            }
+            
+            updatePreview();
+        });
 
         // Initial draw
         draw3DBeam();
@@ -1107,166 +1297,17 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'engineer') {
             doc.save(`Structural_Analysis_${Date.now()}.pdf`);
         }
 
-        // === 3D BACKGROUND ANIMATION ===
-        const initBackground3D = () => {
-            const container = document.getElementById('canvas-container');
-            if (!container) return;
-
-            const scene = new THREE.Scene();
-            scene.background = new THREE.Color('#f8fafc');
-
-            // Camera setup
-            const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.z = 8;
-            camera.position.y = 2;
-
-            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-            container.appendChild(renderer.domElement);
-
-            // Lighting
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-            scene.add(ambientLight);
-
-            const mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
-            mainLight.position.set(10, 10, 10);
-            scene.add(mainLight);
-
-            const blueLight = new THREE.PointLight(0x3d5a49, 0.5);
-            blueLight.position.set(-5, 5, 5);
-            scene.add(blueLight);
-
-            // --- 3D Objects ---
-            const cityGroup = new THREE.Group();
-            scene.add(cityGroup);
-
-            // Create a grid of simple building structures
-            const buildingMaterial = new THREE.MeshPhongMaterial({
-                color: 0x294033,
-                transparent: true,
-                opacity: 0.1,
-                side: THREE.DoubleSide
-            });
-            const edgeMaterial = new THREE.LineBasicMaterial({ color: 0x294033, transparent: true, opacity: 0.3 });
-
-            // Generate a grid of "blueprints"
-            const gridSize = 10;
-            const spacing = 3;
-
-            for (let x = -gridSize; x < gridSize; x++) {
-                for (let z = -gridSize; z < gridSize; z++) {
-                    // Random heights for buildings
-                    const height = Math.random() * 2 + 0.5;
-                    const building = new THREE.Group();
-
-                    // Solid (faint)
-                    const geometry = new THREE.BoxGeometry(1, height, 1);
-                    const mesh = new THREE.Mesh(geometry, buildingMaterial);
-                    mesh.position.y = height / 2;
-
-                    // Wireframe
-                    const edges = new THREE.EdgesGeometry(geometry);
-                    const line = new THREE.LineSegments(edges, edgeMaterial);
-                    line.position.y = height / 2;
-
-                    building.add(mesh);
-                    building.add(line);
-
-                    building.position.set(x * spacing, -2, z * spacing);
-                    cityGroup.add(building);
-                }
-            }
-
-            // Central Hero House (More detailed)
-            const houseGroup = new THREE.Group();
-
-            // Base
-            const baseGeo = new THREE.BoxGeometry(2, 2, 2);
-            const baseEdges = new THREE.EdgesGeometry(baseGeo);
-            const baseLine = new THREE.LineSegments(baseEdges, new THREE.LineBasicMaterial({ color: 0x294033, linewidth: 2 }));
-            houseGroup.add(baseLine);
-
-            // Roof
-            const roofGeo = new THREE.ConeGeometry(1.5, 1.2, 4);
-            const roofEdges = new THREE.EdgesGeometry(roofGeo);
-            const roofLine = new THREE.LineSegments(roofEdges, new THREE.LineBasicMaterial({ color: 0x3d5a49, linewidth: 2 }));
-            roofLine.position.y = 1.6;
-            roofLine.rotation.y = Math.PI / 4;
-            houseGroup.add(roofLine);
-
-            // Float animation group
-            const floatGroup = new THREE.Group();
-            floatGroup.add(houseGroup);
-            floatGroup.position.set(0, 0, 2); // Bring closer
-            scene.add(floatGroup);
-
-            // Animation Loop
-            let mouseX = 0;
-            let mouseY = 0;
-            let targetRotationX = 0;
-            let targetRotationY = 0;
-
-            // Mouse interaction
-            document.addEventListener('mousemove', (event) => {
-                mouseX = (event.clientX - window.innerWidth / 2) * 0.001;
-                mouseY = (event.clientY - window.innerHeight / 2) * 0.001;
-            });
-
-            // Scroll interaction
-            let scrollY = 0;
-            const wizardSection = document.querySelector('.wizard-section');
-            if (wizardSection) {
-                wizardSection.addEventListener('scroll', () => {
-                     scrollY = wizardSection.scrollTop * 0.001;
-                });
-            } else {
-                window.addEventListener('scroll', () => {
-                    scrollY = window.scrollY * 0.001;
-                });
-            }
-
-            const animate = () => {
-                requestAnimationFrame(animate);
-
-                // Rotate entire city slowly
-                cityGroup.rotation.y += 0.001;
-
-                // Hero house rotation
-                floatGroup.rotation.y += 0.005;
-                floatGroup.position.y = Math.sin(Date.now() * 0.001) * 0.5 + 0.5;
-
-                // Interactive camera movement
-                targetRotationX = mouseX;
-                targetRotationY = mouseY;
-
-                // Smooth follow
-                cityGroup.rotation.x += 0.05 * (targetRotationY - cityGroup.rotation.x);
-                cityGroup.rotation.y += 0.05 * (targetRotationX - cityGroup.rotation.y);
-
-                // Scroll effect
-                camera.position.y = 2 - scrollY * 2;
-                camera.position.z = 8 + scrollY * 5;
-
-                renderer.render(scene, camera);
-            };
-
-            animate();
-
-            // Handle Window Resize
-            window.addEventListener('resize', () => {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
-            });
-        };
-
-        // Initialize 3D Background
-        if (typeof THREE !== 'undefined') {
-            initBackground3D();
-        } else {
-            console.warn('Three.js not loaded');
-        }
     </script>
+
+    <!-- === 3D BACKGROUND ANIMATION === -->
+    <script src="js/architectural_bg.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+             if(typeof initArchitecturalBackground === 'function') {
+                 initArchitecturalBackground('canvas-container');
+             }
+        });
+    </script>
+
 </body>
 </html>

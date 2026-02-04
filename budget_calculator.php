@@ -569,7 +569,7 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'User';
                     <h2 class="step-title">Let's start with your plot.</h2>
                     <p class="step-desc">Enter the total area of your plot in square feet.</p>
                     <div class="form-group">
-                        <input type="number" id="plotSize" class="big-input" placeholder="e.g. 1200" min="100" />
+                        <input type="text" inputmode="decimal" id="plotSize" class="big-input" placeholder="e.g. 1200" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.charCode == 46" />
                         <label style="display:block; margin-top:1rem; color:var(--text-muted);">Square Feet (sq. ft)</label>
                     </div>
                 </div>
@@ -817,9 +817,9 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'User';
 
             if (step === 1) {
                 const plot = parseFloat(document.getElementById('plotSize').value);
-                if (!plot || plot < 100) {
+                if (!plot || plot < 100 || plot > 50000) {
                     valid = false;
-                    msg = 'Please enter a valid plot size (> 100 sq.ft)';
+                    msg = 'Please enter a valid plot size (100 - 50,000 sq.ft)';
                 }
             }
             if (step === 2) {
@@ -917,7 +917,39 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'User';
 
         function calculateLive() {
             // Gather inputs
-            const plotSize = parseFloat(document.getElementById('plotSize').value) || 0;
+            const plotInput = document.getElementById('plotSize');
+            const rawValue = plotInput.value;
+            let plotSize = parseFloat(rawValue);
+            
+            // Live Step 1 Validation
+            const MIN_AREA = 100;
+            const MAX_AREA = 50000;
+            let isValid = true;
+
+            // Strict number check: digits only (optional decimal)
+            // This prevents "255-1" or "10e2" or "-50"
+            const strictNumberRegex = /^\d*\.?\d+$/;
+
+            if (rawValue !== '') {
+                 if (!strictNumberRegex.test(rawValue) || isNaN(plotSize) || plotSize < MIN_AREA || plotSize > MAX_AREA) {
+                     plotInput.style.borderColor = '#ef4444';
+                     plotInput.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.2)';
+                     isValid = false;
+                 } else {
+                     plotInput.style.borderColor = '';
+                     plotInput.style.boxShadow = '';
+                 }
+            } else {
+                plotInput.style.borderColor = '';
+                plotInput.style.boxShadow = '';
+                plotSize = 0; // Treat empty as 0 for calc
+            }
+
+            if (!isValid) return; // Stop updates if invalid
+
+            // Ensure plotSize is valid number for math
+            if (isNaN(plotSize)) plotSize = 0;
+
             const floors = parseInt(document.getElementById('floors').value);
             const qualityRate = parseFloat(document.getElementById('quality').value);
             const locationFactor = parseFloat(document.getElementById('location').value);
@@ -1076,170 +1108,14 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'User';
             window.requestAnimationFrame(step);
         }
 
-        // === 3D BACKGROUND ANIMATION ===
-        const initBackground3D = () => {
-            const container = document.getElementById('canvas-container');
-            if (!container) return;
-
-            const scene = new THREE.Scene();
-            // Transparent background to blend with page or use a light color
-            scene.background = new THREE.Color('#f8fafc');
-
-            // Camera setup
-            const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.z = 8;
-            camera.position.y = 2;
-
-            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-            container.appendChild(renderer.domElement);
-
-            // Lighting
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-            scene.add(ambientLight);
-
-            const mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
-            mainLight.position.set(10, 10, 10);
-            scene.add(mainLight);
-
-            const blueLight = new THREE.PointLight(0x3d5a49, 0.5);
-            blueLight.position.set(-5, 5, 5);
-            scene.add(blueLight);
-
-            // --- 3D Objects ---
-            const cityGroup = new THREE.Group();
-            scene.add(cityGroup);
-
-            // Create a grid of simple building structures
-            const buildingGeometry = new THREE.BoxGeometry(1, 1, 1);
-            const buildingMaterial = new THREE.MeshPhongMaterial({
-                color: 0x294033,
-                transparent: true,
-                opacity: 0.1,
-                side: THREE.DoubleSide
-            });
-            const edgeMaterial = new THREE.LineBasicMaterial({ color: 0x294033, transparent: true, opacity: 0.3 });
-
-            // Generate a grid of "blueprints"
-            const gridSize = 10;
-            const spacing = 3;
-
-            for (let x = -gridSize; x < gridSize; x++) {
-                for (let z = -gridSize; z < gridSize; z++) {
-                    // Random heights for buildings
-                    const height = Math.random() * 2 + 0.5;
-                    const building = new THREE.Group();
-
-                    // Solid (faint)
-                    const geometry = new THREE.BoxGeometry(1, height, 1);
-                    const mesh = new THREE.Mesh(geometry, buildingMaterial);
-                    mesh.position.y = height / 2;
-
-                    // Wireframe
-                    const edges = new THREE.EdgesGeometry(geometry);
-                    const line = new THREE.LineSegments(edges, edgeMaterial);
-                    line.position.y = height / 2;
-
-                    building.add(mesh);
-                    building.add(line);
-
-                    building.position.set(x * spacing, -2, z * spacing);
-                    cityGroup.add(building);
-                }
-            }
-
-            // Central Hero House (More detailed)
-            const houseGroup = new THREE.Group();
-
-            // Base
-            const baseGeo = new THREE.BoxGeometry(2, 2, 2);
-            const baseEdges = new THREE.EdgesGeometry(baseGeo);
-            const baseLine = new THREE.LineSegments(baseEdges, new THREE.LineBasicMaterial({ color: 0x294033, linewidth: 2 }));
-            houseGroup.add(baseLine);
-
-            // Roof
-            const roofGeo = new THREE.ConeGeometry(1.5, 1.2, 4);
-            const roofEdges = new THREE.EdgesGeometry(roofGeo);
-            const roofLine = new THREE.LineSegments(roofEdges, new THREE.LineBasicMaterial({ color: 0x3d5a49, linewidth: 2 }));
-            roofLine.position.y = 1.6;
-            roofLine.rotation.y = Math.PI / 4;
-            houseGroup.add(roofLine);
-
-            // Float animation group
-            const floatGroup = new THREE.Group();
-            floatGroup.add(houseGroup);
-            floatGroup.position.set(0, 0, 2); // Bring closer
-            scene.add(floatGroup);
-
-
-            // Animation Loop
-            let mouseX = 0;
-            let mouseY = 0;
-            let targetRotationX = 0;
-            let targetRotationY = 0;
-
-            // Mouse interaction
-            document.addEventListener('mousemove', (event) => {
-                mouseX = (event.clientX - window.innerWidth / 2) * 0.001;
-                mouseY = (event.clientY - window.innerHeight / 2) * 0.001;
-            });
-
-            // Scroll interaction (Adapted for this page's structure)
-            let scrollY = 0;
-            const wizardSection = document.querySelector('.wizard-section');
-            if (wizardSection) {
-                wizardSection.addEventListener('scroll', () => {
-                     scrollY = wizardSection.scrollTop * 0.001;
-                });
-            } else {
-                window.addEventListener('scroll', () => {
-                    scrollY = window.scrollY * 0.001;
-                });
-            }
-
-            const animate = () => {
-                requestAnimationFrame(animate);
-
-                // Rotate entire city slowly
-                cityGroup.rotation.y += 0.001;
-
-                // Hero house rotation
-                floatGroup.rotation.y += 0.005;
-                floatGroup.position.y = Math.sin(Date.now() * 0.001) * 0.5 + 0.5;
-
-                // Interactive camera movement
-                targetRotationX = mouseX;
-                targetRotationY = mouseY;
-
-                // Smooth follow
-                cityGroup.rotation.x += 0.05 * (targetRotationY - cityGroup.rotation.x);
-                cityGroup.rotation.y += 0.05 * (targetRotationX - cityGroup.rotation.y);
-
-                // Scroll effect
-                camera.position.y = 2 - scrollY * 2;
-                camera.position.z = 8 + scrollY * 5;
-
-                renderer.render(scene, camera);
-            };
-
-            animate();
-
-            // Handle Window Resize
-            window.addEventListener('resize', () => {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
-            });
-        };
-
-        // Initialize 3D Background if libraries loaded
-        if (typeof THREE !== 'undefined') {
-            initBackground3D();
-        } else {
-            console.warn('Three.js not loaded');
-        }
-
+    </script>
+    <script src="js/architectural_bg.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+             if(typeof initArchitecturalBackground === 'function') {
+                 initArchitecturalBackground('canvas-container');
+             }
+        });
     </script>
 </body>
 

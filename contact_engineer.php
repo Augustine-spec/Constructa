@@ -49,7 +49,7 @@ $homeowner_name = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Home
             --text-main: #1e293b;
             --text-muted: #64748b;
             --border-color: #e2e8f0;
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 0 1px rgba(0, 0, 0, 0.05);
             --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
@@ -717,7 +717,7 @@ $homeowner_name = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Home
                     <h2 class="step-title">What's your project called?</h2>
                     <p class="step-desc">Give your project a descriptive name</p>
                     <div class="form-group validation-wrapper">
-                        <input type="text" id="project_title" name="project_title" class="big-input" placeholder="e.g., Modern Villa Construction" required>
+                        <input type="text" id="project_title" name="project_title" class="big-input" placeholder="e.g., Modern Villa Construction" required onkeypress="return /[a-zA-Z\s]/.test(event.key)">
                         <div class="validation-icon" id="validation_project_title">
                             <i class="fas fa-check"></i>
                         </div>
@@ -787,9 +787,9 @@ $homeowner_name = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Home
                 <!-- STEP 5: Project Size -->
                 <div class="step" id="step5">
                     <h2 class="step-title">What's the size of your project?</h2>
-                    <p class="step-desc">Approximate area or dimensions (optional)</p>
+                    <p class="step-desc">Approximate area in square feet <span style="font-weight:600; color:#64748b;">(Max: 10,000 sq.ft)</span></p>
                     <div class="form-group validation-wrapper">
-                        <input type="text" id="project_size" name="project_size" class="big-input" placeholder="e.g., 3500 sq ft">
+                        <input type="number" id="project_size" name="project_size" class="big-input" placeholder="e.g., 3500" min="1" max="10000">
                         <div class="validation-icon" id="validation_project_size">
                             <i class="fas fa-check"></i>
                         </div>
@@ -955,6 +955,10 @@ $homeowner_name = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Home
                         valid = false;
                         message = 'Please enter a project title';
                     }
+                    else if (!/^[a-zA-Z\s]+$/.test(title)) {
+                        valid = false;
+                        message = 'Title must contain only letters and spaces';
+                    }
                     break;
                 case 4:
                     const location = document.getElementById('location').value.trim();
@@ -1014,7 +1018,8 @@ $homeowner_name = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Home
             document.getElementById('prevTitle').textContent = document.getElementById('project_title').value || '-';
             document.getElementById('prevType').textContent = document.getElementById('project_type').value || '-';
             document.getElementById('prevLocation').textContent = document.getElementById('location').value || '-';
-            document.getElementById('prevSize').textContent = document.getElementById('project_size').value || '-';
+            const sizeValue = document.getElementById('project_size').value;
+            document.getElementById('prevSize').textContent = sizeValue ? `${sizeValue} sq.ft` : '-';
             document.getElementById('prevBudget').textContent = document.getElementById('budget').value || '-';
             document.getElementById('prevTimeline').textContent = document.getElementById('timeline').value || '-';
         }
@@ -1024,6 +1029,10 @@ $homeowner_name = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Home
             project_title: (value) => {
                 if (!value || value.trim().length === 0) {
                     return { valid: false, message: 'Project title is required' };
+                }
+                const strictRegex = /^[a-zA-Z\s]+$/;
+                if (!strictRegex.test(value)) {
+                    return { valid: false, message: '✗ No numbers or special symbols allowed' };
                 }
                 if (value.trim().length < 3) {
                     return { valid: false, message: 'Title must be at least 3 characters' };
@@ -1082,12 +1091,31 @@ $homeowner_name = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Home
                     return { valid: true, message: 'Project size is optional' };
                 }
                 
-                // Should contain some numbers or measurement units
-                if (!/\d/.test(value) && !/sq|ft|meter|acre|hectare/i.test(value)) {
-                    return { valid: false, message: '✗ Please include size with units (e.g., 3500 sq ft)' };
+                // Parse numeric value
+                const numValue = parseFloat(value);
+                
+                // Check if it's a valid number
+                if (isNaN(numValue)) {
+                    return { valid: false, message: '✗ Please enter a valid number (e.g., 3500)' };
                 }
                 
-                return { valid: true, message: '✓ Size format is good' };
+                // Check minimum
+                if (numValue < 1) {
+                    return { valid: false, message: '✗ Project size must be at least 1 sq.ft' };
+                }
+                
+                // Check maximum
+                if (numValue > 10000) {
+                    // Auto-cap the value
+                    const input = document.getElementById('project_size');
+                    input.value = 10000;
+                    setTimeout(() => {
+                        validateField('project_size');
+                    }, 500);
+                    return { valid: false, message: '✗ Project size cannot exceed 10,000 sq.ft (auto-capped)' };
+                }
+                
+                return { valid: true, message: `✓ Size format is good (${numValue.toLocaleString()} sq.ft)` };
             },
             
             description: (value) => {
@@ -1109,12 +1137,26 @@ $homeowner_name = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Home
                     return { valid: false, message: '✗ Budget estimate is required' };
                 }
                 
-                // Should contain numbers or currency symbols
-                if (!/\d/.test(value) && !/\$|₹|€|£/.test(value)) {
-                    return { valid: false, message: '✗ Please include budget amount' };
+                // Extract all numbers from the string (removes currency symbols, commas, etc)
+                // We handle "50k" or "50,000" logic if user types k/lakh? 
+                // For now, let's just look for raw digits.
+                // If user types "12", matches ["12"].
+                const matches = value.replace(/,/g, '').match(/(\d+)/g);
+                
+                if (!matches) {
+                    return { valid: false, message: '✗ Please include a numeric budget amount' };
                 }
                 
-                return { valid: true, message: '✓ Budget format is acceptable' };
+                // Find the largest number mentioned (in case of a range "10000-20000", both valid)
+                // We want to ensure at least one number or the implied budget is significant.
+                // If user enters "12", max is 12 -> Invalid.
+                const maxVal = Math.max(...matches.map(n => parseInt(n)));
+                
+                if (maxVal < 10000) {
+                    return { valid: false, message: '✗ Minimum budget should be at least 10,000' };
+                }
+                
+                return { valid: true, message: '✓ Budget amount looks reasonable' };
             },
             
             timeline: (value) => {
@@ -1124,6 +1166,19 @@ $homeowner_name = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Home
                 if (value.trim().length < 3) {
                     return { valid: false, message: '✗ Please provide expected timeline' };
                 }
+
+                // Check for range pattern like "6-8" or "6 - 8"
+                // matches "6-8 months", "6-8", etc.
+                const rangeMatch = value.match(/(\d+)\s*-\s*(\d+)/);
+                if (rangeMatch) {
+                    const start = parseInt(rangeMatch[1]);
+                    const end = parseInt(rangeMatch[2]);
+                    
+                    if (start >= end) {
+                        return { valid: false, message: '✗ Start range must be smaller than end range (e.g., 4-6)' };
+                    }
+                }
+
                 return { valid: true, message: '✓ Timeline looks good!' };
             }
         };
@@ -1358,6 +1413,7 @@ $homeowner_name = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Home
 
             const scene = new THREE.Scene();
             scene.background = new THREE.Color('#f8fafc');
+            scene.fog = new THREE.Fog('#f8fafc', 5, 45);
             const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
             camera.position.set(0, 5, 10);
 

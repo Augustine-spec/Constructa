@@ -15,6 +15,9 @@ session_start();
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     
+    <!-- Razorpay Checkout -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    
     <style>
         :root {
             --bg-color: #f6f7f2;
@@ -234,7 +237,7 @@ session_start();
             backdrop-filter: blur(10px);
             border-radius: 16px;
             padding: 1.5rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 0 1px rgba(0, 0, 0, 0.05);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
             display: flex;
             flex-direction: column;
@@ -243,7 +246,7 @@ session_start();
 
         .material-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 0 1px rgba(0, 0, 0, 0.05);
             cursor: pointer;
         }
 
@@ -591,6 +594,9 @@ session_start();
                     <i class="fas fa-th-large"></i> Dashboard
                 </a>
             <?php endif; ?>
+            <a href="material_procurement.php" class="top-nav-btn">
+                <i class="fas fa-truck-loading"></i> Track Materials
+            </a>
             <button class="top-nav-btn cart-nav-btn" onclick="toggleCart()">
                 <i class="fas fa-shopping-cart"></i> Cart
                 <span class="cart-badge-nav" id="cartBadgeNav">0</span>
@@ -2047,6 +2053,14 @@ session_start();
     </div>
     
     <script src="js/shopping_cart.js"></script>
+    <script src="js/architectural_bg.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+             if(typeof initArchitecturalBackground === 'function') {
+                 initArchitecturalBackground('bg-canvas-container');
+             }
+        });
+    </script>
 </body>
 </html>
 

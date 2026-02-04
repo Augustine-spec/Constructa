@@ -13,14 +13,26 @@ $conn = getDatabaseConnection();
 $action = $_POST['action'] ?? '';
 
 if ($action === 'create' || $action === 'update') {
-    $title = $_POST['title'];
-    $description = $_POST['description'];
-    $area_sqft = $_POST['area_sqft'];
-    $floors = $_POST['floors'];
-    $style = $_POST['style'];
-    $budget_min = $_POST['budget_min'];
-    $budget_max = $_POST['budget_max'];
-    $specifications = $_POST['specifications'];
+    $title = $_POST['title'] ?? 'Untitled Template';
+    $description = $_POST['description'] ?? '';
+    $area_sqft = $_POST['area_sqft'] ?? 1200;
+    $floors = $_POST['floors'] ?? 1;
+    $style = $_POST['style'] ?? 'Modern';
+    $budget_min = $_POST['budget_min'] ?? 0;
+    
+    // Optional fields with defaults
+    $budget_max = $_POST['budget_max'] ?? ($budget_min * 1.2); // 20% more than min
+    $specifications = $_POST['specifications'] ?? '';
+    
+    // New wizard fields
+    $quality = $_POST['quality'] ?? 'Basic';
+    $location = $_POST['location'] ?? 'Urban';
+    $features = $_POST['features'] ?? '';
+    
+    // Combine description with features if features exist
+    if (!empty($features)) {
+        $description = !empty($description) ? $description . ', ' . $features : $features;
+    }
     
     // Handle Image Upload
     $image_url = $_POST['current_image'] ?? ''; // Default to existing if update

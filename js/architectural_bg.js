@@ -8,6 +8,8 @@ function initArchitecturalBackground(containerId) {
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color('#f6f7f2');
+    // Add soft fog for atmospheric perspective (fades distant objects)
+    scene.fog = new THREE.Fog('#f6f7f2', 10, 45);
 
     const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.z = 8;

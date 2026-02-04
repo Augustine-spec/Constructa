@@ -177,7 +177,7 @@ $project_details = !empty($project_details_raw) ? json_decode($project_details_r
 
         .tool-card {
             background: white; border: 1px solid var(--glass-border);
-            padding: 2rem; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+            padding: 2rem; border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 0 1px rgba(0, 0, 0, 0.05);
             transition: var(--transition);
         }
         .tool-card:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,0,0,0.06); }
@@ -489,7 +489,7 @@ $project_details = !empty($project_details_raw) ? json_decode($project_details_r
             padding: 1.5rem;
             margin-bottom: 1.5rem;
             transition: var(--transition);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 0 1px rgba(0, 0, 0, 0.05);
         }
 
         .approval-card:hover {
@@ -642,6 +642,7 @@ $project_details = !empty($project_details_raw) ? json_decode($project_details_r
             border: 1px solid #eef2f6;
             transition: var(--transition);
             margin-bottom: 1rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 0 1px rgba(0, 0, 0, 0.05);
         }
 
         .phase-card:hover {
@@ -1314,9 +1315,9 @@ $project_details = !empty($project_details_raw) ? json_decode($project_details_r
                                     <div class="input-group">
                                         <label>Number of Floors</label>
                                         <div class="input-wrapper">
-                                            <input type="number" class="c-input" oninput="updateGatherPreview('floors', this.value)" min="1" max="200" value="<?php echo htmlspecialchars($project_details['gathering']['floors'] ?? ''); ?>">
+                                            <input type="number" class="c-input" oninput="updateGatherPreview('floors', this.value)" min="1" max="3" value="<?php echo htmlspecialchars($project_details['gathering']['floors'] ?? ''); ?>">
                                         </div>
-                                        <div class="validation-msg">Architectural limit: 1 to 200 floors</div>
+                                        <div class="validation-msg">Architectural limit: 1 to 3 floors</div>
                                     </div>
                                     <div class="input-group">
                                         <label>Total Budget (₹)</label>
@@ -1671,8 +1672,14 @@ $project_details = !empty($project_details_raw) ? json_decode($project_details_r
                                         </select>
                                     </div>
                                     <div class="input-group">
-                                        <label>Authority Remarks</label>
-                                        <textarea class="c-input" style="height: 80px;" placeholder="Enter any conditions or remarks from the authority..." oninput="updateApprovalData('plan_remarks', this.value)"></textarea>
+                                        <label>Authority Remarks <span style="font-size:0.75rem; color:#64748b;">(Max: 500 characters)</span></label>
+                                        <textarea id="plan_remarks" class="c-input" style="height: 80px;" placeholder="Enter any conditions or remarks from the authority..." maxlength="500" oninput="validateTextArea(this, 500, 'plan_remarks_counter')"></textarea>
+                                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.5rem;">
+                                            <div id="plan_remarks_error" style="display:none; color:#ef4444; font-size:0.75rem; font-weight:600;">
+                                                <i class="fas fa-exclamation-circle"></i> <span></span>
+                                            </div>
+                                            <div id="plan_remarks_counter" style="font-size:0.75rem; color:#64748b; margin-left:auto;">0 / 500</div>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -1690,7 +1697,15 @@ $project_details = !empty($project_details_raw) ? json_decode($project_details_r
                                     </div>
                                     <div class="input-group">
                                         <label>Licensed Engineer ID</label>
-                                        <input type="text" class="c-input" placeholder="e.g. LIC-ENG-2024-XXXX" oninput="updateApprovalData('engineer_license', this.value)">
+                                        <?php 
+                                            $username = $_SESSION['username'] ?? 'ENG';
+                                            $prefix = strtoupper(substr($username, 0, 3));
+                                            $engineerId = "LIC-ENG-2024-" . $prefix;
+                                        ?>
+                                        <input type="text" class="c-input" placeholder="e.g. LIC-ENG-2024-XXXX" value="<?php echo htmlspecialchars($engineerId); ?>" readonly style="background-color: #f8fafc; cursor: not-allowed;" oninput="updateApprovalData('engineer_license', this.value)">
+                                        <small style="color: #64748b; font-size: 0.75rem; margin-top: 0.25rem; display: block;">
+                                            <i class="fas fa-info-circle"></i> Auto-generated from username
+                                        </small>
                                     </div>
                                 </div>
 
@@ -2048,8 +2063,14 @@ $project_details = !empty($project_details_raw) ? json_decode($project_details_r
                                             </select>
                                         </div>
                                         <div class="input-group">
-                                            <label>Authority Remarks / File No.</label>
-                                            <input type="text" class="c-input" placeholder="e.g. BMC/2024/XP-908" oninput="updateApprovalData('plan_remarks', this.value)">
+                                            <label>Authority Remarks / File No. <span style="font-size:0.75rem; color:#64748b;">(Max: 100 characters)</span></label>
+                                            <input type="text" id="plan_file_no" class="c-input" placeholder="e.g. BMC/2024/XP-908" maxlength="100" oninput="validateFileNo(this, 'plan_file_no_counter')">
+                                            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.5rem;">
+                                                <div id="plan_file_no_error" style="display:none; color:#ef4444; font-size:0.75rem; font-weight:600;">
+                                                    <i class="fas fa-exclamation-circle"></i> <span></span>
+                                                </div>
+                                                <div id="plan_file_no_counter" style="font-size:0.75rem; color:#64748b; margin-left:auto;">0 / 100</div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -2595,6 +2616,8 @@ $project_details = !empty($project_details_raw) ? json_decode($project_details_r
             const container = document.getElementById('canvas-container');
             const scene = new THREE.Scene();
             scene.background = new THREE.Color('#f6f7f2');
+            // Add soft fog for atmospheric perspective (fades distant objects)
+            scene.fog = new THREE.Fog('#f6f7f2', 10, 45);
             const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
             camera.position.set(0, 2, 8);
 
@@ -4286,6 +4309,118 @@ Current Readiness: ${approvalsData.confirmed ? 'CERTIFIED FOR CONSTRUCTION' : 'P
         const projectID = <?php echo (int)$project_id; ?>;
         let projectStageIdx = <?php echo (int)$current_project_stage; ?>;
         let viewStageIdx = <?php echo (int)$current_stage_idx; ?>;
+        
+        // --- Live Preview Updates ---
+        let projectData = {
+            gathering: <?php echo json_encode($project_details['gathering'] ?? []); ?>,
+            survey: <?php echo json_encode($project_details['survey'] ?? []); ?>,
+            planning: <?php echo json_encode($project_details['planning'] ?? []); ?>
+        };
+
+        function updateGatherPreview(key, val) {
+            // Live validation logic
+            const group = event.target.closest('.input-group');
+            let isValid = true;
+            let finalVal = val;
+
+            // Trim string values
+            if (typeof val === 'string') val = val.trim();
+
+            if (key === 'plot_area') {
+                const area = parseFloat(val);
+                if (!val || isNaN(area) || area < 100 || area > 1000000) isValid = false;
+                else finalVal = area; 
+            } else if (key === 'floors') {
+                let fl = parseFloat(val);
+                if (!val || isNaN(fl) || fl < 1) {
+                    isValid = false;
+                } else if (fl > 3) {
+                    // Auto-limit to 3
+                    fl = 3;
+                    finalVal = 3;
+                    // Update input value directly to reflect correction
+                    if (event.target) event.target.value = 3;
+                } else {
+                    finalVal = fl;
+                }
+            } else if (key === 'budget') {
+                const bg = parseFloat(val);
+                if (!val || isNaN(bg) || bg < 500000) isValid = false;
+                else finalVal = bg;
+            } else {
+                // Generic non-empty check for other fields
+                if (!val) isValid = false;
+            }
+
+            if (group) {
+                if (isValid) {
+                    group.classList.remove('invalid');
+                    group.classList.add('valid');
+                } else {
+                    group.classList.remove('valid');
+                    group.classList.add('invalid');
+                }
+            }
+
+            if (isValid) {
+                projectData.gathering[key] = finalVal;
+                // Update 3D model properties if relevant
+                if (key === 'plot_area') updateHouseGeometry(); 
+                if (key === 'floors') updateHouseGeometry();
+            } else {
+                // If invalid, clear from data to prevent saving bad state if submitted
+                delete projectData.gathering[key];
+            }
+        }
+
+        function updateSurveyPreview(key, val) {
+            const group = event.target.closest('.input-group');
+            let isValid = true;
+            
+            if (typeof val === 'string') val = val.trim();
+
+            // Dimension checks
+            if (['f_width', 'r_width', 'l_depth', 'r_depth'].includes(key)) {
+                const dim = parseFloat(val);
+                if (!val || isNaN(dim) || dim < 5) isValid = false;
+                else val = dim;
+            } else if (key === 'total_area') {
+                const area = parseFloat(val);
+                if (!val || isNaN(area) || area < 100) isValid = false;
+                else val = area;
+            } else if (key === 'road_width') {
+                const rw = parseFloat(val);
+                if (!val || isNaN(rw) || rw <= 0) isValid = false;
+                else val = rw;
+            } else if (key === 'constraints' || key === 'road_type') {
+                // Optional fields? No, strict validation requested prevents empty
+                if (!val) isValid = false; 
+            }
+
+            if (group) {
+                if (isValid) {
+                    group.classList.remove('invalid');
+                    group.classList.add('valid');
+                } else {
+                    group.classList.remove('valid');
+                    group.classList.add('invalid');
+                }
+            }
+            
+            if (isValid) {
+                projectData.survey[key] = val;
+                
+                // Auto-calc logic for survey dimensions to total area (approx)
+                if (['f_width', 'r_width', 'l_depth', 'r_depth'].includes(key)) {
+                    calcSurveyArea();
+                }
+                if (key === 'total_area') {
+                    document.getElementById('calc-site-area').innerText = val + " sq.ft (Manual)";
+                }
+            } else {
+                delete projectData.survey[key];
+            }
+        }
 
         // === Interactions ===
         async function approveCurrentStage() {
@@ -4800,37 +4935,97 @@ Current Readiness: ${approvalsData.confirmed ? 'CERTIFIED FOR CONSTRUCTION' : 'P
             }
         }
 
-        // Initialize Drag & Drop
-        const dropZone = document.getElementById('document-repository');
-        if (dropZone) {
-            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-                dropZone.addEventListener(eventName, e => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                }, false);
-            });
-
-            ['dragenter', 'dragover'].forEach(eventName => {
-                dropZone.addEventListener(eventName, () => {
-                    document.getElementById('upload-zone').style.borderColor = 'var(--accent)';
-                    document.getElementById('upload-zone').style.background = '#fef9e7';
-                }, false);
-            });
-
-            ['dragleave', 'drop'].forEach(eventName => {
-                dropZone.addEventListener(eventName, () => {
-                    document.getElementById('upload-zone').style.borderColor = '#ddd';
-                    document.getElementById('upload-zone').style.background = 'transparent';
-                }, false);
-            });
-
-            dropZone.addEventListener('drop', e => {
-                const dt = e.dataTransfer;
-                const files = dt.files;
-                if (files.length > 0) {
-                    uploadFile(files[0]);
+        // === VALIDATION FUNCTIONS FOR APPROVAL & PERMISSIONS ===
+        function validateTextArea(textarea, maxLength, counterId) {
+            const value = textarea.value;
+            const length = value.length;
+            const counter = document.getElementById(counterId);
+            const errorDiv = document.getElementById(textarea.id + '_error');
+            
+            // Update counter
+            if (counter) {
+                counter.textContent = `${length} / ${maxLength}`;
+                
+                // Change color based on usage
+                if (length > maxLength * 0.9) {
+                    counter.style.color = '#ef4444'; // Red when near limit
+                } else if (length > maxLength * 0.7) {
+                    counter.style.color = '#f59e0b'; // Orange when approaching
+                } else {
+                    counter.style.color = '#64748b'; // Gray default
                 }
-            }, false);
+            }
+            
+            // Visual feedback on textarea
+            textarea.classList.remove('valid', 'invalid');
+            if (length > 0) {
+                if (length <= maxLength) {
+                    textarea.classList.add('valid');
+                    textarea.style.borderColor = '#10b981';
+                    if (errorDiv) errorDiv.style.display = 'none';
+                } else {
+                    textarea.classList.add('invalid');
+                    textarea.style.borderColor = '#ef4444';
+                    if (errorDiv) {
+                        errorDiv.style.display = 'block';
+                        errorDiv.querySelector('span').textContent = 'Character limit exceeded';
+                    }
+                }
+            } else {
+                textarea.style.borderColor = '';
+                if (errorDiv) errorDiv.style.display = 'none';
+            }
+            
+            // Call original update function if it exists
+            if (typeof updateApprovalData === 'function') {
+                updateApprovalData('plan_remarks', value);
+            }
+        }
+        
+        function validateFileNo(input, counterId) {
+            const value = input.value;
+            const length = value.length;
+            const counter = document.getElementById(counterId);
+            const errorDiv = document.getElementById(input.id + '_error');
+            
+            // Update counter
+            if (counter) {
+                counter.textContent = `${length} / 100`;
+                
+                // Change color based on usage
+                if (length > 90) {
+                    counter.style.color = '#ef4444';
+                } else if (length > 70) {
+                    counter.style.color = '#f59e0b';
+                } else {
+                    counter.style.color = '#64748b';
+                }
+            }
+            
+            // Visual feedback
+            input.classList.remove('valid', 'invalid');
+            if (length > 0) {
+                if (length <= 100) {
+                    input.classList.add('valid');
+                    input.style.borderColor = '#10b981';
+                    if (errorDiv) errorDiv.style.display = 'none';
+                } else {
+                    input.classList.add('invalid');
+                    input.style.borderColor = '#ef4444';
+                    if (errorDiv) {
+                        errorDiv.style.display = 'block';
+                        errorDiv.querySelector('span').textContent = 'Maximum 100 characters allowed';
+                    }
+                }
+            } else {
+                input.style.borderColor = '';
+                if (errorDiv) errorDiv.style.display = 'none';
+            }
+            
+            // Call original update function if it exists
+            if (typeof updateApprovalData === 'function') {
+                updateApprovalData('plan_remarks', value);
+            }
         }
     </script>
 
@@ -4850,5 +5045,13 @@ Current Readiness: ${approvalsData.confirmed ? 'CERTIFIED FOR CONSTRUCTION' : 'P
         </div>
     </div>
 
+    <script src="js/architectural_bg.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if(typeof initArchitecturalBackground === 'function') {
+                initArchitecturalBackground('canvas-container');
+            }
+        });
+    </script>
 </body>
 </html>

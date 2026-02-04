@@ -402,7 +402,7 @@
             display: flex;
             flex-direction: column;
             justify-content: center;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 0 1px rgba(0, 0, 0, 0.05);
             transition: transform 0.2s;
             position: relative;
             overflow: hidden;
@@ -980,6 +980,8 @@
                 const scene = new THREE.Scene();
                 // Transparent background to blend with page or use a light color
                 scene.background = new THREE.Color('#f6f7f2');
+                // Add soft fog for atmospheric perspective (fades distant objects)
+                scene.fog = new THREE.Fog('#f6f7f2', 10, 45);
 
                 // Camera setup
                 const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);

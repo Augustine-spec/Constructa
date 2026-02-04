@@ -54,7 +54,7 @@ foreach ($projects as $p) {
             --text-main: #1e293b;
             --text-muted: #64748b;
             --glass-border: rgba(255, 255, 255, 0.6);
-            --shadow: 0 10px 30px rgba(0,0,0,0.05);
+            --shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 0 1px rgba(0, 0, 0, 0.05);
             --nav-height: 70px;
         }
 
@@ -288,24 +288,27 @@ foreach ($projects as $p) {
                     if ($proj['status'] === 'completed') $status_class = 'status-completed';
                     if ($proj['status'] === 'rejected') $status_class = 'status-rejected';
                     
-                    // Logic: If pending, show 0 progress and distinct label
-                    $stage = $proj['current_stage'] ?? 1;
-                    $progress = min(100, round(($stage / 7) * 100));
+                    // Logic: Calculate progress based on current_stage
+                    // Stages: 1-7, where 7 is completion
+                    $stage = isset($proj['current_stage']) ? (int)$proj['current_stage'] : 1;
                     
-                    $stage_label = "Stage " . $stage;
-                    
-                    if ($proj['status'] === 'pending') {
-                        $progress = 0;
-                        $stage_label = "Request Sent";
-                    }
-                    if ($proj['status'] === 'completed') {
+                    // If current_stage is 7 or higher, it's 100% complete
+                    if ($stage >= 7) {
                         $progress = 100;
                         $stage_label = "Completed";
-                        $stage = 8; // Max
-                    }
-                    if ($proj['status'] === 'rejected') {
+                        $status_class = 'status-completed'; // Force completed status
+                    } elseif ($proj['status'] === 'pending') {
+                        $progress = 0;
+                        $stage_label = "Request Sent";
+                        $stage = 0;
+                    } elseif ($proj['status'] === 'rejected') {
                         $progress = 0;
                         $stage_label = "Rejected";
+                        $stage = 0;
+                    } else {
+                        // Active project: calculate progress (stages 1-6 map to 0-85%, stage 7 is 100%)
+                        $progress = min(100, round(($stage / 7) * 100));
+                        $stage_label = "Stage " . $stage . " of 7";
                     }
                 ?>
                 <div class="project-card" onclick="window.location.href='project_tracking.php?project_id=<?php echo $proj['id']; ?>'">
@@ -367,6 +370,7 @@ foreach ($projects as $p) {
             if (container && typeof THREE !== 'undefined') {
                 const scene = new THREE.Scene();
                 scene.background = new THREE.Color('#f6f7f2');
+                scene.fog = new THREE.Fog('#f6f7f2', 10, 45);
 
                 const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
                 camera.position.z = 10;
