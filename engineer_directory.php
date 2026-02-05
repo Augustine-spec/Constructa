@@ -310,6 +310,13 @@ $result = $conn->query($sql);
                                 <span><?php echo $exp; ?> Yrs Exp</span>
                                 <span>Verified</span>
                             </div>
+                            <!-- Chat Button Area -->
+                            <div style="margin-top: 1rem; position: relative; z-index: 2;">
+                                <button onclick="event.stopPropagation(); window.location.href='chat_with_engineer.php?engineer_id=<?php echo $row['id']; ?>'" 
+                                    style="width: 100%; padding: 0.8rem; background: var(--primary-green); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: all 0.2s;">
+                                    <i class="fas fa-comment"></i> Chat with Engineer
+                                </button>
+                            </div>
                         </div>
                         <div class="card-bg-3d"></div>
                     </div>

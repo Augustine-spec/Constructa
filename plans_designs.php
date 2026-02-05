@@ -1280,10 +1280,7 @@ if (!isset($_SESSION['user_id'])) {
             </div>
 
             <!-- Top Right Actions -->
-            <div class="top-right-actions">
-                <button class="btn-pdf" onclick="downloadPlan()"><i class="fas fa-file-pdf"></i> Download PDF</button>
-                <button class="btn-estimate-budget" onclick="location.href='budget_calculator.php'"><i class="fas fa-calculator"></i> Estimate Budget</button>
-            </div>
+            <!-- Top Right Actions Removed as per request -->
             <a href="homeowner.php" class="brand-floating">
         <i class="far fa-building"></i> Constructa AI
     </a>
@@ -1888,116 +1885,296 @@ if (!isset($_SESSION['user_id'])) {
             if(!houseGroup) return;
             while(houseGroup.children.length > 0) houseGroup.remove(houseGroup.children[0]);
 
-            const plotScale = 0.5; // Increased scale
+            const plotScale = 0.5; 
             const pW = houseLayout.plot.width * plotScale;
             const pL = houseLayout.plot.length * plotScale;
-            const unitScale = 0.5; // Increased scale
+            const unitScale = 0.5; 
             const hUnit = 10 * unitScale;
             
-            // Platform
-            const platformGeo = new THREE.BoxGeometry(pW, 0.1, pL);
-            const platformMat = new THREE.MeshStandardMaterial({ color: 0x294033, transparent: true, opacity: 0.2 });
-            const platform = new THREE.Mesh(platformGeo, platformMat);
-            platform.position.y = -0.05;
-            houseGroup.add(platform);
+            // === STYLE DEFINITIONS ===
+            const isTraditional = (formData.style === 'traditional');
+            
+            // 1. Lighting (Uniform Neutral / Professional)
+            if(houseScene) {
+                houseScene.children.forEach(c => {
+                    if(c.isAmbientLight) {
+                        c.color.setHex(0xffffff);
+                        c.intensity = 0.6;
+                    }
+                    if(c.isDirectionalLight) {
+                        c.color.setHex(0xffffff); 
+                        c.position.set(-5, 10, 5); 
+                        c.intensity = 0.8;
+                        c.castShadow = true;
+                    }
+                });
+            }
 
+            const stylePalette = isTraditional ? {
+                wall: 0xffffff,      // Match Modern White
+                trim: 0x1e293b,      // Modern Dark Slate Trim
+                roof: 0xffffff,      // White Roof (Traditional request)
+                wood: 0x3e2723,      // Dark Wood (Pillars) - Kept as wood texture
+                floor: 0x94a3b8,     // Neutral Grey Stone
+                base: 0x0f172a,      // Dark Base
+                glass: 0x1a1a1a
+            } : {
+                wall: 0xffffff,
+                trim: 0xcbd5e1,
+                roof: 0x1e293b,
+                wood: 0x64748b,
+                base: 0x334155,
+                floor: 0xe2e8f0,
+                glass: 0xa5f3fc
+            };
+
+            // === REALISTIC BASE (Plinth) ===
+            const plinthH = 0.6 * unitScale; // High 2ft plinth
+            const platformGeo = new THREE.BoxGeometry(pW + 1, plinthH, pL + 1); 
+            const platformMat = new THREE.MeshStandardMaterial({ 
+                color: stylePalette.base, 
+                roughness: 0.9 
+            });
+            const platform = new THREE.Mesh(platformGeo, platformMat);
+            platform.position.y = plinthH/2 - 0.3; // Sit on ground
+            houseGroup.add(platform);
+            
+            // Floor Surface
+            const floorSurfGeo = new THREE.BoxGeometry(pW + 0.8, 0.05, pL + 0.8);
+            const floorSurfMat = new THREE.MeshStandardMaterial({ color: stylePalette.floor, roughness: 0.4 });
+            const floorSurf = new THREE.Mesh(floorSurfGeo, floorSurfMat);
+            floorSurf.position.y = plinthH - 0.3 + 0.025;
+            houseGroup.add(floorSurf);
+
+            // === STRUCTURE ===
             for(let f = 0; f < formData.floors; f++) {
-                const floorY = f * hUnit;
+                const floorY = (f * hUnit) + (plinthH - 0.3);
+
                 houseLayout.rooms.forEach(room => {
                     const rW = room.width * unitScale;
                     const rL = room.height * unitScale;
                     const rX = (room.x * unitScale) - (pW / 2) + (rW / 2);
                     const rZ = (room.y * unitScale) - (pL / 2) + (rL / 2);
 
-                    // Floor
-                    const fGeo = new THREE.BoxGeometry(rW, 0.05, rL);
-                    const fMat = new THREE.MeshStandardMaterial({ color: room.color });
-                    const fMesh = new THREE.Mesh(fGeo, fMat);
-                    fMesh.position.set(rX, floorY, rZ);
+                    // Interior Floor
+                    const fGeo = new THREE.BoxGeometry(rW-0.1, 0.02, rL-0.1);
+                    const fMesh = new THREE.Mesh(fGeo, floorSurfMat);
+                    fMesh.position.set(rX, floorY + 0.05, rZ);
                     houseGroup.add(fMesh);
 
-                    // Ceiling
-                    const cGeo = new THREE.BoxGeometry(rW, 0.05, rL);
-                    const cMat = new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: !isWalking, opacity: isWalking ? 1 : 0.1 });
-                    const cMesh = new THREE.Mesh(cGeo, cMat);
-                    cMesh.position.set(rX, floorY + hUnit, rZ);
-                    houseGroup.add(cMesh);
-
-                    // Furniture
-                    if(room.furniture) {
-                        room.furniture.forEach(fur => {
-                            const fw = fur.w * unitScale;
-                            const fl = fur.l * unitScale;
-                            const fh = (fur.type === 'wardrobe' ? 7 : (fur.type === 'desk' ? 2.5 : 1.5)) * unitScale;
-                            const fx = rX - (rW/2) + (fur.x * rW) + (fw/2);
-                            const fz = rZ - (rL/2) + (fur.y * rL) + (fl/2);
-                            
-                            const furMat = new THREE.MeshStandardMaterial({ color: (fur.type==='bed' || fur.type==='sofa') ? 0x8d6e63 : 0x5a4a42 });
-                            const furMesh = createDetailedFurniture(fur.type, fw, fl, fh, furMat);
-                            furMesh.position.set(fx, floorY, fz);
-                            houseGroup.add(furMesh);
-                        });
-                        
-                        // Add an Avatar to the Living Room and Office-style Bedrooms
-                        if (f === 0) {
-                            if (room.type === 'living' || room.furniture.some(f => f.type === 'desk')) {
-                                const avatar = createDetailedFurniture('avatar', 0, 0, 0, null);
-                                avatar.position.set(rX + (room.type==='living'?0.5:1), floorY, rZ + (room.type==='living'?0.5:1));
-                                houseGroup.add(avatar);
-                            }
-                        }
-                    }
-
                     // Walls
-                    const wThick = 0.1 * unitScale;
-                    const wMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+                    const wThick = isTraditional ? (0.25 * unitScale) : (0.1 * unitScale); 
+                    const wMat = new THREE.MeshStandardMaterial({ color: stylePalette.wall, roughness: 1.0 });
+                    
                     const dW = 3 * unitScale;
                     const dH = 7 * unitScale;
                     
                     const sideWalls = [
-                        { p: [0, 0, -rL/2], d: [rW, hUnit, wThick], door: room.doors?.find(d=>d.wall==='North') },
-                        { p: [0, 0, rL/2], d: [rW, hUnit, wThick], door: room.doors?.find(d=>d.wall==='South') },
-                        { p: [-rW/2, 0, 0], d: [wThick, hUnit, rL], door: room.doors?.find(d=>d.wall==='West') },
-                        { p: [rW/2, 0, 0], d: [wThick, hUnit, rL], door: room.doors?.find(d=>d.wall==='East') }
+                        { p: [0, 0, -rL/2], d: [rW, hUnit, wThick], door: room.doors?.find(d=>d.wall==='North'), axis: 'z' },
+                        { p: [0, 0, rL/2], d: [rW, hUnit, wThick], door: room.doors?.find(d=>d.wall==='South'), axis: 'z' },
+                        { p: [-rW/2, 0, 0], d: [wThick, hUnit, rL], door: room.doors?.find(d=>d.wall==='West'), axis: 'x' },
+                        { p: [rW/2, 0, 0], d: [wThick, hUnit, rL], door: room.doors?.find(d=>d.wall==='East'), axis: 'x' }
                     ];
 
                     sideWalls.forEach(sw => {
                         const wallGrp = new THREE.Group();
                         wallGrp.position.set(rX + sw.p[0], floorY + hUnit/2, rZ + sw.p[2]);
-                        if(sw.door) {
-                            const lH = hUnit - dH;
-                            const lGeo = new THREE.BoxGeometry(sw.d[0], lH, sw.d[2]);
-                            const lMesh = new THREE.Mesh(lGeo, wMat);
-                            lMesh.position.y = (hUnit/2) - (lH/2);
-                            wallGrp.add(lMesh);
 
-                            const sW = (sw.d[0] - dW) / 2;
-                            if(sW > 0) {
-                                const sGeo = new THREE.BoxGeometry(sW, dH, sw.d[2]);
-                                const left = new THREE.Mesh(sGeo, wMat);
+                        if(sw.door) {
+                            // Door Logic (Lintel + Sides)
+                             const lH = hUnit - dH;
+                            const lintel = new THREE.Mesh(new THREE.BoxGeometry(sw.d[0], lH, sw.d[2]), wMat);
+                            lintel.position.y = (hUnit/2) - (lH/2);
+                            wallGrp.add(lintel);
+
+                            const sW = (Math.max(sw.d[0], sw.d[2]) - dW) / 2;
+                            const left = new THREE.Mesh(new THREE.BoxGeometry(sw.axis==='z'?sW:sw.d[0], dH, sw.axis==='z'?sw.d[2]:sW), wMat);
+                            const right = left.clone();
+                            if (sw.axis === 'z') {
                                 left.position.set(-sw.d[0]/2 + sW/2, -lH/2, 0);
-                                wallGrp.add(left);
-                                const right = new THREE.Mesh(sGeo, wMat);
                                 right.position.set(sw.d[0]/2 - sW/2, -lH/2, 0);
-                                wallGrp.add(right);
+                            } else {
+                                left.position.set(0, -lH/2, -sw.d[2]/2 + sW/2);
+                                right.position.set(0, -lH/2, sw.d[2]/2 - sW/2);
+                            }
+                            wallGrp.add(left);
+                            wallGrp.add(right);
+
+                            // DOOR MODELS
+                            if (sw.door.type === 'main') {
+                                if (isTraditional) {
+                                    // TRADITIONAL ORNATE DOOR
+                                    const dMat = new THREE.MeshStandardMaterial({color: stylePalette.wood});
+                                    const dGroup = new THREE.Group();
+                                    dGroup.add(new THREE.Mesh(new THREE.BoxGeometry(dW, dH, wThick+0.05), dMat));
+                                    // Panels
+                                    const p1 = new THREE.Mesh(new THREE.BoxGeometry(dW/2-0.1, dH-0.2, 0.05), new THREE.MeshStandardMaterial({color: 0x3e2723}));
+                                    p1.position.set(-dW/4, 0, wThick/2 + 0.03);
+                                    const p2 = p1.clone(); p2.position.set(dW/4, 0, wThick/2 + 0.03);
+                                    dGroup.add(p1); dGroup.add(p2);
+                                    dGroup.position.y = -lH/2;
+                                    if(sw.axis === 'x') dGroup.rotation.y = Math.PI/2;
+                                    wallGrp.add(dGroup);
+                                } else {
+                                    // MODERN SLAB DOOR
+                                    const dMat = new THREE.MeshStandardMaterial({color: 0x334155, roughness: 0.5});
+                                    const door = new THREE.Mesh(new THREE.BoxGeometry(dW, dH, 0.1), dMat);
+                                    door.position.y = -lH/2;
+                                    // Simple Handle
+                                    const h = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.4, 0.15), new THREE.MeshStandardMaterial({color: 0xe2e8f0}));
+                                    h.position.set(dW/3, 0, 0);
+                                    door.add(h);
+                                    
+                                    if(sw.axis === 'x') door.rotation.y = Math.PI/2;
+                                    wallGrp.add(door);
+                                }
                             }
                         } else {
-                            const wGeo = new THREE.BoxGeometry(sw.d[0], hUnit, sw.d[2]);
-                            const wMesh = new THREE.Mesh(wGeo, wMat);
-                            wallGrp.add(wMesh);
+                            // Solid Wall + Windows
+                            const dim = Math.max(sw.d[0], sw.d[2]);
+                            
+                            // Window Logic (If wall is long enough)
+                            if (dim > 5 * unitScale) {
+                                const wGeo = new THREE.BoxGeometry(sw.d[0], hUnit, sw.d[2]);
+                                const wMesh = new THREE.Mesh(wGeo, wMat);
+                                wallGrp.add(wMesh);
+
+                                // Create Window Group
+                                const winGrp = new THREE.Group();
+                                
+                                if (isTraditional) {
+                                    // TRADITIONAL WINDOW (Frame + Shutters)
+                                    const winW = 2.5 * unitScale;
+                                    const winH = 3.5 * unitScale;
+                                    const frameMat = new THREE.MeshStandardMaterial({color: stylePalette.wood});
+                                    const frame = new THREE.Mesh(new THREE.BoxGeometry(winW, winH, wThick + 0.1), frameMat);
+                                    winGrp.add(frame);
+                                    const sMat = new THREE.MeshStandardMaterial({color: 0x3e2723});
+                                    const s = new THREE.Mesh(new THREE.BoxGeometry(winW-0.2, winH-0.2, 0.05), sMat);
+                                    s.position.z = 0.05;
+                                    winGrp.add(s);
+                                } else {
+                                    // MODERN WINDOW (Glass Pane + Minimal Frame)
+                                    const winW = 3.0 * unitScale;
+                                    const winH = 4.0 * unitScale;
+                                    
+                                    // Glass
+                                    const glassGeo = new THREE.PlaneGeometry(winW, winH);
+                                    const glassMat = new THREE.MeshStandardMaterial({
+                                        color: 0xa5f3fc, 
+                                        metalness: 0.9, 
+                                        roughness: 0.1, 
+                                        transparent: true, 
+                                        opacity: 0.3,
+                                        side: THREE.DoubleSide
+                                    });
+                                    const glass = new THREE.Mesh(glassGeo, glassMat);
+                                    glass.position.z = wThick/2 + 0.02; // Just outside surface
+                                    winGrp.add(glass);
+                                    
+                                    // Frame
+                                    const fMat = new THREE.MeshStandardMaterial({color: 0x1e293b});
+                                    // Top/Bottom
+                                    const f1 = new THREE.Mesh(new THREE.BoxGeometry(winW, 0.1, 0.1), fMat); f1.position.set(0, winH/2, wThick/2); winGrp.add(f1);
+                                    const f2 = f1.clone(); f2.position.set(0, -winH/2, wThick/2); winGrp.add(f2);
+                                }
+                                
+                                if(sw.axis==='x') winGrp.rotation.y = Math.PI/2;
+                                wallGrp.add(winGrp);
+                                
+                            } else {
+                                // Just Solid Wall
+                                const wGeo = new THREE.BoxGeometry(sw.d[0], hUnit, sw.d[2]);
+                                const wMesh = new THREE.Mesh(wGeo, wMat);
+                                wallGrp.add(wMesh);
+                            }
                         }
                         houseGroup.add(wallGrp);
                     });
                 });
             }
 
-            // Roof
-            const roofY = formData.floors * hUnit;
-            const rGeo = new THREE.BoxGeometry(pW + 0.5, 0.1, pL + 0.5);
-            const rMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, transparent: !isWalking, opacity: isWalking ? 1 : 0.2 });
-            const roof = new THREE.Mesh(rGeo, rMat);
-            roof.position.y = roofY;
-            if(!isWalking) houseGroup.add(roof);
+            // ROOF & EXTERIOR DETAILS
+            const roofY = (formData.floors * hUnit) + (plinthH - 0.3);
+            
+            // Dynamic Roof Visibility: Transparent in 3D View (to see layout), Solid in Walkthrough (Ceiling)
+            const roofOpacity = isWalking ? 1.0 : 0.2;
+            const roofTransparent = !isWalking;
+
+            if (isTraditional) {
+                // FLAT ROOF (Traditional with Veranda coverage)
+                const rMat = new THREE.MeshStandardMaterial({ 
+                    color: stylePalette.roof, 
+                    roughness: 0.6,
+                    transparent: roofTransparent, 
+                    opacity: roofOpacity,
+                    side: THREE.DoubleSide
+                });
+                
+                // Main flat slab
+                const roofGeo = new THREE.BoxGeometry(pW + 1.0, 0.2, pL + 1.5);
+                const roof = new THREE.Mesh(roofGeo, rMat);
+                roof.position.y = roofY;
+                roof.position.z = 0.5 * unitScale; 
+                houseGroup.add(roof);
+                
+                // Parapet Wall (Always visible)
+                const paraH = 0.8 * unitScale;
+                const paraThick = 0.1 * unitScale;
+                const pMat = new THREE.MeshStandardMaterial({ color: stylePalette.wall });
+                
+                const pg = new THREE.Group();
+                const bX = (pW + 1.0)/2;
+                const bZ = (pL + 1.5)/2;
+                
+                const pw1 = new THREE.Mesh(new THREE.BoxGeometry(pW + 1.0, paraH, paraThick), pMat); pw1.position.z = -bZ + paraThick/2;
+                const pw2 = new THREE.Mesh(new THREE.BoxGeometry(pW + 1.0, paraH, paraThick), pMat); pw2.position.z = bZ - paraThick/2;
+                const pw3 = new THREE.Mesh(new THREE.BoxGeometry(paraThick, paraH, pL + 1.5), pMat); pw3.position.x = -bX + paraThick/2;
+                const pw4 = new THREE.Mesh(new THREE.BoxGeometry(paraThick, paraH, pL + 1.5), pMat); pw4.position.x = bX - paraThick/2;
+                
+                pg.add(pw1); pg.add(pw2); pg.add(pw3); pg.add(pw4);
+                pg.position.y = roofY + 0.1 + paraH/2;
+                pg.position.z = 0.5 * unitScale;
+                houseGroup.add(pg);
+
+                // VERANDA PILLARS
+                const pRad = 0.2 * unitScale;
+                const pH = hUnit;
+                const postGeo = new THREE.BoxGeometry(pRad, pH, pRad);
+                const postMat = new THREE.MeshStandardMaterial({color: stylePalette.wood});
+                const baseGeo = new THREE.BoxGeometry(pRad*1.5, 0.3, pRad*1.5);
+                const baseMat = new THREE.MeshStandardMaterial({color: stylePalette.base});
+
+                const startX = -pW/2;
+                const endX = pW/2;
+                const zPos = pL/2 + 0.5;
+                const count = Math.floor(pW / (3*unitScale)) + 2;
+                
+                for(let i=0; i<count; i++) {
+                    const x = startX + (i * ((endX - startX)/(count-1)));
+                    const grp = new THREE.Group();
+                    const p = new THREE.Mesh(postGeo, postMat);
+                    p.position.y = pH/2;
+                    const b = new THREE.Mesh(baseGeo, baseMat);
+                    b.position.y = 0.15;
+                    grp.add(b); grp.add(p);
+                    grp.position.set(x, (plinthH - 0.3), zPos);
+                    houseGroup.add(grp);
+                }
+
+            } else {
+                // MODERN ROOF
+                const rGeo = new THREE.BoxGeometry(pW + 0.5, 0.1, pL + 0.5);
+                const rMat = new THREE.MeshStandardMaterial({ 
+                    color: stylePalette.roof, 
+                    transparent: roofTransparent, 
+                    opacity: roofOpacity,
+                    side: THREE.DoubleSide 
+                });
+                const roof = new THREE.Mesh(rGeo, rMat);
+                roof.position.y = roofY;
+                houseGroup.add(roof);
+            }
         }
 
         let controls;

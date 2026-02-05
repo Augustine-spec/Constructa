@@ -604,13 +604,31 @@ while ($row = $result->fetch_assoc()) {
                     </div>
                 </div>
 
+                <!-- Step 4: Design Style -->
+                <div class="step" id="step-4">
+                    <div class="step-title">Design Style</div>
+                    <div class="step-desc">Select the architectural style.</div>
+                    <div class="selection-grid" style="grid-template-columns: 1fr 1fr;">
+                        <div class="selection-card selected" onclick="setDesignStyle('modern', this)">
+                            <i class="fas fa-cube"></i>
+                            <h4>Modern</h4>
+                            <div style="font-size: 0.9rem; color:#64748b; margin-top:0.5rem;">Minimalist, flat roof, clean lines</div>
+                        </div>
+                        <div class="selection-card" onclick="setDesignStyle('traditional', this)">
+                            <i class="fas fa-landmark"></i>
+                            <h4>Traditional</h4>
+                            <div style="font-size: 0.9rem; color:#64748b; margin-top:0.5rem;">Pitched roof, verandas, cultural elements</div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="wizard-nav">
                     <button class="btn-wiz btn-prev" id="btn-prev" onclick="moveStep(-1)">Back</button>
                     <button class="btn-wiz btn-next" id="btn-next" onclick="moveStep(1)">Next Step <i class="fas fa-arrow-right"></i></button>
                 </div>
             </div>
 
-            <!-- Live Preview Sidebar (Visible only in Steps 1-3) -->
+            <!-- Live Preview Sidebar (Visible only in Steps 1-4) -->
             <div class="wizard-preview" id="wizard-sidebar">
                 <div class="live-total-label">Estimated Budget</div>
                 <div class="live-total-val" id="live-total">₹0</div>
@@ -628,6 +646,9 @@ while ($row = $result->fetch_assoc()) {
                     <li style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-weight: 500;">
                         <span>Quality</span> <span id="prev-quality" style="color: var(--primary); font-weight: 700;">Premium</span>
                     </li>
+                    <li style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-weight: 500;">
+                        <span>Style</span> <span id="prev-style" style="color: var(--primary); font-weight: 700;">Modern</span>
+                    </li>
                 </ul>
                 
                 <div style="margin-top: auto; padding: 1.5rem; background: rgba(255,255,255,0.5); border-radius: 12px; font-size: 0.85rem; color: var(--text-muted); border: 1px solid rgba(0,0,0,0.02);">
@@ -636,7 +657,7 @@ while ($row = $result->fetch_assoc()) {
             </div>
 
             <!-- ==============================================
-                 STEP 4: AI STUDY EXPERIENCE (FULL OVERLAY)
+                 STEP 5: AI STUDY EXPERIENCE (FULL OVERLAY)
                  ============================================== -->
             <div id="ai-study-container">
                 
@@ -772,11 +793,12 @@ while ($row = $result->fetch_assoc()) {
         let currentProject = null;
         let wizState = {
             step: 1,
-            maxStep: 3, // Normal wizard steps before AI mode
+            maxStep: 4, // Updated max steps
             area: 0,
             floors: 1,
             quality: 2200, 
-            qualityName: 'Premium'
+            qualityName: 'Premium',
+            designStyle: 'modern'
         };
         let finalCost = 0;
 
@@ -959,45 +981,85 @@ while ($row = $result->fetch_assoc()) {
             const material = new THREE.MeshPhongMaterial({ 
                 color: 0x2c4a3b, 
                 transparent: true, 
-                opacity: 0.6, // Increased opacity for better visibility
+                opacity: 0.6, 
                 side: THREE.DoubleSide
             });
-            const roofMaterial = new THREE.MeshPhongMaterial({ color: 0x8b4513, side: THREE.DoubleSide }); // Brownish roof
             const edgeMaterial = new THREE.LineBasicMaterial({ color: 0x1a2e23, transparent: true, opacity: 0.8 });
-            const baseMaterial = new THREE.MeshPhongMaterial({ color: 0xcccccc }); // Light gray base
+            const baseMaterial = new THREE.MeshPhongMaterial({ color: 0xcccccc }); 
 
-            for (let i = 0; i < floors; i++) {
-                const geo = new THREE.BoxGeometry(baseSide, floorHeight, baseSide);
-                const mesh = new THREE.Mesh(geo, material);
-                mesh.position.y = (i * floorHeight);
+            // --- TRADITIONAL VS MODERN LOGIC ---
+            if (wizState.designStyle === 'traditional') {
+                // TRADITIONAL STYLE
+                const pillarMat = new THREE.MeshPhongMaterial({ color: 0x8d6e63 }); // Wood-ish
+                const roofMat = new THREE.MeshPhongMaterial({ color: 0xa0522d }); // Terracotta
                 
-                const edges = new THREE.EdgesGeometry(geo);
-                const line = new THREE.LineSegments(edges, edgeMaterial);
-                line.position.y = mesh.position.y;
+                for (let i = 0; i < floors; i++) {
+                     // Main block (slightly smaller to allow for veranda/pillars)
+                    const mainGeo = new THREE.BoxGeometry(baseSide * 0.9, floorHeight, baseSide * 0.9);
+                    const mesh = new THREE.Mesh(mainGeo, material);
+                    mesh.position.y = (i * floorHeight);
+                    
+                    const edges = new THREE.EdgesGeometry(mainGeo);
+                    const line = new THREE.LineSegments(edges, edgeMaterial);
+                    line.position.y = mesh.position.y;
 
-                houseDisplayGroup.add(mesh);
-                houseDisplayGroup.add(line);
+                    houseDisplayGroup.add(mesh);
+                    houseDisplayGroup.add(line);
+                    
+                    // Add Pillars (Traditional feel) at corners
+                    [-1, 1].forEach(x => {
+                        [-1, 1].forEach(z => {
+                             const pGeo = new THREE.CylinderGeometry(0.05, 0.05, floorHeight, 8);
+                             const pillar = new THREE.Mesh(pGeo, pillarMat);
+                             pillar.position.set(x * baseSide * 0.5, (i*floorHeight), z * baseSide * 0.5);
+                             houseDisplayGroup.add(pillar);
+                        });
+                    });
+                }
+                
+                // Sloped Pitch Roof (Pyramid style)
+                const roofHeight = 1.0;
+                const roofGeo = new THREE.ConeGeometry(baseSide * 0.8, roofHeight, 4);
+                const roof = new THREE.Mesh(roofGeo, roofMat);
+                roof.position.y = (floors * floorHeight) - (floorHeight/2) + (roofHeight/2);
+                roof.rotation.y = Math.PI / 4;
+                houseDisplayGroup.add(roof);
+
+            } else {
+                // MODERN STYLE (Flat/Boxy)
+                const roofMat = new THREE.MeshPhongMaterial({ color: 0x2c4a3b }); // Matches walls
+                
+                for (let i = 0; i < floors; i++) {
+                    const geo = new THREE.BoxGeometry(baseSide, floorHeight, baseSide);
+                    const mesh = new THREE.Mesh(geo, material);
+                    mesh.position.y = (i * floorHeight);
+                    
+                    const edges = new THREE.EdgesGeometry(geo);
+                    const line = new THREE.LineSegments(edges, edgeMaterial);
+                    line.position.y = mesh.position.y;
+
+                    houseDisplayGroup.add(mesh);
+                    houseDisplayGroup.add(line);
+                }
+                
+                // Flat Roof (Thin box)
+                const roofGeo = new THREE.BoxGeometry(baseSide * 1.05, 0.1, baseSide * 1.05);
+                const roof = new THREE.Mesh(roofGeo, roofMat);
+                roof.position.y = (floors * floorHeight) - (floorHeight/2) + 0.1;
+                houseDisplayGroup.add(roof);
             }
 
-            // Add Roof
-            const roofHeight = 0.8;
-            const roofGeo = new THREE.ConeGeometry(baseSide * 0.8, roofHeight, 4);
-            const roof = new THREE.Mesh(roofGeo, roofMaterial);
-            roof.position.y = (floors * floorHeight) - (floorHeight/2) + (roofHeight/2);
-            roof.rotation.y = Math.PI / 4;
-            houseDisplayGroup.add(roof);
-
-            // Add Base/Plot
+            // Common Base/Plot
             const plotGeo = new THREE.BoxGeometry(baseSide * 1.5, 0.1, baseSide * 1.5);
             const plot = new THREE.Mesh(plotGeo, baseMaterial);
             plot.position.y = -floorHeight/2;
             houseDisplayGroup.add(plot);
 
             // Center the group
-            const totalH = (floors * floorHeight) + roofHeight;
+            const totalH = (floors * floorHeight) + 1;
             houseDisplayGroup.position.y = -(totalH / 4);
 
-            // Adjust camera based on height
+            // Adjust camera
             const totalHeight = floors * floorHeight;
             const distance = Math.max(baseSide * 2, totalHeight * 1.5, 5);
             housePreviewCamera.position.set(distance, distance * 0.8, distance);
@@ -1011,7 +1073,7 @@ while ($row = $result->fetch_assoc()) {
             document.getElementById('wiz-client-name').innerText = 'Client: ' + project.homeowner_name;
             
             // Reset
-            wizState.area = 0; wizState.floors = 1;
+            wizState.area = 0; wizState.floors = 1; wizState.designStyle = 'modern';
             document.getElementById('inp-area').value = '';
             document.getElementById('disp-floors').innerText = '1';
             
@@ -1036,6 +1098,7 @@ while ($row = $result->fetch_assoc()) {
                 navBar.style.pointerEvents = 'none';
             }
             
+            wizState.step = 1; // Reset to step 1
             updateUI();
         }
 
@@ -1063,8 +1126,8 @@ while ($row = $result->fetch_assoc()) {
                     alert("Please enter a valid area (min 100 sq.ft)"); return;
                 }
                 
-                // If moving past Step 3, triggering AI Mode
-                if(wizState.step === 3) {
+                // If moving past Max Steps, triggering AI Mode
+                if(wizState.step === wizState.maxStep) {
                     launchAIStudy();
                     return;
                 }
@@ -1077,7 +1140,7 @@ while ($row = $result->fetch_assoc()) {
 
         function updateUI() {
             // Steps
-            for(let i=1; i<=3; i++) {
+            for(let i=1; i<=wizState.maxStep; i++) {
                 const el = document.getElementById(`step-${i}`);
                 if(el) {
                    if(i === wizState.step) el.classList.add('active');
@@ -1090,7 +1153,7 @@ while ($row = $result->fetch_assoc()) {
             const next = document.getElementById('btn-next');
             
             prev.style.visibility = (wizState.step === 1) ? 'hidden' : 'visible';
-            next.innerHTML = (wizState.step === 3) ? 
+            next.innerHTML = (wizState.step === wizState.maxStep) ? 
                 'Analyze Project <i class="fas fa-robot"></i>' : 
                 'Next Step <i class="fas fa-arrow-right"></i>';
 
@@ -1181,7 +1244,15 @@ while ($row = $result->fetch_assoc()) {
         function setQuality(val, el) {
             wizState.quality = val;
             wizState.qualityName = el.querySelector('h4').innerText;
-            document.querySelectorAll('.selection-card').forEach(c => c.classList.remove('selected'));
+            // Only remove selection from quality cards (in step 3)
+            document.querySelectorAll('#step-3 .selection-card').forEach(c => c.classList.remove('selected'));
+            el.classList.add('selected');
+            calculate();
+        }
+        
+        function setDesignStyle(style, el) {
+            wizState.designStyle = style;
+            document.querySelectorAll('#step-4 .selection-card').forEach(c => c.classList.remove('selected'));
             el.classList.add('selected');
             calculate();
         }
@@ -1201,6 +1272,7 @@ while ($row = $result->fetch_assoc()) {
             document.getElementById('prev-area').innerText = wizState.area + ' sq.ft';
             document.getElementById('prev-floors').innerText = wizState.floors;
             document.getElementById('prev-quality').innerText = wizState.qualityName;
+            document.getElementById('prev-style').innerText = wizState.designStyle.charAt(0).toUpperCase() + wizState.designStyle.slice(1);
 
             updateHousePreview3D();
         }
