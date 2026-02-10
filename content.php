@@ -198,67 +198,139 @@ session_start();
     </main>
 
     <!-- Add Image Modal -->
-    <div id="add-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-2xl max-w-2xl w-full p-8 shadow-2xl">
-            <div class="flex items-center justify-between mb-6">
-                <h2 class="text-2xl font-bold text-slate-900">Add New Image</h2>
-                <button onclick="closeAddModal()" class="w-10 h-10 rounded-full hover:bg-slate-100 flex items-center justify-center transition">
-                    <i class="fa-solid fa-xmark text-xl text-slate-600"></i>
-                </button>
+    <div id="add-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md hidden flex items-center justify-center z-50 p-4 transition-all duration-300">
+        <div class="bg-white rounded-3xl max-w-4xl w-full flex flex-col md:flex-row overflow-hidden shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] border border-white/20">
+            
+            <!-- Left: Visual Guide & Preview (35%) -->
+            <div class="md:w-5/12 bg-slate-50 p-8 border-r border-slate-100 flex flex-col items-center justify-center text-center">
+                <div id="preview-placeholder" class="w-full aspect-square bg-slate-200 rounded-2xl flex flex-col items-center justify-center border-2 border-dashed border-slate-300 text-slate-400 group transition-all duration-500">
+                    <i class="fa-solid fa-cloud-arrow-up text-5xl mb-4 group-hover:scale-110 transition"></i>
+                    <p class="text-sm font-medium text-slate-600">Image Preview</p>
+                    <p class="text-[11px] mt-1 text-slate-400 font-normal">Link will appear here once validated</p>
+                </div>
+                <div id="image-preview-container" class="hidden w-full aspect-square rounded-2xl overflow-hidden shadow-xl border-4 border-white">
+                    <img id="live-preview-img" src="" alt="Preview" class="w-full h-full object-cover">
+                </div>
+                
+                <div class="mt-8 text-left w-full space-y-4">
+                    <div class="flex items-start gap-3">
+                        <div class="w-6 h-6 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center shrink-0 mt-0.5"><i class="fa-solid fa-check text-[10px]"></i></div>
+                        <div>
+                            <p class="text-xs font-bold text-slate-800 uppercase tracking-wider">Quality First</p>
+                            <p class="text-[11px] text-slate-500">High-resolution assets ensure a premium user experience.</p>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <form id="add-image-form" class="space-y-5">
-                <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-2">Image URL</label>
-                    <input type="url" id="image-url" required 
-                        class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition"
-                        placeholder="https://images.pexels.com/photos/...">
-                    <p class="text-xs text-slate-500 mt-1">Enter the full URL of the image</p>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
+            <!-- Right: Input Collection (65%) -->
+            <div class="md:w-7/12 p-8 flex flex-col">
+                <div class="flex items-center justify-between mb-8">
                     <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-2">Category</label>
-                        <select id="category" required 
-                            class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition">
-                            <option value="exterior">Exterior</option>
-                            <option value="interior">Interior</option>
-                        </select>
+                        <h2 id="modal-title" class="text-2xl font-bold text-slate-900 tracking-tight text-brand-900">Resource Entry</h2>
+                        <div class="flex items-center gap-2 mt-1">
+                            <span id="step-1-indicator" class="w-10 h-1 rounded-full bg-brand-600"></span>
+                            <span id="step-2-indicator" class="w-10 h-1 rounded-full bg-slate-200"></span>
+                        </div>
                     </div>
-
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-2">Subcategory</label>
-                        <input type="text" id="subcategory" 
-                            class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition"
-                            placeholder="e.g., living_room, kitchen">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-2">Title</label>
-                    <input type="text" id="title" required 
-                        class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition"
-                        placeholder="Modern House Exterior">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-2">Description</label>
-                    <textarea id="description" rows="3" 
-                        class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition resize-none"
-                        placeholder="Beautiful house exterior design with modern architecture."></textarea>
-                </div>
-
-                <div class="flex gap-3 pt-4">
-                    <button type="button" onclick="closeAddModal()" 
-                        class="flex-1 px-6 py-3 border border-slate-300 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition">
-                        Cancel
-                    </button>
-                    <button type="submit" 
-                        class="flex-1 px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-lg font-medium transition shadow-lg shadow-brand-200">
-                        Add Image
+                    <button onclick="closeAddModal()" class="w-10 h-10 rounded-xl hover:bg-slate-100 flex items-center justify-center transition">
+                        <i class="fa-solid fa-xmark text-slate-500"></i>
                     </button>
                 </div>
-            </form>
+
+                <form id="add-image-form" class="flex-1 space-y-6">
+                    <!-- Step 1: Data entry -->
+                    <div id="form-step-input" class="space-y-5">
+                        <div class="space-y-1.5">
+                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Image URL</label>
+                            <div class="relative group">
+                                <input type="url" id="image-url" required 
+                                    class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition text-sm font-medium"
+                                    placeholder="https://images.pexels.com/photos/..."
+                                    oninput="handleUrlInput()">
+                                <div id="url-status" class="absolute right-4 top-1/2 -translate-y-1/2 hidden">
+                                    <i class="fa-solid fa-circle-check text-green-500"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-1.5">
+                                <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Category</label>
+                                <select id="category" required onchange="handleCategoryChange()"
+                                    class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-brand-500/10 outline-none transition text-sm font-medium cursor-pointer appearance-none">
+                                    <option value="exterior">Exterior View</option>
+                                    <option value="interior">Interior View</option>
+                                </select>
+                            </div>
+                            <div class="space-y-1.5">
+                                <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Refinement</label>
+                                <input type="text" id="subcategory" list="sub-options"
+                                    class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-brand-500/10 outline-none transition text-sm font-medium"
+                                    placeholder="e.g., Living Room">
+                                <datalist id="sub-options"></datalist>
+                            </div>
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Professional Title</label>
+                            <input type="text" id="title" required 
+                                class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-brand-500/10 outline-none transition text-sm font-medium"
+                                placeholder="Descriptive Name">
+                            <p class="text-[10px] text-slate-400 pl-1">Use a title that clearly describes the design aesthetic.</p>
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Detailed Description</label>
+                            <textarea id="description" rows="3" 
+                                class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-brand-500/10 outline-none transition text-sm font-medium resize-none shadow-inner"
+                                placeholder="Key architectural highlights and materials..."></textarea>
+                            <p class="text-[10px] text-slate-400 pl-1">Provide context for the engineering and design choices.</p>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Confirmation -->
+                    <div id="form-step-confirm" class="hidden space-y-6 animate-in slide-in-from-right duration-300">
+                        <div class="bg-brand-50/50 p-6 rounded-2xl border border-brand-100/50">
+                            <h4 class="text-xs font-bold text-brand-600 uppercase tracking-widest mb-4">Summary Verification</h4>
+                            <div class="grid grid-cols-2 gap-y-4 gap-x-6">
+                                <div>
+                                    <p class="text-[10px] text-slate-400 font-bold uppercase mb-1">Asset Identity</p>
+                                    <p id="summary-title" class="text-sm font-bold text-slate-900">--</p>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] text-slate-400 font-bold uppercase mb-1">Classification</p>
+                                    <p id="summary-taxonomy" class="text-sm font-bold text-slate-900 italic">--</p>
+                                </div>
+                                <div class="col-span-2">
+                                    <p class="text-[10px] text-slate-400 font-bold uppercase mb-1">Resource Context</p>
+                                    <p id="summary-desc" class="text-sm text-slate-700 leading-relaxed font-medium">--</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3 p-4 bg-amber-50/50 border border-amber-100 rounded-xl">
+                            <i class="fa-solid fa-shield-halved text-amber-500"></i>
+                            <p class="text-[11px] text-amber-700 font-medium">Review the image preview on the left to ensure the URL is valid and the quality meets platform standards.</p>
+                        </div>
+                    </div>
+
+                    <!-- Modal Actions -->
+                    <div class="flex flex-col sm:flex-row gap-3 pt-6 border-t border-slate-100">
+                        <button type="button" id="prev-btn" onclick="goToStep(1)" class="hidden flex-1 px-6 py-3.5 bg-slate-50 text-slate-500 rounded-2xl font-bold hover:bg-slate-100 transition flex items-center justify-center gap-2 border border-slate-200">
+                            <i class="fa-solid fa-arrow-left text-[10px]"></i> Back
+                        </button>
+                        <button type="button" id="cancel-btn" onclick="closeAddModal()" class="flex-1 px-6 py-3.5 bg-slate-50 text-slate-500 rounded-2xl font-bold hover:bg-slate-100 hover:text-red-500 transition border border-slate-100">
+                            Cancel
+                        </button>
+                        <button type="button" id="next-btn" onclick="goToStep(2)" class="flex-1 px-6 py-3.5 bg-brand-600 text-white rounded-2xl font-bold hover:bg-brand-700 transition shadow-lg shadow-brand-200 flex items-center justify-center gap-2">
+                            Review Summary <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                        </button>
+                        <button type="submit" id="submit-btn" class="hidden flex-1 px-6 py-3.5 bg-brand-600 text-white rounded-2xl font-bold hover:bg-brand-700 transition shadow-lg shadow-brand-200">
+                            Confirm & Publish
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -371,16 +443,184 @@ session_start();
 
         function openAddModal() {
             document.getElementById('add-modal').classList.remove('hidden');
+            goToStep(1);
+            handleCategoryChange();
         }
 
         function closeAddModal() {
             document.getElementById('add-modal').classList.add('hidden');
             document.getElementById('add-image-form').reset();
+            resetPreview();
+            goToStep(1);
+        }
+
+        // --- NEW MODAL UI LOGIC ---
+
+        function validateTextInput(input, fieldName) {
+            const originalValue = input.value;
+            // Strict rule: No digits and no arithmetic symbols/math notations
+            // Math symbols: + - * / = % < >
+            // Digits: 0-9
+            const cleanedValue = originalValue.replace(/[0-9\+\-\*\/\=%<>]/g, '');
+            
+            if (originalValue !== cleanedValue) {
+                input.value = cleanedValue;
+                showValidationError(input, `Numbers and math operators are not allowed in ${fieldName}`);
+                return false;
+            }
+            return true;
+        }
+
+        function showValidationError(input, message) {
+            // Add a temporary shake effect
+            input.classList.add('border-red-400', 'animate-shake');
+            setTimeout(() => {
+                input.classList.remove('border-red-400', 'animate-shake');
+            }, 500);
+        }
+
+        // Attach live listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            const titleInput = document.getElementById('title');
+            const subInput = document.getElementById('subcategory');
+            const descInput = document.getElementById('description');
+
+            const fields = [
+                { el: titleInput, name: 'Title' },
+                { el: subInput, name: 'Sub-Type' },
+                { el: descInput, name: 'Description' }
+            ];
+
+            fields.forEach(field => {
+                if (field.el) {
+                    field.el.addEventListener('input', (e) => validateTextInput(e.target, field.name));
+                }
+            });
+        });
+
+        // Shake animation style
+        const validationStyle = document.createElement('style');
+        validationStyle.textContent = `
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                25% { transform: translateX(-5px); }
+                75% { transform: translateX(5px); }
+            }
+            .animate-shake { animation: shake 0.2s ease-in-out 0s 2; }
+        `;
+        document.head.appendChild(validationStyle);
+
+        function handleUrlInput() {
+            const url = document.getElementById('image-url').value;
+            const previewImg = document.getElementById('live-preview-img');
+            const previewPlaceholder = document.getElementById('preview-placeholder');
+            const previewContainer = document.getElementById('image-preview-container');
+            const statusIcon = document.getElementById('url-status');
+
+            if (!url) {
+                resetPreview();
+                return;
+            }
+
+            // Enhanced validation
+            const isImage = url.match(/\.(jpeg|jpg|gif|png|webp|svg|avif)$/i) || 
+                            url.includes('images.pexels.com') || 
+                            url.includes('images.unsplash.com') ||
+                            url.includes('plus.unsplash.com');
+
+            if (isImage) {
+                previewImg.src = url;
+                previewImg.onload = () => {
+                    previewPlaceholder.classList.add('hidden');
+                    previewContainer.classList.remove('hidden');
+                    statusIcon.classList.remove('hidden');
+                    statusIcon.innerHTML = '<i class="fa-solid fa-circle-check text-green-500"></i>';
+                };
+                previewImg.onerror = () => {
+                    resetPreview();
+                    statusIcon.classList.remove('hidden');
+                    statusIcon.innerHTML = '<i class="fa-solid fa-circle-exclamation text-red-400"></i>';
+                };
+            } else if (url.length > 10) {
+                statusIcon.classList.remove('hidden');
+                statusIcon.innerHTML = '<i class="fa-solid fa-circle-exclamation text-amber-400"></i>';
+                resetPreview();
+            }
+        }
+
+        function resetPreview() {
+            document.getElementById('live-preview-img').src = '';
+            document.getElementById('preview-placeholder').classList.remove('hidden');
+            document.getElementById('image-preview-container').classList.add('hidden');
+            document.getElementById('url-status').classList.add('hidden');
+        }
+
+        function handleCategoryChange() {
+            const category = document.getElementById('category').value;
+            const suggestions = document.getElementById('sub-options');
+            const subInput = document.getElementById('subcategory');
+
+            const options = {
+                exterior: ['Modern', 'Traditional', 'Contemporary', 'Minimalist', 'Luxury Villa', 'Coastal', 'Mountain Cabin', 'Industrial', 'Colonial'],
+                interior: ['Living Room', 'Modular Kitchen', 'Master Bedroom', 'Luxury Bathroom', 'Home Office', 'Dining Hall', 'Kids Room', 'Studio', 'Walk-in Closet']
+            };
+
+            const list = options[category] || [];
+            suggestions.innerHTML = list.map(opt => `<option value="${opt}">`).join('');
+            subInput.placeholder = category === 'exterior' ? 'e.g., Luxury Villa' : 'e.g., Modular Kitchen';
+        }
+
+        function goToStep(step) {
+            const stepInput = document.getElementById('form-step-input');
+            const stepConfirm = document.getElementById('form-step-confirm');
+            const nextBtn = document.getElementById('next-btn');
+            const submitBtn = document.getElementById('submit-btn');
+            const prevBtn = document.getElementById('prev-btn');
+            const cancelBtn = document.getElementById('cancel-btn');
+            const step1Ind = document.getElementById('step-1-indicator');
+            const step2Ind = document.getElementById('step-2-indicator');
+            const modalTitle = document.getElementById('modal-title');
+
+            if (step === 1) {
+                stepInput.classList.remove('hidden');
+                stepConfirm.classList.add('hidden');
+                nextBtn.classList.remove('hidden');
+                submitBtn.classList.add('hidden');
+                prevBtn.classList.add('hidden');
+                cancelBtn.classList.remove('hidden');
+                step1Ind.className = 'w-10 h-1 rounded-full bg-brand-600 transition-all';
+                step2Ind.className = 'w-10 h-1 rounded-full bg-slate-200 transition-all';
+                modalTitle.innerText = 'Resource Entry';
+            } else {
+                // Populate Summary
+                document.getElementById('summary-title').innerText = document.getElementById('title').value || 'Untitled Design';
+                const cat = document.getElementById('category').value;
+                const subCat = document.getElementById('subcategory').value;
+                document.getElementById('summary-taxonomy').innerText = `${cat.charAt(0).toUpperCase() + cat.slice(1)} • ${subCat || 'General'}`;
+                document.getElementById('summary-desc').innerText = document.getElementById('description').value || 'No additional summary provided.';
+
+                stepInput.classList.add('hidden');
+                stepConfirm.classList.remove('hidden');
+                nextBtn.classList.add('hidden');
+                submitBtn.classList.remove('hidden');
+                prevBtn.classList.add('hidden');
+                prevBtn.classList.remove('hidden');
+                cancelBtn.classList.add('hidden');
+                step1Ind.className = 'w-10 h-1 rounded-full bg-brand-100 transition-all';
+                step2Ind.className = 'w-10 h-1 rounded-full bg-brand-600 transition-all';
+                modalTitle.innerText = 'Final Review';
+            }
         }
 
         document.getElementById('add-image-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             
+            // If we are on step 1, clicking submit (or hitting enter) should move to step 2
+            if (!document.getElementById('form-step-input').classList.contains('hidden')) {
+                goToStep(2);
+                return;
+            }
+
             const formData = {
                 image_url: document.getElementById('image-url').value,
                 category: document.getElementById('category').value,
@@ -389,12 +629,15 @@ session_start();
                 description: document.getElementById('description').value
             };
 
+            const submitBtn = document.getElementById('submit-btn');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Publishing...';
+
             try {
                 const response = await fetch('backend/manage_gallery_images.php?action=add', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(formData)
                 });
                 
