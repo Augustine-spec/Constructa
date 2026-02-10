@@ -331,7 +331,7 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Admin';
             </div>
 
             <!-- Card 2: Content Management -->
-            <div class="feature-card tilt-card" onclick="window.location.href='#'">
+            <div class="feature-card tilt-card" onclick="window.location.href='content.php'">
                 <div class="card-content">
                     <div class="icon-wrapper gradient-admin-3">
                         <i class="fas fa-folder-open"></i>
@@ -367,7 +367,7 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Admin';
             </div>
 
             <!-- Card 5: Analytics -->
-            <div class="feature-card tilt-card" onclick="window.location.href='#'">
+            <div class="feature-card tilt-card" onclick="window.location.href='platform_analytics.php'">
                 <div class="card-content">
                     <div class="icon-wrapper gradient-admin-5">
                         <i class="fas fa-chart-line"></i>
