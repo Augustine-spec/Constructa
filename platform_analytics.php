@@ -241,30 +241,46 @@ $analytics_json = json_encode([
         }
 
         .top-nav-btn {
-            padding: 0.7rem 1.4rem;
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(0, 0, 0, 0.1);
-            border-radius: 6px;
-            text-decoration: none;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.75rem;
+            background: white;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
             color: #1e293b;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-weight: 700;
-            transition: all 0.3s ease;
-            display: flex;
+            text-decoration: none;
+            display: inline-flex;
             align-items: center;
             gap: 0.5rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            text-transform: uppercase;
         }
 
         .top-nav-btn:hover {
             background: var(--primary);
-            color: white;
+            color: white !important;
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 12px rgba(41, 64, 51, 0.15);
+            border-color: var(--primary);
+        }
+
+        .nav-logo {
+            font-weight: 800;
+            font-size: 1.6rem;
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(90deg, var(--primary), var(--primary-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-decoration: none;
+            display: flex;
+            gap: 2px;
+            letter-spacing: -0.5px;
+        }
+
+        .nav-logo span {
+            display: inline-block;
+            opacity: 0;
+            transform: translateY(10px);
         }
 
         .btn {
@@ -470,13 +486,15 @@ $analytics_json = json_encode([
     <main class="main-content">
         <!-- Header -->
         <header class="header">
-            <div class="page-title">
-                <h1>Platform Analytics</h1>
-                <p>Real-time data visualization and AI-powered insights</p>
-            </div>
+            <a href="admin_dashboard.php" class="nav-logo" id="header-logo">
+                <span>C</span><span>O</span><span>N</span><span>S</span><span>T</span><span>R</span><span>U</span><span>C</span><span>T</span><span>A</span>
+            </a>
             <div class="header-actions">
                 <a href="admin_dashboard.php" class="top-nav-btn">
                     <i class="fas fa-th-large"></i> Dashboard
+                </a>
+                <a href="team_management.php" class="top-nav-btn">
+                    <i class="fas fa-user-circle"></i> Profile
                 </a>
                 <a href="logout.php" class="top-nav-btn">
                     <i class="fas fa-sign-out-alt"></i> Logout
@@ -768,6 +786,18 @@ $analytics_json = json_encode([
         initGrowthChart();
         // Periodically "re-analyze" data to keep insights feeling alive
         setInterval(refreshAIInsights, 8000);
+
+        // Sequential Letter Animation
+        if (typeof gsap !== 'undefined') {
+            gsap.to("#header-logo span", {
+                opacity: 1,
+                y: 0,
+                stagger: 0.08,
+                duration: 0.6,
+                ease: "back.out(1.7)",
+                delay: 0.5
+            });
+        }
     });
 
     // === AI STUDY FUNCTIONS ===

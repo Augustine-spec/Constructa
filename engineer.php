@@ -25,6 +25,7 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Engineer';
             --accent-green: #3d5a49;
             --card-bg: #ffffff;
             --input-bg: #f9f9f9;
+            --transition-smooth: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         * {
@@ -64,57 +65,62 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Engineer';
             max-width: 1600px;
             margin: 0 auto;
             width: 100%;
-            background: rgba(246, 247, 242, 0.9);
-            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
             position: sticky;
             top: 0;
             z-index: 100;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
         }
 
         .logo {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: var(--primary-green);
+            font-weight: 800;
+            font-size: 1.6rem;
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(90deg, var(--primary-green), var(--accent-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
             text-decoration: none;
+            display: flex;
+            gap: 2px;
+            letter-spacing: -0.5px;
         }
 
-        .logo i {
-            font-size: 1.5rem;
+        .logo span {
+            display: inline-block;
+            opacity: 0;
+            transform: translateY(10px);
         }
 
         nav {
             display: flex;
-            gap: 1.5rem;
+            gap: 1rem;
             align-items: center;
         }
 
         .nav-btn {
             background: white;
-            border: 1px solid #e2e8f0;
+            border: 1px solid rgba(0, 0, 0, 0.08);
             padding: 0.75rem 1.5rem;
-            border-radius: 6px;
-            font-weight: 800;
-            font-size: 0.85rem;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
             color: var(--text-dark);
             text-decoration: none;
             display: inline-flex;
             align-items: center;
-            gap: 0.75rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            transition: all 0.2s ease;
+            gap: 0.5rem;
+            transition: var(--transition-smooth);
+            text-transform: uppercase;
         }
 
         .nav-btn:hover {
-            background: #fff;
-            border-color: var(--text-dark);
-            color: var(--text-dark);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(41, 64, 51, 0.15);
+            background: var(--primary-green);
+            color: white;
+            border-color: var(--primary-green);
         }
 
         .nav-btn i {
@@ -352,16 +358,15 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Engineer';
 
     <!-- Navigation -->
     <header>
-        <a href="landingpage.html" class="logo">
-            <i class="far fa-building"></i>
-            Constructa
+        <a href="engineer.php" class="logo" id="main-logo">
+            <span>C</span><span>O</span><span>N</span><span>S</span><span>T</span><span>R</span><span>U</span><span>C</span><span>T</span><span>A</span>
         </a>
         <nav>
             <a href="landingpage.html" class="nav-btn">
-                <i class="fas fa-home"></i> HOME
+                <i class="fas fa-home"></i> Home
             </a>
-            <a href="login.html" class="nav-btn">
-                <i class="fas fa-sign-out-alt"></i> LOGOUT
+            <a href="logout.php" class="nav-btn">
+                <i class="fas fa-sign-out-alt"></i> Logout
             </a>
         </nav>
     </header>
@@ -445,14 +450,14 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Engineer';
                 <div class="card-bg-3d"></div>
             </div>
 
-            <!-- Card 7: Team Management -->
-            <div class="feature-card tilt-card" onclick="window.location.href='team_management.php'">
+            <!-- Card 7: Professional Network -->
+            <div class="feature-card tilt-card" onclick="window.location.href='network.php'">
                 <div class="card-content">
                     <div class="icon-wrapper gradient-eng-7">
-                        <i class="fas fa-users"></i>
+                        <i class="fas fa-network-wired"></i>
                     </div>
-                    <h3>Team Management</h3>
-                    <p>Manage your on-site teams, assign tasks, and track roles.</p>
+                    <h3>Professional Network</h3>
+                    <p>Connect with other engineers, share work updates, and build your professional community.</p>
                 </div>
                 <div class="card-bg-3d"></div>
             </div>
@@ -513,6 +518,7 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Engineer';
                 scene.add(mainLight);
                 const blueLight = new THREE.PointLight(0x3d5a49, 0.5);
                 blueLight.position.set(-5, 5, 5);
+                scene.add(blueLight);
 
                 const cityGroup = new THREE.Group();
                 scene.add(cityGroup);
@@ -537,20 +543,7 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Engineer';
                     }
                 }
 
-                const houseGroup = new THREE.Group();
-                const baseGeo = new THREE.BoxGeometry(2, 2, 2);
-                const baseLine = new THREE.LineSegments(new THREE.EdgesGeometry(baseGeo), new THREE.LineBasicMaterial({ color: 0x294033, linewidth: 2 }));
-                houseGroup.add(baseLine);
-                const roofGeo = new THREE.ConeGeometry(1.5, 1.2, 4);
-                const roofLine = new THREE.LineSegments(new THREE.EdgesGeometry(roofGeo), new THREE.LineBasicMaterial({ color: 0x3d5a49, linewidth: 2 }));
-                roofLine.position.y = 1.6;
-                roofLine.rotation.y = Math.PI / 4;
-                houseGroup.add(roofLine);
 
-                const floatGroup = new THREE.Group();
-                floatGroup.add(houseGroup);
-                floatGroup.position.set(0, 0, 2);
-                scene.add(floatGroup);
 
                 let mouseX = 0;
                 let mouseY = 0;
@@ -563,8 +556,6 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Engineer';
                 const animate = () => {
                     requestAnimationFrame(animate);
                     cityGroup.rotation.y += 0.001;
-                    floatGroup.rotation.y += 0.005;
-                    floatGroup.position.y = Math.sin(Date.now() * 0.001) * 0.5 + 0.5;
                     cityGroup.rotation.x += 0.05 * (mouseY - cityGroup.rotation.x);
                     cityGroup.rotation.y += 0.05 * (mouseX - cityGroup.rotation.y);
                     camera.position.y = 2 - scrollY * 2;
@@ -580,6 +571,18 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Engineer';
                 });
             };
             if (typeof THREE !== 'undefined') initBackground3D();
+
+            // Sequential Letter Animation
+            if (typeof gsap !== 'undefined') {
+                gsap.to("#main-logo span", {
+                    opacity: 1,
+                    y: 0,
+                    stagger: 0.08,
+                    duration: 0.6,
+                    ease: "back.out(1.7)",
+                    delay: 0.5
+                });
+            }
         });
     </script>
 </body>

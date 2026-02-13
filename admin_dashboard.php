@@ -14,7 +14,7 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Admin';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - Constructa</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         :root {
@@ -87,20 +87,35 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Admin';
 
         nav {
             display: flex;
-            gap: 2rem;
+            gap: 1rem;
             align-items: center;
         }
 
-        nav a {
+        .top-nav-btn {
+            padding: 0.8rem 1.5rem;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
             text-decoration: none;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
             color: var(--text-dark);
-            font-weight: 500;
-            font-size: 0.95rem;
-            transition: color 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
         }
 
-        nav a:hover {
-            color: var(--primary-green);
+        .top-nav-btn:hover {
+            background: var(--primary-green);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
         }
 
         /* Dashboard Layout */
@@ -306,8 +321,12 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Admin';
             Constructa
         </a>
         <nav>
-            <a href="landingpage.html">Home</a>
-            <a href="login.html">Logout</a>
+            <a href="landingpage.html" class="top-nav-btn">
+                <i class="fas fa-home"></i> Home
+            </a>
+            <a href="backend/logout.php" class="top-nav-btn">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
         </nav>
     </header>
 
@@ -342,14 +361,14 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Admin';
                 <div class="card-bg-3d"></div>
             </div>
 
-            <!-- Card 3: Material Pricing -->
-            <div class="feature-card tilt-card" onclick="window.location.href='#'">
+            <!-- Card 3: Material Procurement -->
+            <div class="feature-card tilt-card" onclick="window.location.href='material_procurement.php'">
                 <div class="card-content">
                     <div class="icon-wrapper gradient-admin-2">
-                        <i class="fas fa-tags"></i>
+                        <i class="fas fa-boxes"></i>
                     </div>
-                    <h3>Material Pricing</h3>
-                    <p>Update market rates for construction materials and labor costs.</p>
+                    <h3>Material Procurement</h3>
+                    <p>Track material orders, monitor delivery statuses, and manage onsite inventory.</p>
                 </div>
                 <div class="card-bg-3d"></div>
             </div>
@@ -378,26 +397,16 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Admin';
                 <div class="card-bg-3d"></div>
             </div>
 
-            <!-- Card 6: System Settings -->
-            <div class="feature-card tilt-card" onclick="window.location.href='#'">
-                <div class="card-content">
-                    <div class="icon-wrapper gradient-admin-6">
-                        <i class="fas fa-cogs"></i>
-                    </div>
-                    <h3>System Settings</h3>
-                    <p>Configure platform modules, APIs, and global preferences.</p>
-                </div>
-                <div class="card-bg-3d"></div>
-            </div>
 
-            <!-- Card 7: Security Logs -->
-            <div class="feature-card tilt-card" onclick="window.location.href='#'">
+
+            <!-- Card 7: Notification Hub -->
+            <div class="feature-card tilt-card" onclick="window.location.href='notifications.php'">
                 <div class="card-content">
                     <div class="icon-wrapper gradient-admin-7">
-                        <i class="fas fa-shield-alt"></i>
+                        <i class="fas fa-bullhorn"></i>
                     </div>
-                    <h3>Security Logs</h3>
-                    <p>Monitor access logs, audit trails, and system security.</p>
+                    <h3>Notification Hub</h3>
+                    <p>Policy-driven communication and audience-targeted broadcasting.</p>
                 </div>
                 <div class="card-bg-3d"></div>
             </div>
@@ -410,6 +419,18 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Admin';
                     </div>
                     <h3>Template Management</h3>
                     <p>Add, update, enable, or remove house plan templates and specifications.</p>
+                </div>
+                <div class="card-bg-3d"></div>
+            </div>
+
+            <!-- Card 9: Professional Network -->
+            <div class="feature-card tilt-card" onclick="window.location.href='network.php'">
+                <div class="card-content">
+                    <div class="icon-wrapper gradient-admin-3">
+                        <i class="fas fa-network-wired"></i>
+                    </div>
+                    <h3>Professional Network</h3>
+                    <p>Moderate discussions, view community posts, and handle user reports.</p>
                 </div>
                 <div class="card-bg-3d"></div>
             </div>

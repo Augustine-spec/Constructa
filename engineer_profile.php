@@ -99,44 +99,41 @@ $total_projects = $project_result['count'] ?? 0;
             position: sticky;
             top: 0;
             z-index: 1000;
-            background: rgba(255, 255, 255, 0.4);
+            background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--glass-border);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
         }
 
         .nav-logo {
-            font-weight: 800;
-            font-size: 1.5rem;
-            color: var(--primary);
             text-decoration: none;
-            letter-spacing: -1px;
         }
         
         /* 3D Brand Title Styling */
         .brand-3d {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 1.5rem;
-            font-weight: 900;
-            color: var(--primary);
+            font-family: 'Inter', sans-serif;
+            font-size: 1.6rem;
+            font-weight: 800;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
             text-transform: uppercase;
-            letter-spacing: 4px;
+            letter-spacing: -0.5px;
             display: flex;
+            gap: 2px;
             cursor: pointer;
-            perspective: 1000px;
-            transform-style: preserve-3d;
         }
 
         .brand-3d span {
             display: inline-block;
             opacity: 0;
-            transform: translateY(10px) rotateX(-90deg);
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+            transform: translateY(10px);
+            text-shadow: none;
         }
 
         .brand-3d span.visible {
             opacity: 1;
-            transform: translateY(0) rotateX(0);
+            transform: translateY(0);
         }
 
         .nav-actions {
@@ -146,26 +143,26 @@ $total_projects = $project_result['count'] ?? 0;
 
         .nav-btn {
             background: white;
-            border: 1px solid rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(0, 0, 0, 0.08);
             padding: 0.75rem 1.5rem;
-            border-radius: 12px;
-            font-weight: 700;
-            font-size: 0.85rem;
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
             color: var(--text-main);
             text-decoration: none;
             display: inline-flex;
             align-items: center;
-            gap: 0.75rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            gap: 0.5rem;
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            text-transform: uppercase;
         }
 
         .nav-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.05);
-            border-color: rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 12px rgba(41, 64, 51, 0.15);
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
         }
 
         /* Layout */
@@ -1062,15 +1059,24 @@ $total_projects = $project_result['count'] ?? 0;
 <body>
     <div id="canvas-container"></div>
     <div class="bg-gradient"></div>
-
     <nav>
-        <div class="brand-3d" id="brand-3d-text" onclick="window.location.href='engineer.php'">CONSTRUCTA</div>
+        <a href="engineer.php" class="nav-logo">
+            <span class="brand-3d">
+                <span>C</span><span>O</span><span>N</span><span>S</span><span>T</span><span>R</span><span>U</span><span>C</span><span>T</span><span>A</span>
+            </span>
+        </a>
         <div class="nav-actions">
-            <a href="engineer.php" class="nav-btn">
-                <i class="fas fa-home"></i> DASHBOARD
+            <a href="network.php" class="nav-btn" title="Community Home">
+                <i class="fas fa-home"></i>
             </a>
-            <a href="login.html" class="nav-btn">
-                <i class="fas fa-sign-out-alt"></i> LOGOUT
+            <a href="engineer.php" class="nav-btn">
+                <i class="fas fa-th-large"></i> Dashboard
+            </a>
+            <a href="team_management.php" class="nav-btn">
+                <i class="fas fa-user-circle"></i> Profile
+            </a>
+            <a href="logout.php" class="nav-btn">
+                <i class="fas fa-sign-out-alt"></i> Logout
             </a>
         </div>
     </nav>
@@ -1379,6 +1385,12 @@ $total_projects = $project_result['count'] ?? 0;
             });
 
             // Count up Animations
+            const spans = document.querySelectorAll('.brand-3d span');
+            spans.forEach((span, idx) => {
+                setTimeout(() => {
+                    span.classList.add('visible');
+                }, idx * 80);
+            });
             const stats = document.querySelectorAll('.stat-value');
             stats.forEach(stat => {
                 const target = parseInt(stat.getAttribute('data-target'));

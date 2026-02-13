@@ -121,6 +121,35 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Homeowner'
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
         }
 
+        .bell-container {
+            position: relative;
+            cursor: pointer;
+            color: var(--text-dark);
+            font-size: 1.2rem;
+            transition: color 0.2s;
+            margin: 0 1rem;
+        }
+
+        .bell-container:hover {
+            color: var(--primary-green);
+        }
+
+        .badge {
+            position: absolute;
+            top: -5px;
+            right: -8px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            font-size: 0.6rem;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid white;
+        }
+
         /* Dashboard Layout */
         .dashboard-container {
             max-width: 1400px;
@@ -292,7 +321,11 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Homeowner'
         </a>
         <nav>
             <a href="landingpage.html" class="top-nav-btn">Home</a>
-            <a href="login.html" class="top-nav-btn">Logout</a>
+            <a href="backend/logout.php" class="top-nav-btn">Logout</a>
+            <div class="bell-container" onclick="window.location.href='notifications.php'">
+                <i class="far fa-bell"></i>
+                <span class="badge" id="notif-badge">0</span>
+            </div>
         </nav>
     </header>
 
@@ -543,6 +576,23 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Homeowner'
             };
 
             if (typeof THREE !== 'undefined') initBackground3D();
+
+            // === Notifications Update ===
+            async function updateNotifs() {
+                try {
+                    const res = await fetch('backend/get_notification_count.php');
+                    const data = await res.json();
+                    const badge = document.getElementById('notif-badge');
+                    if(data.unread > 0) {
+                        badge.innerText = data.unread;
+                        badge.style.display = 'flex';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                } catch(e) {}
+            }
+            updateNotifs();
+            setInterval(updateNotifs, 10000);
 
             // === WELCOME TEXT ANIMATION ===
             const welcomeSubtitle = document.querySelector('.welcome-subtitle');
