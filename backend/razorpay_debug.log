@@ -45,3 +45,9 @@
 2026-02-02 03:45:50 - Input: {"amount":191500,"cart":[{"id":"1","name":"TMT Steel Bars (Fe-550)","price":65,"unit":"per kg","quantity":1,"icon":"fa-bars"},{"id":"13","name":"Copper Wire (2.5 sqmm)","price":1850,"unit":"per coil","quantity":1,"icon":"fa-plug"}]}
 2026-02-02 03:45:53 - HTTP Code: 200
 2026-02-02 03:45:53 - Response: {"amount":191500,"amount_due":191500,"amount_paid":0,"attempts":0,"created_at":1770000352,"currency":"INR","entity":"order","id":"order_SB7K19HLVA9LQZ","notes":{"item_count":2,"order_type":"material_purchase"},"offer_id":null,"receipt":"order_1770000350","status":"created"}
+2026-02-15 03:39:28 - Input: {"amount":840000,"cart":[{"id":"8","name":"Waterproof Chemical","price":4200,"unit":"per bucket","quantity":2,"icon":"fa-cube"}]}
+2026-02-15 03:39:29 - HTTP Code: 200
+2026-02-15 03:39:29 - Response: {"amount":840000,"amount_due":840000,"amount_paid":0,"attempts":0,"created_at":1771123169,"currency":"INR","entity":"order","id":"order_SGG9pyPJiJCfVc","notes":{"item_count":1,"order_type":"material_purchase"},"offer_id":null,"receipt":"order_1771123168","status":"created"}
+2026-02-15 16:08:55 - Input: {"amount":13000,"cart":[{"id":"1","name":"TMT Steel Bars (Fe-550)","price":65,"unit":"per kg","quantity":2,"icon":"fa-bars"}]}
+2026-02-15 16:08:55 - HTTP Code: 200
+2026-02-15 16:08:55 - Response: {"amount":13000,"amount_due":13000,"amount_paid":0,"attempts":0,"created_at":1771168135,"currency":"INR","entity":"order","id":"order_SGSvUVUlu0tcxY","notes":{"item_count":1,"order_type":"material_purchase"},"offer_id":null,"receipt":"order_1771168135","status":"created"}

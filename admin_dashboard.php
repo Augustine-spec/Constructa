@@ -362,7 +362,7 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Admin';
             </div>
 
             <!-- Card 3: Material Procurement -->
-            <div class="feature-card tilt-card" onclick="window.location.href='material_procurement.php'">
+            <div class="feature-card tilt-card" onclick="window.location.href='admin_material_procurement.php'">
                 <div class="card-content">
                     <div class="icon-wrapper gradient-admin-2">
                         <i class="fas fa-boxes"></i>

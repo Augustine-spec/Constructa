@@ -581,9 +581,7 @@ session_start();
     <div id="bg-canvas-container"></div>
 
     <div class="nav-fixed-container">
-        <a href="landingpage.html" class="top-nav-btn">
-            <i class="fas fa-home"></i> Home
-        </a>
+
         <?php if(isset($_SESSION['user_id'])): ?>
             <?php if($_SESSION['role'] === 'homeowner'): ?>
                 <a href="homeowner.php" class="top-nav-btn">

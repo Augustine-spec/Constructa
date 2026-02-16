@@ -462,14 +462,14 @@ $username = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : 'Engineer';
                 <div class="card-bg-3d"></div>
             </div>
 
-            <!-- Card 8: Schedule & Calendar -->
-            <div class="feature-card tilt-card" onclick="window.location.href='schedule_calendar.php'">
+            <!-- Card 8: CAD Blueprint Workspace -->
+            <div class="feature-card tilt-card" onclick="window.location.href='cad_blueprint_workspace.php'">
                 <div class="card-content">
                     <div class="icon-wrapper gradient-eng-8">
-                        <i class="fas fa-calendar-alt"></i>
+                        <i class="fas fa-drafting-compass"></i>
                     </div>
-                    <h3>Schedule & Calendar</h3>
-                    <p>Keep track of project timelines, deadlines, and meetings.</p>
+                    <h3>CAD Blueprint Workspace</h3>
+                    <p>Design, edit, and manage construction blueprints directly within the platform.</p>
                 </div>
                 <div class="card-bg-3d"></div>
             </div>
